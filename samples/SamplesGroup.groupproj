@@ -1,0 +1,84 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{DA95132F-8688-4582-AC79-A3AE5D5D4C73}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="01_zero_conf_logging\zero_conf_logging.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="02_file_appender\file_appender.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="03_console_appender\console_appender.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="04_outputdebugstring_appender\outputdebugstring_appender.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="10_multiple_appenders\multiple_appenders.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="zero_conf_logging">
+        <MSBuild Projects="01_zero_conf_logging\zero_conf_logging.dproj"/>
+    </Target>
+    <Target Name="zero_conf_logging:Clean">
+        <MSBuild Projects="01_zero_conf_logging\zero_conf_logging.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="zero_conf_logging:Make">
+        <MSBuild Projects="01_zero_conf_logging\zero_conf_logging.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="file_appender">
+        <MSBuild Projects="02_file_appender\file_appender.dproj"/>
+    </Target>
+    <Target Name="file_appender:Clean">
+        <MSBuild Projects="02_file_appender\file_appender.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="file_appender:Make">
+        <MSBuild Projects="02_file_appender\file_appender.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="console_appender">
+        <MSBuild Projects="03_console_appender\console_appender.dproj"/>
+    </Target>
+    <Target Name="console_appender:Clean">
+        <MSBuild Projects="03_console_appender\console_appender.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="console_appender:Make">
+        <MSBuild Projects="03_console_appender\console_appender.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="outputdebugstring_appender">
+        <MSBuild Projects="04_outputdebugstring_appender\outputdebugstring_appender.dproj"/>
+    </Target>
+    <Target Name="outputdebugstring_appender:Clean">
+        <MSBuild Projects="04_outputdebugstring_appender\outputdebugstring_appender.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="outputdebugstring_appender:Make">
+        <MSBuild Projects="04_outputdebugstring_appender\outputdebugstring_appender.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="multiple_appenders">
+        <MSBuild Projects="10_multiple_appenders\multiple_appenders.dproj"/>
+    </Target>
+    <Target Name="multiple_appenders:Clean">
+        <MSBuild Projects="10_multiple_appenders\multiple_appenders.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="multiple_appenders:Make">
+        <MSBuild Projects="10_multiple_appenders\multiple_appenders.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="zero_conf_logging;file_appender;console_appender;outputdebugstring_appender;multiple_appenders"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="zero_conf_logging:Clean;file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;multiple_appenders:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="zero_conf_logging:Make;file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;multiple_appenders:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

@@ -114,7 +114,7 @@ class procedure TLogger.Initialize;
 begin
   if ConfiguredAppenders.Count = 0 then
   begin
-    ConfiguredAppenders.Add(TLogFileAppender.Create);
+    ConfiguredAppenders.Add(TLoggerProFileAppender.Create);
   end;
 
   Instance := TLogWriter.Create(ConfiguredAppenders);

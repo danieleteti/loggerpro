@@ -1,4 +1,4 @@
-unit LoggerPro.DebugStringAppender;
+unit LoggerPro.OutputDebugStringAppender;
 
 interface
 
@@ -6,7 +6,7 @@ uses
   LoggerPro, System.Classes;
 
 type
-  TOutputDebugStringLogAppender = class(TInterfacedObject, ILogAppender)
+  TLoggerProOutputDebugStringAppender = class(TInterfacedObject, ILogAppender)
   private
     FStrings: TStrings;
     FModuleName: string;
@@ -26,22 +26,22 @@ uses
 const
   DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
 
-constructor TOutputDebugStringLogAppender.Create;
+constructor TLoggerProOutputDebugStringAppender.Create;
 begin
   inherited Create;
 end;
 
-procedure TOutputDebugStringLogAppender.Setup;
+procedure TLoggerProOutputDebugStringAppender.Setup;
 begin
   FModuleName := TPath.GetFileName(GetModuleName(HInstance));
 end;
 
-procedure TOutputDebugStringLogAppender.TearDown;
+procedure TLoggerProOutputDebugStringAppender.TearDown;
 begin
   // do nothing
 end;
 
-procedure TOutputDebugStringLogAppender.WriteLog(const aLogItem: TLogItem);
+procedure TLoggerProOutputDebugStringAppender.WriteLog(const aLogItem: TLogItem);
 var
   lLog: string;
 begin

@@ -17,7 +17,7 @@ const
   DEFAULT_MAX_FILE_SIZE_KB = 1000;
 
 type
-  TLogFileAppender = class(TInterfacedObject, ILogAppender)
+  TLoggerProFileAppender = class(TInterfacedObject, ILogAppender)
   private
     FFormatSettings: TFormatSettings;
     FWritersDictionary: TObjectDictionary<String, TStreamWriter>;
@@ -50,9 +50,9 @@ implementation
 uses
   System.IOUtils;
 
-{ TLogFileAppender }
+{ TLoggerProFileAppender }
 
-function TLogFileAppender.GetLogFileName(const aTag: String;
+function TLoggerProFileAppender.GetLogFileName(const aTag: String;
   const aFileNumber: Integer): String;
 var
   lExt: string;
@@ -61,7 +61,7 @@ begin
   Result := ChangeFileExt(GetModuleName(HInstance), lExt);
 end;
 
-procedure TLogFileAppender.Setup;
+procedure TLoggerProFileAppender.Setup;
 begin
   FFormatSettings.DateSeparator := '-';
   FFormatSettings.TimeSeparator := ':';
@@ -71,19 +71,19 @@ begin
     ([doOwnsValues]);
 end;
 
-procedure TLogFileAppender.TearDown;
+procedure TLoggerProFileAppender.TearDown;
 begin
   FWritersDictionary.Free;
 end;
 
-procedure TLogFileAppender.WriteLog(const aStreamWriter: TStreamWriter;
+procedure TLoggerProFileAppender.WriteLog(const aStreamWriter: TStreamWriter;
   const aValue: String);
 begin
   aStreamWriter.WriteLine(aValue);
   aStreamWriter.Flush;
 end;
 
-procedure TLogFileAppender.WriteLog(const aLogItem: TLogItem);
+procedure TLoggerProFileAppender.WriteLog(const aLogItem: TLogItem);
 var
   lWriter: TStreamWriter;
   lLogFileName: string;
@@ -102,7 +102,7 @@ begin
   end;
 end;
 
-procedure TLogFileAppender.RetryMove(const aFileSrc, aFileDest: String);
+procedure TLoggerProFileAppender.RetryMove(const aFileSrc, aFileDest: String);
 var
   lRetries: Integer;
 const
@@ -131,7 +131,7 @@ begin
     raise ELoggerPro.CreateFmt('Cannot rename %s to %s', [aFileSrc, aFileDest]);
 end;
 
-procedure TLogFileAppender.RotateLog(const aLogItem: TLogItem;
+procedure TLoggerProFileAppender.RotateLog(const aLogItem: TLogItem;
   lWriter: TStreamWriter);
 var
   lLogFileName: string;
@@ -163,7 +163,7 @@ begin
   WriteLog(lWriter, '#[START LOG ' + datetimetostr(Now, FFormatSettings) + ']');
 end;
 
-procedure TLogFileAppender.AddWriter(const aLogItem: TLogItem;
+procedure TLoggerProFileAppender.AddWriter(const aLogItem: TLogItem;
   var lWriter: TStreamWriter; var lLogFileName: string);
 begin
   lLogFileName := GetLogFileName(aLogItem.LogTag, 0);
@@ -171,7 +171,7 @@ begin
   FWritersDictionary.Add(aLogItem.LogTag, lWriter);
 end;
 
-constructor TLogFileAppender.Create(aMaxBackupFileCount: Integer;
+constructor TLoggerProFileAppender.Create(aMaxBackupFileCount: Integer;
   aMaxFileSizeInKiloByte: Integer; aLogFormat: String);
 begin
   inherited Create;
@@ -180,7 +180,7 @@ begin
   FLogFormat := aLogFormat;
 end;
 
-function TLogFileAppender.CreateWriter(const aFileName: String): TStreamWriter;
+function TLoggerProFileAppender.CreateWriter(const aFileName: String): TStreamWriter;
 var
   lFileStream: TFileStream;
   lFileAccessMode: Word;
