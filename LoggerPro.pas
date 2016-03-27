@@ -1,6 +1,6 @@
 unit LoggerPro;
-{<@abstract(The main unit you should always include)
-@author(Daniele Teti)}
+{ <@abstract(The main unit you should always include)
+  @author(Daniele Teti) }
 
 interface
 
@@ -9,7 +9,7 @@ uses
 
 type
 {$SCOPEDENUMS ON}
-  TLogType = (Debug, Info, Warning, Error);
+  TLogType = (Debug = 0, Info, Warning, Error);
 
   { @abstract(Represent the single log item)
     Each call to some kind of log method is wrapped in a @link(TLogItem)
@@ -24,24 +24,24 @@ type
     FThreadID: Cardinal;
     function GetLogTypeAsString: String;
   public
-    {@abstract(The type of the log)
-    Log can be one of the following types:
-    @unorderedlist(
-    @item(DEBUG)
-    @item(INFO)
-    @item(WARNING)
-    @item(ERROR)
-    )}
+    { @abstract(The type of the log)
+      Log can be one of the following types:
+      @unorderedlist(
+      @item(DEBUG)
+      @item(INFO)
+      @item(WARNING)
+      @item(ERROR)
+      ) }
     property LogType: TLogType read FType;
-    {@abstract(The text of the log message)}
+    { @abstract(The text of the log message) }
     property LogMessage: String read FMessage;
-    {@abstract(The tag of the log message)}
+    { @abstract(The tag of the log message) }
     property LogTag: String read FTag;
-    {@abstract(The timestamp when the @link(TLogItem) is generated)}
+    { @abstract(The timestamp when the @link(TLogItem) is generated) }
     property TimeStamp: TDateTime read FTimeStamp;
-    {@abstract(The IDof the thread which generated the log item)}
+    { @abstract(The IDof the thread which generated the log item) }
     property ThreadID: Cardinal read FThreadID;
-    {@abstract(The type of the log converted in string)}
+    { @abstract(The type of the log converted in string) }
     property LogTypeAsString: String read GetLogTypeAsString;
   end;
 
@@ -63,108 +63,97 @@ type
 
   end;
 
-  TLogger = class sealed
-  public
-    class constructor Create;
-    class destructor Destroy;
-    class procedure AddAppender(aILogAppender: ILogAppender);
-    class procedure Initialize;
-    class procedure ResetAppenders;
-  private type
-    TLogAppenderList = TList<ILogAppender>;
-
-    TLoggerThread = class(TThread)
-    private
-      FQueue: TThreadedQueue<TLogItem>;
-      FAppenders: TLogAppenderList;
-    public
-      constructor Create(aQueue: TThreadedQueue<TLogItem>;
-        aAppenders: TLogAppenderList);
-      procedure Execute; override;
-    end;
-
-    ILogWriter = interface
-      ['{A717A040-4493-458F-91B2-6F6E2AFB496F}']
-      procedure Debug(aMessage: String; aTag: String);
-      procedure Info(aMessage: String; aTag: String);
-      procedure Warn(aMessage: String; aTag: String);
-      procedure Error(aMessage: String; aTag: String);
-      procedure Log(aType: TLogType; aMessage: String; aTag: String);
-    end;
-
-    TLogWriter = class(TInterfacedObject, ILogWriter)
-    private
-      FQueue: TThreadedQueue<TLogItem>;
-      FLoggerThread: TLoggerThread;
-      FLogAppenders: TLogAppenderList;
-      FFreeAllowed: Boolean;
-      procedure SetupAppenders;
-      procedure Start;
-      procedure TearDownAppenders;
-      constructor Create(aLogAppenders: TLogAppenderList);
-    public
-      destructor Destroy; override;
-      procedure Debug(aMessage: String; aTag: String);
-      procedure Info(aMessage: String; aTag: String);
-      procedure Warn(aMessage: String; aTag: String);
-      procedure Error(aMessage: String; aTag: String);
-      procedure Log(aType: TLogType; aMessage: String; aTag: String);
-    end;
-  private
-    class var ConfiguredAppenders: TLogger.TLogAppenderList;
-    class var Instance: ILogWriter;
-
+  ILogWriter = interface
+    ['{A717A040-4493-458F-91B2-6F6E2AFB496F}']
+    procedure Debug(aMessage: String; aTag: String);
+    procedure DebugFmt(aMessage: String; aParams: array of const; aTag: String);
+    procedure Info(aMessage: String; aTag: String);
+    procedure Warn(aMessage: String; aTag: String);
+    procedure Error(aMessage: String; aTag: String);
+    procedure Log(aType: TLogType; aMessage: String; aTag: String);
   end;
 
-function Log: TLogger.ILogWriter;
+  TLogAppenderList = TList<ILogAppender>;
+
+  TLoggerThread = class(TThread)
+  private
+    FQueue: TThreadedQueue<TLogItem>;
+    FAppenders: TLogAppenderList;
+  public
+    constructor Create(aQueue: TThreadedQueue<TLogItem>;
+      aAppenders: TLogAppenderList);
+    procedure Execute; override;
+  end;
+
+  TLogWriter = class(TInterfacedObject, ILogWriter)
+  private
+    FQueue: TThreadedQueue<TLogItem>;
+    FLoggerThread: TLoggerThread;
+    FLogAppenders: TLogAppenderList;
+    FFreeAllowed: Boolean;
+    FLogLevel: TLogType;
+    procedure SetupAppenders;
+    procedure Initialize;
+    procedure TearDownAppenders;
+  public
+    constructor Create(aLogLevel: TLogType = TLogType.Debug); overload;
+    constructor Create(aLogAppenders: TLogAppenderList;
+      aLogLevel: TLogType = TLogType.Debug); overload;
+    destructor Destroy; override;
+    procedure Debug(aMessage: String; aTag: String);
+    procedure DebugFmt(aMessage: string; aParams: array of TVarRec;
+      aTag: string);
+
+    procedure Info(aMessage: String; aTag: String);
+    procedure InfoFmt(aMessage: string; aParams: array of TVarRec;
+      aTag: string);
+
+    procedure Warn(aMessage: String; aTag: String);
+    procedure WarnFmt(aMessage: string; aParams: array of TVarRec;
+      aTag: string);
+
+    procedure Error(aMessage: String; aTag: String);
+    procedure ErrorFmt(aMessage: string; aParams: array of TVarRec;
+      aTag: string);
+
+    procedure Log(aType: TLogType; aMessage: String; aTag: String);
+    procedure LogFmt(aType: TLogType; aMessage: String; aParams: array of const;
+      aTag: String);
+  end;
+
+  { @abstract(Entry point for the user code. Call this global function to access the LoggerPro engine.)
+    This function can called also before call TLogger.Initialize, however in such cases it implements a NULL object, so
+    no log will be handled, but your code will not raise exceptions. }
+function BuildLogWriter(aAppenders: array of ILogAppender;
+  aLogLevel: TLogType = TLogType.Debug): ILogWriter;
 
 implementation
 
 uses
   System.Types, LoggerPro.FileAppender;
 
-function Log: TLogger.ILogWriter;
+function BuildLogWriter(aAppenders: array of ILogAppender; aLogLevel: TLogType)
+  : ILogWriter;
+var
+  lLogAppenders: TLogAppenderList;
+  lLogAppender: ILogAppender;
 begin
-  Result := TLogger.Instance;
-end;
-
-{ TLoggerConfig }
-
-class procedure TLogger.AddAppender(aILogAppender: ILogAppender);
-begin
-  ConfiguredAppenders.Add(aILogAppender);
-end;
-
-class constructor TLogger.Create;
-begin
-  ConfiguredAppenders := TLogAppenderList.Create;
-end;
-
-class destructor TLogger.Destroy;
-begin
-  Instance := nil;
-end;
-
-class procedure TLogger.Initialize;
-begin
-  if ConfiguredAppenders.Count = 0 then
+  lLogAppenders := TLogAppenderList.Create;
+  for lLogAppender in aAppenders do
   begin
-    ConfiguredAppenders.Add(TLoggerProFileAppender.Create);
+    lLogAppenders.Add(lLogAppender);
   end;
-
-  Instance := TLogWriter.Create(ConfiguredAppenders);
-  TLogWriter(Instance).SetupAppenders;
-  TLogWriter(Instance).Start;
-end;
-
-class procedure TLogger.ResetAppenders;
-begin
-  ConfiguredAppenders.Clear;
+  Result := TLogWriter.Create(lLogAppenders, aLogLevel);
+  TLogWriter(Result).Initialize;
+  while not TLogWriter(Result).FLoggerThread.Started do
+  begin
+    sleep(1); // wait the thread start
+  end;
 end;
 
 { TLogger.TLogWriter }
 
-procedure TLogger.TLogWriter.SetupAppenders;
+procedure TLogWriter.SetupAppenders;
 var
   I: Integer;
 begin
@@ -174,21 +163,37 @@ begin
   end;
 end;
 
-constructor TLogger.TLogWriter.Create(aLogAppenders: TLogAppenderList);
+constructor TLogWriter.Create(aLogAppenders: TLogAppenderList;
+  aLogLevel: TLogType);
 begin
   inherited Create;
   FFreeAllowed := False;
   FQueue := TThreadedQueue<TLogItem>.Create(1000, INFINITE, 200);
   FLogAppenders := aLogAppenders;
+  FLogLevel := aLogLevel;
 end;
 
-procedure TLogger.TLogWriter.Debug(aMessage, aTag: String);
+constructor TLogWriter.Create(aLogLevel: TLogType);
+begin
+  Create(TLogAppenderList.Create, aLogLevel);
+end;
+
+procedure TLogWriter.Debug(aMessage, aTag: String);
 begin
   Log(TLogType.Debug, aMessage, aTag);
 end;
 
-destructor TLogger.TLogWriter.Destroy;
+procedure TLogWriter.DebugFmt(aMessage: string; aParams: array of TVarRec;
+  aTag: string);
 begin
+  LogFmt(TLogType.Debug, aMessage, aParams, aTag);
+end;
+
+destructor TLogWriter.Destroy;
+begin
+  FQueue.DoShutDown;
+  FLoggerThread.Terminate;
+  FLoggerThread.WaitFor;
   FLoggerThread.Free;
   TearDownAppenders;
   FQueue.Free;
@@ -196,32 +201,54 @@ begin
   inherited;
 end;
 
-procedure TLogger.TLogWriter.Error(aMessage, aTag: String);
+procedure TLogWriter.Error(aMessage, aTag: String);
 begin
   Log(TLogType.Error, aMessage, aTag);
 end;
 
-procedure TLogger.TLogWriter.Info(aMessage, aTag: String);
+procedure TLogWriter.ErrorFmt(aMessage: string; aParams: array of TVarRec;
+  aTag: string);
+begin
+  LogFmt(TLogType.Error, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriter.Info(aMessage, aTag: String);
 begin
   Log(TLogType.Info, aMessage, aTag);
 end;
 
-procedure TLogger.TLogWriter.Log(aType: TLogType; aMessage, aTag: String);
+procedure TLogWriter.InfoFmt(aMessage: string; aParams: array of TVarRec;
+  aTag: string);
+begin
+  LogFmt(TLogType.Info, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriter.Log(aType: TLogType; aMessage, aTag: String);
 var
   LLogItem: TLogItem;
 begin
-  LLogItem := TLogItem.Create(aType, aMessage, aTag);
-  if FQueue.PushItem(LLogItem) = TWaitResult.wrTimeout then
-    raise ELoggerPro.Create('Log queue is full');
+  if aType >= FLogLevel then
+  begin
+    LLogItem := TLogItem.Create(aType, aMessage, aTag);
+    if FQueue.PushItem(LLogItem) = TWaitResult.wrTimeout then
+      raise ELoggerPro.Create('Log queue is full');
+  end;
 end;
 
-procedure TLogger.TLogWriter.Start;
+procedure TLogWriter.LogFmt(aType: TLogType; aMessage: String;
+  aParams: array of const; aTag: String);
 begin
+  Log(aType, Format(aMessage, aParams), aTag);
+end;
+
+procedure TLogWriter.Initialize;
+begin
+  SetupAppenders;
   FLoggerThread := TLoggerThread.Create(FQueue, FLogAppenders);
   FLoggerThread.Start;
 end;
 
-procedure TLogger.TLogWriter.TearDownAppenders;
+procedure TLogWriter.TearDownAppenders;
 var
   I: Integer;
 begin
@@ -231,9 +258,15 @@ begin
   end;
 end;
 
-procedure TLogger.TLogWriter.Warn(aMessage, aTag: String);
+procedure TLogWriter.Warn(aMessage, aTag: String);
 begin
   Log(TLogType.Warning, aMessage, aTag);
+end;
+
+procedure TLogWriter.WarnFmt(aMessage: string; aParams: array of TVarRec;
+  aTag: string);
+begin
+  LogFmt(TLogType.Warning, aMessage, aParams, aTag);
 end;
 
 { TLogger.TLogItem }
@@ -250,7 +283,7 @@ end;
 
 { TLogger.TLoggerThread }
 
-constructor TLogger.TLoggerThread.Create(aQueue: TThreadedQueue<TLogItem>;
+constructor TLoggerThread.Create(aQueue: TThreadedQueue<TLogItem>;
   aAppenders: TLogAppenderList);
 begin
   FQueue := aQueue;
@@ -259,23 +292,28 @@ begin
   FreeOnTerminate := False;
 end;
 
-procedure TLogger.TLoggerThread.Execute;
+procedure TLoggerThread.Execute;
 var
   lQSize: Integer;
   LLogItem: TLogItem;
   I: Integer;
 begin
-  while not Terminated do
+  while (not Terminated) or (FQueue.QueueSize > 0) do
   begin
     if FQueue.PopItem(lQSize, LLogItem) = TWaitResult.wrSignaled then
-      try
-        for I := 0 to FAppenders.Count - 1 do
-        begin
-          FAppenders[I].WriteLog(LLogItem);
+    begin
+      if LLogItem <> nil then
+      begin
+        try
+          for I := 0 to FAppenders.Count - 1 do
+          begin
+            FAppenders[I].WriteLog(LLogItem);
+          end;
+        finally
+          LLogItem.Free;
         end;
-      finally
-        LLogItem.Free;
-      end
+      end;
+    end;
   end;
 end;
 

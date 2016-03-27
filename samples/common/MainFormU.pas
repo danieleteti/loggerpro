@@ -31,7 +31,7 @@ var
 implementation
 
 uses
-  LoggerPro;
+  LoggerProConfig;
 
 {$R *.dfm}
 

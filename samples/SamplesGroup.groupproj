@@ -3,9 +3,6 @@
         <ProjectGuid>{DA95132F-8688-4582-AC79-A3AE5D5D4C73}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
-        <Projects Include="01_zero_conf_logging\zero_conf_logging.dproj">
-            <Dependencies/>
-        </Projects>
         <Projects Include="02_file_appender\file_appender.dproj">
             <Dependencies/>
         </Projects>
@@ -21,6 +18,9 @@
         <Projects Include="10_multiple_appenders\multiple_appenders.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="20_multiple_loggers\multiple_loggers.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -29,15 +29,6 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <Target Name="zero_conf_logging">
-        <MSBuild Projects="01_zero_conf_logging\zero_conf_logging.dproj"/>
-    </Target>
-    <Target Name="zero_conf_logging:Clean">
-        <MSBuild Projects="01_zero_conf_logging\zero_conf_logging.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="zero_conf_logging:Make">
-        <MSBuild Projects="01_zero_conf_logging\zero_conf_logging.dproj" Targets="Make"/>
-    </Target>
     <Target Name="file_appender">
         <MSBuild Projects="02_file_appender\file_appender.dproj"/>
     </Target>
@@ -83,14 +74,23 @@
     <Target Name="multiple_appenders:Make">
         <MSBuild Projects="10_multiple_appenders\multiple_appenders.dproj" Targets="Make"/>
     </Target>
+    <Target Name="multiple_loggers">
+        <MSBuild Projects="20_multiple_loggers\multiple_loggers.dproj"/>
+    </Target>
+    <Target Name="multiple_loggers:Clean">
+        <MSBuild Projects="20_multiple_loggers\multiple_loggers.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="multiple_loggers:Make">
+        <MSBuild Projects="20_multiple_loggers\multiple_loggers.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="zero_conf_logging;file_appender;console_appender;outputdebugstring_appender;memo_appenders;multiple_appenders"/>
+        <CallTarget Targets="file_appender;console_appender;outputdebugstring_appender;memo_appenders;multiple_appenders;multiple_loggers"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="zero_conf_logging:Clean;file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;memo_appenders:Clean;multiple_appenders:Clean"/>
+        <CallTarget Targets="file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;memo_appenders:Clean;multiple_appenders:Clean;multiple_loggers:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="zero_conf_logging:Make;file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;memo_appenders:Make;multiple_appenders:Make"/>
+        <CallTarget Targets="file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;memo_appenders:Make;multiple_appenders:Make;multiple_loggers:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

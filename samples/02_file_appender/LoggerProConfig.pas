@@ -2,27 +2,33 @@ unit LoggerProConfig;
 
 interface
 
+uses
+  LoggerPro;
+
+function Log: ILogWriter;
+
 implementation
 
 uses
-  LoggerPro, LoggerPro.FileAppender;
+  LoggerPro.FileAppender;
 
-procedure SetupLogger;
+var
+  _Log: ILogWriter;
+
+function Log: ILogWriter;
 begin
-  { The TLoggerProFileAppender has its defaults defined as follows:
-    DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
-    DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
-    DEFAULT_MAX_FILE_SIZE_KB = 1000;
-
-    You can override these dafaults passing parameters to the constructor
-  }
-
-  TLogger.AddAppender(TLoggerProFileAppender.Create(10, 5));
-  TLogger.Initialize;
+  Result := _Log;
 end;
 
 initialization
 
-SetupLogger;
+{ The TLoggerProFileAppender has its defaults defined as follows:
+  DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
+  DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
+  DEFAULT_MAX_FILE_SIZE_KB = 1000;
+
+  You can override these dafaults passing parameters to the constructor
+}
+_Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);
 
 end.

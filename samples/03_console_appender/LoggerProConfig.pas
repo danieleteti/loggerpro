@@ -2,20 +2,26 @@ unit LoggerProConfig;
 
 interface
 
+uses
+  LoggerPro;
+
+function Log: ILogWriter;
+
 implementation
 
 uses
-  LoggerPro, LoggerPro.ConsoleAppender;
+  LoggerPro.ConsoleAppender;
 
-procedure SetupLogger;
+var
+  _Log: ILogWriter;
+
+function Log: ILogWriter;
 begin
-  { The TLoggerProConsoleAppender logs to the console using 4 different colors for the different log level. }
-  TLogger.AddAppender(TLoggerProConsoleAppender.Create);
-  TLogger.Initialize;
+  Result := _Log;
 end;
 
 initialization
 
-SetupLogger;
+_Log := BuildLogWriter([TLoggerProConsoleAppender.Create])
 
 end.

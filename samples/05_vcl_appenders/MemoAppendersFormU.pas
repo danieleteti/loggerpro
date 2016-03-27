@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, LoggerPro;
 
 type
   TMainForm = class(TForm)
@@ -22,9 +22,10 @@ type
     procedure Button5Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
+    FLog: ILogWriter;
     { Private declarations }
   public
-    { Public declarations }
+    function Log: ILogWriter;
   end;
 
 var
@@ -33,7 +34,7 @@ var
 implementation
 
 uses
-  LoggerPro, LoggerPro.VCLMemoAppender;
+  LoggerPro.VCLMemoAppender;
 
 {$R *.dfm}
 
@@ -92,8 +93,13 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  TLogger.AddAppender(TVCLMemoLogAppender.Create(Memo1));
-  TLogger.Initialize;
+  //Let's create the local logger for this form
+  FLog := BuildLogWriter([TVCLMemoLogAppender.Create(Memo1)])
+end;
+
+function TMainForm.Log: ILogWriter;
+begin
+  Result := FLog;
 end;
 
 end.

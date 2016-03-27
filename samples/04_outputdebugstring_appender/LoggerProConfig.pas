@@ -2,19 +2,26 @@ unit LoggerProConfig;
 
 interface
 
+uses
+  LoggerPro;
+
+function Log: ILogWriter;
+
 implementation
 
 uses
-  LoggerPro, LoggerPro.OutputDebugStringAppender;
+  LoggerPro.OutputDebugStringAppender;
 
-procedure SetupLogger;
+var
+  _Log: ILogWriter;
+
+function Log: ILogWriter;
 begin
-  TLogger.AddAppender(TLoggerProOutputDebugStringAppender.Create);
-  TLogger.Initialize;
+  Result := _Log;
 end;
 
 initialization
 
-SetupLogger;
+_Log := BuildLogWriter([TLoggerProOutputDebugStringAppender.Create])
 
 end.
