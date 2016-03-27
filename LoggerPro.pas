@@ -121,9 +121,48 @@ type
       aTag: String);
   end;
 
-  { @abstract(Entry point for the user code. Call this global function to access the LoggerPro engine.)
-    This function can called also before call TLogger.Initialize, however in such cases it implements a NULL object, so
-    no log will be handled, but your code will not raise exceptions. }
+  { @abstract(Builds a new ILogWriter instance. Call this global function to start logging like a pro.)
+Here's a sample unit that you can use in your code
+@longcode(#
+unit LoggerProConfig;
+
+interface
+
+uses
+  LoggerPro;
+
+function Log: ILogWriter;
+
+implementation
+
+uses
+  LoggerPro.FileAppender;
+
+var
+  _Log: ILogWriter;
+
+function Log: ILogWriter;
+begin
+  Result := _Log;
+end;
+
+initialization
+
+//If you need other appenders, feel free to add them here in the array
+_Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);
+
+end.
+  #)
+
+Add this unit to your project, then when you need to use the logger, include
+the unit and call one of the followings:
+@unorderedlist(
+@item(Log.Debug('This is a debug message', 'tag1'))
+@item(Log.Info('This is an information message', 'tag1'))
+@item(Log.Warn('This is a warning message', 'tag1'))
+@item(Log.Error('This is an error message', 'tag1'))
+)
+  }
 function BuildLogWriter(aAppenders: array of ILogAppender;
   aLogLevel: TLogType = TLogType.Debug): ILogWriter;
 
