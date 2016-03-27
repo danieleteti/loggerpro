@@ -1,4 +1,6 @@
 unit LoggerPro.ConsoleAppender;
+{<@abstract(The unit to include if you want to use @link(TLoggerProConsoleAppender))
+@author(Daniele Teti)}
 
 interface
 
@@ -6,6 +8,10 @@ uses
   LoggerPro, System.Classes, Vcl.StdCtrls;
 
 type
+  {
+  @abstract(Logs to the console using 4 different colors for the different logs level)
+  @author(Daniele Teti - d.teti@bittime.it)
+  }
   TLoggerProConsoleAppender = class(TInterfacedObject, ILogAppender)
   protected
     procedure SetColor(const Color: Integer);
@@ -70,7 +76,7 @@ begin
     TLogType.Info:
       lColor := FOREGROUND_BLUE or FOREGROUND_GREEN or FOREGROUND_RED;
     TLogType.Warning:
-      lColor := FOREGROUND_GREEN or FOREGROUND_BLUE;
+      lColor := FOREGROUND_RED or FOREGROUND_GREEN or FOREGROUND_INTENSITY;
     TLogType.Error:
       lColor := FOREGROUND_RED or FOREGROUND_INTENSITY;
   end;

@@ -15,6 +15,9 @@
         <Projects Include="04_outputdebugstring_appender\outputdebugstring_appender.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="05_vcl_appenders\memo_appenders.dproj">
+            <Dependencies/>
+        </Projects>
         <Projects Include="10_multiple_appenders\multiple_appenders.dproj">
             <Dependencies/>
         </Projects>
@@ -62,6 +65,15 @@
     <Target Name="outputdebugstring_appender:Make">
         <MSBuild Projects="04_outputdebugstring_appender\outputdebugstring_appender.dproj" Targets="Make"/>
     </Target>
+    <Target Name="memo_appenders">
+        <MSBuild Projects="05_vcl_appenders\memo_appenders.dproj"/>
+    </Target>
+    <Target Name="memo_appenders:Clean">
+        <MSBuild Projects="05_vcl_appenders\memo_appenders.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="memo_appenders:Make">
+        <MSBuild Projects="05_vcl_appenders\memo_appenders.dproj" Targets="Make"/>
+    </Target>
     <Target Name="multiple_appenders">
         <MSBuild Projects="10_multiple_appenders\multiple_appenders.dproj"/>
     </Target>
@@ -72,13 +84,13 @@
         <MSBuild Projects="10_multiple_appenders\multiple_appenders.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="zero_conf_logging;file_appender;console_appender;outputdebugstring_appender;multiple_appenders"/>
+        <CallTarget Targets="zero_conf_logging;file_appender;console_appender;outputdebugstring_appender;memo_appenders;multiple_appenders"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="zero_conf_logging:Clean;file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;multiple_appenders:Clean"/>
+        <CallTarget Targets="zero_conf_logging:Clean;file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;memo_appenders:Clean;multiple_appenders:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="zero_conf_logging:Make;file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;multiple_appenders:Make"/>
+        <CallTarget Targets="zero_conf_logging:Make;file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;memo_appenders:Make;multiple_appenders:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

@@ -1,4 +1,6 @@
 unit LoggerPro;
+{<@abstract(The main unit you should always include)
+@author(Daniele Teti)}
 
 interface
 
@@ -9,6 +11,9 @@ type
 {$SCOPEDENUMS ON}
   TLogType = (Debug, Info, Warning, Error);
 
+  { @abstract(Represent the single log item)
+    Each call to some kind of log method is wrapped in a @link(TLogItem)
+    instance and passed down the layour of LoggerPro. }
   TLogItem = class sealed
     constructor Create(aType: TLogType; aMessage: String; aTag: String);
   private
@@ -19,18 +24,38 @@ type
     FThreadID: Cardinal;
     function GetLogTypeAsString: String;
   public
+    {@abstract(The type of the log)
+    Log can be one of the following types:
+    @unorderedlist(
+    @item(DEBUG)
+    @item(INFO)
+    @item(WARNING)
+    @item(ERROR)
+    )}
     property LogType: TLogType read FType;
+    {@abstract(The text of the log message)}
     property LogMessage: String read FMessage;
+    {@abstract(The tag of the log message)}
     property LogTag: String read FTag;
+    {@abstract(The timestamp when the @link(TLogItem) is generated)}
     property TimeStamp: TDateTime read FTimeStamp;
+    {@abstract(The IDof the thread which generated the log item)}
     property ThreadID: Cardinal read FThreadID;
+    {@abstract(The type of the log converted in string)}
     property LogTypeAsString: String read GetLogTypeAsString;
   end;
 
+  { @abstract(Interface implemented by all the classes used as appenders) }
   ILogAppender = interface
     ['{58AFB557-C594-4A4B-8DC9-0F13B37F60CB}']
+    { @abstract(This method is internally called by LoggerPro to initialize the appender) }
     procedure Setup;
+    { @abstract(This method is called at each log item represented by @link(TLogItem))
+      The appender should be as-fast-as-it-can to handle the message because this method call is synchronous between all the appenders.
+      For instance, if you are implementing an email appender, you cannot send email directly in this method because the call will slow down the
+      log main queue dequeuing. You should implement an internal queue so that the main loop is free to go though the other appenders. }
     procedure WriteLog(const aLogItem: TLogItem);
+    { @abstract(This method is internally called by LoggerPro to deinitialize the appender) }
     procedure TearDown;
   end;
 
@@ -58,16 +83,26 @@ type
       procedure Execute; override;
     end;
 
-    TLogWriter = class
+    ILogWriter = interface
+      ['{A717A040-4493-458F-91B2-6F6E2AFB496F}']
+      procedure Debug(aMessage: String; aTag: String);
+      procedure Info(aMessage: String; aTag: String);
+      procedure Warn(aMessage: String; aTag: String);
+      procedure Error(aMessage: String; aTag: String);
+      procedure Log(aType: TLogType; aMessage: String; aTag: String);
+    end;
+
+    TLogWriter = class(TInterfacedObject, ILogWriter)
     private
       FQueue: TThreadedQueue<TLogItem>;
       FLoggerThread: TLoggerThread;
       FLogAppenders: TLogAppenderList;
+      FFreeAllowed: Boolean;
       procedure SetupAppenders;
       procedure Start;
       procedure TearDownAppenders;
-    public
       constructor Create(aLogAppenders: TLogAppenderList);
+    public
       destructor Destroy; override;
       procedure Debug(aMessage: String; aTag: String);
       procedure Info(aMessage: String; aTag: String);
@@ -77,18 +112,18 @@ type
     end;
   private
     class var ConfiguredAppenders: TLogger.TLogAppenderList;
-    class var Instance: TLogWriter;
+    class var Instance: ILogWriter;
 
   end;
 
-function Log: TLogger.TLogWriter;
+function Log: TLogger.ILogWriter;
 
 implementation
 
 uses
   System.Types, LoggerPro.FileAppender;
 
-function Log: TLogger.TLogWriter;
+function Log: TLogger.ILogWriter;
 begin
   Result := TLogger.Instance;
 end;
@@ -107,7 +142,7 @@ end;
 
 class destructor TLogger.Destroy;
 begin
-  Instance.Free;
+  Instance := nil;
 end;
 
 class procedure TLogger.Initialize;
@@ -118,8 +153,8 @@ begin
   end;
 
   Instance := TLogWriter.Create(ConfiguredAppenders);
-  Instance.SetupAppenders;
-  Instance.Start;
+  TLogWriter(Instance).SetupAppenders;
+  TLogWriter(Instance).Start;
 end;
 
 class procedure TLogger.ResetAppenders;
@@ -142,6 +177,7 @@ end;
 constructor TLogger.TLogWriter.Create(aLogAppenders: TLogAppenderList);
 begin
   inherited Create;
+  FFreeAllowed := False;
   FQueue := TThreadedQueue<TLogItem>.Create(1000, INFINITE, 200);
   FLogAppenders := aLogAppenders;
 end;

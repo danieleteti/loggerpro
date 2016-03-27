@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'LoggerPro SAMPLE'
-  ClientHeight = 132
+  ClientHeight = 384
   ClientWidth = 584
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -11,6 +11,10 @@ object MainForm: TMainForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnCreate = FormCreate
+  DesignSize = (
+    584
+    384)
   PixelsPerInch = 96
   TextHeight = 13
   object Button1: TButton
@@ -57,5 +61,24 @@ object MainForm: TMainForm
     Caption = 'Multithread logging'
     TabOrder = 4
     OnClick = Button5Click
+  end
+  object Memo1: TMemo
+    Left = 8
+    Top = 134
+    Width = 566
+    Height = 242
+    Anchors = [akLeft, akTop, akRight, akBottom]
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Courier New'
+    Font.Style = []
+    Lines.Strings = (
+      'Log in this memo are available only in the VCLAppenders sample')
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssVertical
+    TabOrder = 5
+    WordWrap = False
   end
 end

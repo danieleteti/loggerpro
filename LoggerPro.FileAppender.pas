@@ -1,22 +1,34 @@
 unit LoggerPro.FileAppender;
+{<@abstract(The unit to include if you want to use @link(TLoggerProFileAppender))
+@author(Daniele Teti)}
 
 interface
 
 uses LoggerPro, System.Classes, System.SysUtils, System.Generics.Collections;
 
-const
-  {
-    aLogItem.TimeStamp,
-    aLogItem.ThreadID,
-    aLogItem.LogTypeAsString,
-    aLogItem.LogMessage,
-    aLogItem.LogTag
-  }
-  DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
-  DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
-  DEFAULT_MAX_FILE_SIZE_KB = 1000;
-
 type
+  {
+    @abstract(Logs to file using one different file for each different TAG used.)
+    @author(Daniele Teti - d.teti@bittime.it)
+    Implements log rotations.
+    This appender is the default appender when no configuration is done on the @link(TLogger) class.
+
+    Without any configuration LoggerPro uses the @link(TLoggerProFileAppender) with the default configuration.
+
+    So the following two blocks of code are equivalent:
+
+    @longcode(#
+    ...
+    TLogger.Initialize; //=> uses the TLoggerProFileAppender because no other configuration is provided
+    ...
+
+    ...
+    TLogger.AddAppender(TLoggerProFileAppender.Create);
+    TLogger.Initialize //=> uses the TLoggerProFileAppender as configured
+    ...
+    #)
+
+  }
   TLoggerProFileAppender = class(TInterfacedObject, ILogAppender)
   private
     FFormatSettings: TFormatSettings;
@@ -34,12 +46,28 @@ type
       const aFileNumber: Integer): String;
     procedure WriteLog(const aStreamWriter: TStreamWriter;
       const aValue: String); overload;
-  public
+  public const
+    { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
+      The positional parameters are the followings:
+      @orderedList(
+      @itemSetNumber 0
+      @item TimeStamp
+      @item ThreadID
+      @item LogType
+      @item LogMessage
+      @item LogTag
+      )
+    }
+    DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
+    {@abstract(Defines number of log file set to mantain during logs rotation)}
+    DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
+    {@abstract(Defines the max size of each log file)
+    The actual meaning is: "If the file size is > than @link(DEFAULT_MAX_FILE_SIZE_KB) then rotate logs.}
+    DEFAULT_MAX_FILE_SIZE_KB = 1000;
     constructor Create(aMaxBackupFileCount
       : Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB;
       aLogFormat: String = DEFAULT_LOG_FORMAT);
-    // ILogAppender
     procedure Setup;
     procedure TearDown;
     procedure WriteLog(const aLogItem: TLogItem); overload;
@@ -180,22 +208,20 @@ begin
   FLogFormat := aLogFormat;
 end;
 
-function TLoggerProFileAppender.CreateWriter(const aFileName: String): TStreamWriter;
+function TLoggerProFileAppender.CreateWriter(const aFileName: String)
+  : TStreamWriter;
 var
   lFileStream: TFileStream;
   lFileAccessMode: Word;
 begin
-  lFileAccessMode := 0;
-
+  lFileAccessMode := fmOpenWrite or fmShareDenyWrite;
   if not TFile.Exists(aFileName) then
-    lFileStream := TFileStream.Create(aFileName, fmCreate or fmOpenWrite or
-      fmShareDenyWrite)
-  else
-    lFileStream := TFileStream.Create(aFileName, fmOpenWrite or
-      fmShareDenyWrite);
+    lFileAccessMode := lFileAccessMode or fmCreate;
+
+  lFileStream := TFileStream.Create(aFileName, lFileAccessMode);
   try
     lFileStream.Seek(0, TSeekOrigin.soEnd);
-    Result := TStreamWriter.Create(lFileStream, TEncoding.ANSI, 512);
+    Result := TStreamWriter.Create(lFileStream, TEncoding.ANSI, 1024);
     Result.AutoFlush := False;
     Result.OwnStream;
   except

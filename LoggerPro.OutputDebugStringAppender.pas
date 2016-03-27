@@ -1,4 +1,7 @@
 unit LoggerPro.OutputDebugStringAppender;
+{<@abstract(The unit to include if you want to use @link(TLoggerProOutputDebugStringAppender))
+@author(Daniele Teti)}
+
 
 interface
 
@@ -8,7 +11,6 @@ uses
 type
   TLoggerProOutputDebugStringAppender = class(TInterfacedObject, ILogAppender)
   private
-    FStrings: TStrings;
     FModuleName: string;
   public
     constructor Create;
