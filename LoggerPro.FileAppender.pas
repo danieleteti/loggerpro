@@ -1,6 +1,6 @@
 unit LoggerPro.FileAppender;
-{<@abstract(The unit to include if you want to use @link(TLoggerProFileAppender))
-@author(Daniele Teti)}
+{ <@abstract(The unit to include if you want to use @link(TLoggerProFileAppender))
+  @author(Daniele Teti) }
 
 interface
 
@@ -29,6 +29,10 @@ type
     #)
 
   }
+
+  TFileAppenderOption = (IncludePID, LogsInTheSameFolder);
+  TFileAppenderOptions = set of TFileAppenderOption;
+
   TLoggerProFileAppender = class(TInterfacedObject, ILogAppender)
   private
     FFormatSettings: TFormatSettings;
@@ -36,6 +40,7 @@ type
     FMaxBackupFileCount: Integer;
     FMaxFileSizeInKiloByte: Integer;
     FLogFormat: string;
+    FFileAppenderOptions: TFileAppenderOptions;
     function CreateWriter(const aFileName: String): TStreamWriter;
     procedure AddWriter(const aLogItem: TLogItem; var lWriter: TStreamWriter;
       var lLogFileName: string);
@@ -59,14 +64,16 @@ type
       )
     }
     DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
-    {@abstract(Defines number of log file set to mantain during logs rotation)}
+    { @abstract(Defines number of log file set to mantain during logs rotation) }
     DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
-    {@abstract(Defines the max size of each log file)
-    The actual meaning is: "If the file size is > than @link(DEFAULT_MAX_FILE_SIZE_KB) then rotate logs.}
+    { @abstract(Defines the max size of each log file)
+      The actual meaning is: "If the file size is > than @link(DEFAULT_MAX_FILE_SIZE_KB) then rotate logs. }
     DEFAULT_MAX_FILE_SIZE_KB = 1000;
     constructor Create(aMaxBackupFileCount
       : Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB;
+      aFileAppenderOptions: TFileAppenderOptions =
+      [TFileAppenderOption.LogsInTheSameFolder];
       aLogFormat: String = DEFAULT_LOG_FORMAT);
     procedure Setup;
     procedure TearDown;
@@ -76,17 +83,36 @@ type
 implementation
 
 uses
-  System.IOUtils;
+  System.IOUtils, Winapi.Windows;
 
 { TLoggerProFileAppender }
 
 function TLoggerProFileAppender.GetLogFileName(const aTag: String;
   const aFileNumber: Integer): String;
 var
-  lExt: string;
+  lFormat, lExt: string;
+  lModuleName: string;
+  lFileName: TObject;
+  lPath: string;
 begin
-  lExt := Format('.%2.2d.%s.log', [aFileNumber, aTag]);
-  Result := ChangeFileExt(GetModuleName(HInstance), lExt);
+  lFormat := '.%2.2d.%s.log';
+  lModuleName := TPath.GetFileNameWithoutExtension(GetModuleName(HInstance));
+
+  if TFileAppenderOption.IncludePID in FFileAppenderOptions then
+    lFormat := '.PID-' + IntToStr(GetCurrentProcessID) + lFormat;
+
+  if not(TFileAppenderOption.LogsInTheSameFolder in FFileAppenderOptions) then
+  begin
+    lPath := TPath.Combine(TPath.GetHomePath, lModuleName + '_log');
+    TDirectory.CreateDirectory(lPath);
+  end
+  else
+  begin
+    lPath := TPath.GetDirectoryName(GetModuleName(HInstance));
+  end;
+
+  lExt := Format(lFormat, [aFileNumber, aTag]);
+  Result := TPath.Combine(lPath, ChangeFileExt(lModuleName, lExt));
 end;
 
 procedure TLoggerProFileAppender.Setup;
@@ -139,7 +165,8 @@ begin
   lRetries := 0;
   repeat
     try
-      Sleep(50); // the incidence of "Locked file goes to nearly zero..."
+      Sleep(50);
+      // the incidence of "Locked file goes to nearly zero..."
       TFile.Move(aFileSrc, aFileDest);
       Break;
     except
@@ -200,12 +227,14 @@ begin
 end;
 
 constructor TLoggerProFileAppender.Create(aMaxBackupFileCount: Integer;
-  aMaxFileSizeInKiloByte: Integer; aLogFormat: String);
+  aMaxFileSizeInKiloByte: Integer; aFileAppenderOptions: TFileAppenderOptions;
+  aLogFormat: String);
 begin
   inherited Create;
   FMaxBackupFileCount := aMaxBackupFileCount;
   FMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
   FLogFormat := aLogFormat;
+  FFileAppenderOptions := aFileAppenderOptions;
 end;
 
 function TLoggerProFileAppender.CreateWriter(const aFileName: String)
