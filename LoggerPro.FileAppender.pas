@@ -92,7 +92,6 @@ function TLoggerProFileAppender.GetLogFileName(const aTag: String;
 var
   lFormat, lExt: string;
   lModuleName: string;
-  lFileName: TObject;
   lPath: string;
 begin
   lFormat := '.%2.2d.%s.log';

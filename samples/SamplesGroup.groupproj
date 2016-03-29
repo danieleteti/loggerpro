@@ -21,6 +21,9 @@
         <Projects Include="20_multiple_loggers\multiple_loggers.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="50_custom_appender\custom_appender.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -83,14 +86,23 @@
     <Target Name="multiple_loggers:Make">
         <MSBuild Projects="20_multiple_loggers\multiple_loggers.dproj" Targets="Make"/>
     </Target>
+    <Target Name="custom_appender">
+        <MSBuild Projects="50_custom_appender\custom_appender.dproj"/>
+    </Target>
+    <Target Name="custom_appender:Clean">
+        <MSBuild Projects="50_custom_appender\custom_appender.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="custom_appender:Make">
+        <MSBuild Projects="50_custom_appender\custom_appender.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="file_appender;console_appender;outputdebugstring_appender;memo_appenders;multiple_appenders;multiple_loggers"/>
+        <CallTarget Targets="file_appender;console_appender;outputdebugstring_appender;memo_appenders;multiple_appenders;multiple_loggers;custom_appender"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;memo_appenders:Clean;multiple_appenders:Clean;multiple_loggers:Clean"/>
+        <CallTarget Targets="file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;memo_appenders:Clean;multiple_appenders:Clean;multiple_loggers:Clean;custom_appender:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;memo_appenders:Make;multiple_appenders:Make;multiple_loggers:Make"/>
+        <CallTarget Targets="file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;memo_appenders:Make;multiple_appenders:Make;multiple_loggers:Make;custom_appender:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
