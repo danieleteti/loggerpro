@@ -11,7 +11,13 @@ uses
   DUnitX.Loggers.Console,
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
-  LoggerProTestU in 'LoggerProTestU.pas';
+  LoggerProTestU in 'LoggerProTestU.pas',
+  LoggerPro.ConsoleAppender in '..\LoggerPro.ConsoleAppender.pas',
+  LoggerPro.FileAppender in '..\LoggerPro.FileAppender.pas',
+  LoggerPro.OutputDebugStringAppender in '..\LoggerPro.OutputDebugStringAppender.pas',
+  LoggerPro in '..\LoggerPro.pas',
+  LoggerPro.VCLMemoAppender in '..\LoggerPro.VCLMemoAppender.pas',
+  TestSupportAppendersU in 'TestSupportAppendersU.pas';
 
 var
   runner : ITestRunner;

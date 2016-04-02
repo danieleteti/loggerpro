@@ -57,6 +57,15 @@ type
     property RetriesCount: Cardinal read FRetryCount;
   end;
 
+  TLoggerProAppenderErrorEvent = reference to procedure(const AppenderClassName
+    : String; const aFailedLogItem: TLogItem; const Reason: TLogErrorReason;
+    var Action: TLogErrorAction);
+
+  TLoggerProEventsHandler = class sealed
+  public
+    OnAppenderError: TLoggerProAppenderErrorEvent;
+  end;
+
   { @abstract(Interface implemented by all the classes used as appenders) }
   ILogAppender = interface
     ['{58AFB557-C594-4A4B-8DC9-0F13B37F60CB}']
@@ -109,14 +118,19 @@ type
   private
     FQueue: TThreadedQueue<TLogItem>;
     FAppenders: TLogAppenderList;
+    FEventsHandlers: TLoggerProEventsHandler;
     function BuildAppendersDecorator: TObjectList<TAppenderDecorator>;
-    procedure DoOnLogError(const aFailAppenderDecorator: TAppenderDecorator;
+    procedure DoOnAppenderError(const FailAppenderClassName: String;
       const aFailedLogItem: TLogItem; const aReason: TLogErrorReason;
       var aAction: TLogErrorAction);
+    procedure SetEventsHandlers(const Value: TLoggerProEventsHandler);
+  protected
+    procedure Execute; override;
   public
     constructor Create(aQueue: TThreadedQueue<TLogItem>;
       aAppenders: TLogAppenderList);
-    procedure Execute; override;
+    property EventsHandlers: TLoggerProEventsHandler read FEventsHandlers
+      write SetEventsHandlers;
   end;
 
   TLogWriter = class(TInterfacedObject, ILogWriter)
@@ -126,7 +140,7 @@ type
     FLogAppenders: TLogAppenderList;
     FFreeAllowed: Boolean;
     FLogLevel: TLogType;
-    procedure Initialize;
+    procedure Initialize(aEventsHandler: TLoggerProEventsHandler);
   public
     constructor Create(aLogLevel: TLogType = TLogType.Debug); overload;
     constructor Create(aLogAppenders: TLogAppenderList;
@@ -196,6 +210,7 @@ type
     )
   }
 function BuildLogWriter(aAppenders: array of ILogAppender;
+  aEventsHandlers: TLoggerProEventsHandler = nil;
   aLogLevel: TLogType = TLogType.Debug): ILogWriter;
 
 implementation
@@ -203,8 +218,8 @@ implementation
 uses
   System.Types, LoggerPro.FileAppender;
 
-function BuildLogWriter(aAppenders: array of ILogAppender; aLogLevel: TLogType)
-  : ILogWriter;
+function BuildLogWriter(aAppenders: array of ILogAppender;
+  aEventsHandlers: TLoggerProEventsHandler; aLogLevel: TLogType): ILogWriter;
 var
   lLogAppenders: TLogAppenderList;
   lLogAppender: ILogAppender;
@@ -215,7 +230,7 @@ begin
     lLogAppenders.Add(lLogAppender);
   end;
   Result := TLogWriter.Create(lLogAppenders, aLogLevel);
-  TLogWriter(Result).Initialize;
+  TLogWriter(Result).Initialize(aEventsHandlers);
   while not TLogWriter(Result).FLoggerThread.Started do
   begin
     sleep(1); // wait the thread start
@@ -229,7 +244,7 @@ constructor TLogWriter.Create(aLogAppenders: TLogAppenderList;
 begin
   inherited Create;
   FFreeAllowed := False;
-  FQueue := TThreadedQueue<TLogItem>.Create(1000, INFINITE, 200);
+  FQueue := TThreadedQueue<TLogItem>.Create(10000, 1000, 200);
   FLogAppenders := aLogAppenders;
   FLogLevel := aLogLevel;
 end;
@@ -291,7 +306,7 @@ begin
   begin
     lLogItem := TLogItem.Create(aType, aMessage, aTag, 0);
     if FQueue.PushItem(lLogItem) = TWaitResult.wrTimeout then
-      raise ELoggerPro.Create('Log queue is full');
+      raise ELoggerPro.Create('Main logs queue is full');
   end;
 end;
 
@@ -301,9 +316,10 @@ begin
   Log(aType, Format(aMessage, aParams), aTag);
 end;
 
-procedure TLogWriter.Initialize;
+procedure TLogWriter.Initialize(aEventsHandler: TLoggerProEventsHandler);
 begin
   FLoggerThread := TLoggerThread.Create(FQueue, FLogAppenders);
+  FLoggerThread.EventsHandlers := aEventsHandler;
   FLoggerThread.Start;
 end;
 
@@ -342,11 +358,16 @@ begin
   FreeOnTerminate := False;
 end;
 
-procedure TLoggerThread.DoOnLogError(const aFailAppenderDecorator
-  : TAppenderDecorator; const aFailedLogItem: TLogItem;
-  const aReason: TLogErrorReason; var aAction: TLogErrorAction);
+procedure TLoggerThread.DoOnAppenderError(const FailAppenderClassName: String;
+  const aFailedLogItem: TLogItem; const aReason: TLogErrorReason;
+  var aAction: TLogErrorAction);
 begin
-
+  if Assigned(FEventsHandlers) and (Assigned(FEventsHandlers.OnAppenderError))
+  then
+  begin
+    FEventsHandlers.OnAppenderError(FailAppenderClassName, aFailedLogItem,
+      aReason, aAction);
+  end;
 end;
 
 procedure TLoggerThread.Execute;
@@ -372,9 +393,10 @@ begin
               begin
                 if not lAppendersDecorators[I].WriteLog(lLogItem) then
                 begin
-                  lAction := TLogErrorAction.Skip;
-                  DoOnLogError(lAppendersDecorators[I], lLogItem,
-                    TLogErrorReason.QueueFull, lAction);
+                  lAction := TLogErrorAction.Skip; // default
+                  DoOnAppenderError
+                    (TObject(lAppendersDecorators[I].FLogAppender).ClassName,
+                    lLogItem, TLogErrorReason.QueueFull, lAction);
                   case lAction of
                     TLogErrorAction.Retry:
                       begin
@@ -383,6 +405,7 @@ begin
                       end;
                     TLogErrorAction.Skip:
                       begin
+                        raise Exception.Create('Message skipped');
                       end;
                     TLogErrorAction.DisableAppender:
                       begin
@@ -401,6 +424,11 @@ begin
   finally
     lAppendersDecorators.Free;
   end;
+end;
+
+procedure TLoggerThread.SetEventsHandlers(const Value: TLoggerProEventsHandler);
+begin
+  FEventsHandlers := Value;
 end;
 
 function TLoggerThread.BuildAppendersDecorator: TObjectList<TAppenderDecorator>;
@@ -457,9 +485,10 @@ end;
 constructor TLoggerThread.TAppenderDecorator.Create(aAppender: ILogAppender);
 begin
   inherited Create;
+  FEnabled := true;
   FFailsCount := 0;
   FLogAppender := aAppender;
-  FAppenderQueue := TThreadedQueue<TLogItem>.Create(10, 1, 500);
+  FAppenderQueue := TThreadedQueue<TLogItem>.Create(10000, 0, 500);
   FTerminated := False;
   FAppenderThread := TThread.CreateAnonymousThread(
     procedure
@@ -477,7 +506,7 @@ begin
                 try
                   FLogAppender.WriteLog(lLogItem);
                 except
-                  { TODO -oDaniele -cGeneral : Something smarter to do here? }
+                  { TODO -oDaniele -cGeneral : Call the event to let the develper decide }
                 end;
               finally
                 lLogItem.Free;

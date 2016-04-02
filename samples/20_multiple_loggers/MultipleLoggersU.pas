@@ -50,7 +50,7 @@ var
   I: Integer;
 begin
   FLogWriter := BuildLogWriter([TVCLMemoLogAppender.Create(Memo1)],
-    TLogType.Info);
+    nil, TLogType.Info);
   FLogWriter.Info('Local log correctly initialized', 'tag');
 end;
 
