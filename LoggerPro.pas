@@ -7,31 +7,31 @@ interface
 uses
   System.Generics.Collections, System.SysUtils, System.Classes;
 
+var
+  DefaultLoggerProMainQueueSize: Cardinal = 100000;
+  DefaultLoggerProAppenderQueueSize: Cardinal = 10000;
+
 type
 {$SCOPEDENUMS ON}
   TLogType = (Debug = 0, Info, Warning, Error);
   TLogErrorReason = (QueueFull);
-  TLogErrorAction = (Retry, Skip, DisableAppender);
+  TLogErrorAction = (Skip, DisableAppender);
 
   { @abstract(Represent the single log item)
     Each call to some kind of log method is wrapped in a @link(TLogItem)
     instance and passed down the layour of LoggerPro. }
   TLogItem = class sealed
+    constructor Create(aType: TLogType; aMessage: String;
+      aTag: String); overload;
     constructor Create(aType: TLogType; aMessage: String; aTag: String;
-      aRetryCount: Cardinal); overload;
-    constructor Create(aType: TLogType; aMessage: String; aTag: String;
-      aTimeStamp: TDateTime; aThreadID: Cardinal;
-      aRetryCount: Cardinal); overload;
+      aTimeStamp: TDateTime; aThreadID: Cardinal); overload;
   private
     FType: TLogType;
     FMessage: string;
     FTag: string;
     FTimeStamp: TDateTime;
     FThreadID: Cardinal;
-    FRetryCount: Cardinal;
     function GetLogTypeAsString: String;
-  protected
-    procedure IncRetriesCount;
   public
     function Clone: TLogItem;
     { @abstract(The type of the log)
@@ -53,8 +53,6 @@ type
     property ThreadID: Cardinal read FThreadID;
     { @abstract(The type of the log converted in string) }
     property LogTypeAsString: String read GetLogTypeAsString;
-    { @abstract(How many times this message failed to be processed by its appender) }
-    property RetriesCount: Cardinal read FRetryCount;
   end;
 
   TLoggerProAppenderErrorEvent = reference to procedure(const AppenderClassName
@@ -72,12 +70,16 @@ type
     { @abstract(This method is internally called by LoggerPro to initialize the appender) }
     procedure Setup;
     { @abstract(This method is called at each log item represented by @link(TLogItem))
-      The appender should be as-fast-as-it-can to handle the message because this method call is synchronous between all the appenders.
-      For instance, if you are implementing an email appender, you cannot send email directly in this method because the call will slow down the
-      log main queue dequeuing. You should implement an internal queue so that the main loop is free to go though the other appenders. }
+      The appender should be as-fast-as-it-can to handle the message, however
+      each appender runs in a separated thread. }
     procedure WriteLog(const aLogItem: TLogItem);
     { @abstract(This method is internally called by LoggerPro to deinitialize the appender) }
     procedure TearDown;
+    { @abstract(Enable or disable the log appender. Is used internally by LoggerPro but must be
+      implemented by each logappender. A simple @code(if enabled then dolog) is enough }
+    procedure SetEnabled(const Value: Boolean);
+    { @abstract(Returns if the logappender is currently enabled or not. }
+    function IsEnabled: Boolean;
   end;
 
   ELoggerPro = class(Exception)
@@ -92,6 +94,8 @@ type
     procedure Warn(aMessage: String; aTag: String);
     procedure Error(aMessage: String; aTag: String);
     procedure Log(aType: TLogType; aMessage: String; aTag: String);
+    function GetAppendersClassNames: TArray<String>;
+    function GetAppenderStatus(const AppenderName: String): String;
   end;
 
   TLogAppenderList = TList<ILogAppender>;
@@ -141,6 +145,8 @@ type
     FFreeAllowed: Boolean;
     FLogLevel: TLogType;
     procedure Initialize(aEventsHandler: TLoggerProEventsHandler);
+    function GetAppendersClassNames: TArray<String>;
+    function GetAppenderStatus(const AppenderName: String): String;
   public
     constructor Create(aLogLevel: TLogType = TLogType.Debug); overload;
     constructor Create(aLogAppenders: TLogAppenderList;
@@ -244,7 +250,8 @@ constructor TLogWriter.Create(aLogAppenders: TLogAppenderList;
 begin
   inherited Create;
   FFreeAllowed := False;
-  FQueue := TThreadedQueue<TLogItem>.Create(10000, 1000, 200);
+  FQueue := TThreadedQueue<TLogItem>.Create(DefaultLoggerProMainQueueSize,
+    1000, 200);
   FLogAppenders := aLogAppenders;
   FLogLevel := aLogLevel;
 end;
@@ -287,6 +294,45 @@ begin
   LogFmt(TLogType.Error, aMessage, aParams, aTag);
 end;
 
+function TLogWriter.GetAppendersClassNames: TArray<String>;
+var
+  I: Cardinal;
+begin
+  TMonitor.Enter(FLogAppenders);
+  try
+    SetLength(Result, FLogAppenders.Count);
+    for I := 0 to FLogAppenders.Count - 1 do
+    begin
+      Result[I] := TObject(FLogAppenders[0]).ClassName;
+    end;
+  finally
+    TMonitor.Exit(FLogAppenders);
+  end;
+end;
+
+function TLogWriter.GetAppenderStatus(const AppenderName: String): String;
+var
+  I: Integer;
+begin
+  TMonitor.Enter(FLogAppenders);
+  try
+    Result := '';
+    for I := 0 to FLogAppenders.Count - 1 do
+    begin
+      if TObject(FLogAppenders[I]).ClassName.Equals(AppenderName) then
+      begin
+        if FLogAppenders[I].IsEnabled then
+          Result := 'enabled'
+        else
+          Result := 'disabled';
+        Exit;
+      end;
+    end;
+  finally
+    TMonitor.Exit(FLogAppenders);
+  end;
+end;
+
 procedure TLogWriter.Info(aMessage, aTag: String);
 begin
   Log(TLogType.Info, aMessage, aTag);
@@ -304,9 +350,10 @@ var
 begin
   if aType >= FLogLevel then
   begin
-    lLogItem := TLogItem.Create(aType, aMessage, aTag, 0);
+    lLogItem := TLogItem.Create(aType, aMessage, aTag);
     if FQueue.PushItem(lLogItem) = TWaitResult.wrTimeout then
-      raise ELoggerPro.Create('Main logs queue is full');
+      raise ELoggerPro.Create
+        ('Main logs queue is full. Hints: Are there appenders? Are these appenders fast enough considering the log item production?');
   end;
 end;
 
@@ -338,13 +385,12 @@ end;
 
 function TLogItem.Clone: TLogItem;
 begin
-  Result := TLogItem.Create(FType, FMessage, FTag, FRetryCount);
+  Result := TLogItem.Create(FType, FMessage, FTag);
 end;
 
-constructor TLogItem.Create(aType: TLogType; aMessage, aTag: String;
-  aRetryCount: Cardinal);
+constructor TLogItem.Create(aType: TLogType; aMessage, aTag: String);
 begin
-  Create(aType, aMessage, aTag, now, TThread.Current.ThreadID, aRetryCount);
+  Create(aType, aMessage, aTag, now, TThread.Current.ThreadID);
 end;
 
 { TLogger.TLoggerThread }
@@ -398,14 +444,9 @@ begin
                     (TObject(lAppendersDecorators[I].FLogAppender).ClassName,
                     lLogItem, TLogErrorReason.QueueFull, lAction);
                   case lAction of
-                    TLogErrorAction.Retry:
-                      begin
-                        lLogItem.IncRetriesCount;
-                        FQueue.PushItem(lLogItem.Clone);
-                      end;
                     TLogErrorAction.Skip:
                       begin
-                        raise Exception.Create('Message skipped');
+                        // just skip the message
                       end;
                     TLogErrorAction.DisableAppender:
                       begin
@@ -448,10 +489,9 @@ begin
 end;
 
 constructor TLogItem.Create(aType: TLogType; aMessage, aTag: String;
-  aTimeStamp: TDateTime; aThreadID: Cardinal; aRetryCount: Cardinal);
+  aTimeStamp: TDateTime; aThreadID: Cardinal);
 begin
   inherited Create;
-  FRetryCount := aRetryCount;
   FType := aType;
   FMessage := aMessage;
   FTag := aTag;
@@ -475,21 +515,17 @@ begin
   end;
 end;
 
-procedure TLogItem.IncRetriesCount;
-begin
-  FRetryCount := FRetryCount + 1;
-end;
-
 { TLoggerThread.TAppenderDecorator }
 
 constructor TLoggerThread.TAppenderDecorator.Create(aAppender: ILogAppender);
 begin
   inherited Create;
-  FEnabled := true;
   FFailsCount := 0;
   FLogAppender := aAppender;
-  FAppenderQueue := TThreadedQueue<TLogItem>.Create(10000, 0, 500);
+  FAppenderQueue := TThreadedQueue<TLogItem>.Create
+    (DefaultLoggerProAppenderQueueSize, 0, 500);
   FTerminated := False;
+  Enabled := true; // use the property here, do not set FEnabled!
   FAppenderThread := TThread.CreateAnonymousThread(
     procedure
     var
@@ -506,7 +542,7 @@ begin
                 try
                   FLogAppender.WriteLog(lLogItem);
                 except
-                  { TODO -oDaniele -cGeneral : Call the event to let the develper decide }
+                  Enabled := False;
                 end;
               finally
                 lLogItem.Free;
@@ -534,6 +570,7 @@ end;
 procedure TLoggerThread.TAppenderDecorator.SetEnabled(const Value: Boolean);
 begin
   FEnabled := Value;
+  FLogAppender.SetEnabled(FEnabled);
 end;
 
 function TLoggerThread.TAppenderDecorator.WriteLog(const aLogItem

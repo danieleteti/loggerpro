@@ -13,11 +13,14 @@ type
   private
     FMemo: TMemo;
     FMaxLogLines: Word;
+    FEnabled: Boolean;
   public
     constructor Create(aMemo: TMemo; aMaxLogLines: Word = 500);
     procedure Setup;
     procedure TearDown;
     procedure WriteLog(const aLogItem: TLogItem);
+    procedure SetEnabled(const Value: Boolean);
+    function IsEnabled: Boolean;
   end;
 
 implementation
@@ -35,6 +38,16 @@ begin
   inherited Create;
   FMemo := aMemo;
   FMaxLogLines := aMaxLogLines;
+end;
+
+function TVCLMemoLogAppender.IsEnabled: Boolean;
+begin
+  Result := FEnabled;
+end;
+
+procedure TVCLMemoLogAppender.SetEnabled(const Value: Boolean);
+begin
+  FEnabled := Value;
 end;
 
 procedure TVCLMemoLogAppender.Setup;
@@ -55,6 +68,8 @@ procedure TVCLMemoLogAppender.WriteLog(const aLogItem: TLogItem);
 var
   lText: string;
 begin
+  if not FEnabled then
+    Exit;
   lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp),
     aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
     aLogItem.LogTag]);

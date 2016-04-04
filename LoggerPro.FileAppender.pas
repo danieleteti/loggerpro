@@ -41,6 +41,7 @@ type
     FMaxFileSizeInKiloByte: Integer;
     FLogFormat: string;
     FFileAppenderOptions: TFileAppenderOptions;
+    FEnabled: Boolean;
     function CreateWriter(const aFileName: String): TStreamWriter;
     procedure AddWriter(const aLogItem: TLogItem; var lWriter: TStreamWriter;
       var lLogFileName: string);
@@ -78,6 +79,8 @@ type
     procedure Setup;
     procedure TearDown;
     procedure WriteLog(const aLogItem: TLogItem); overload;
+    procedure SetEnabled(const Value: Boolean);
+    function IsEnabled: Boolean;
   end;
 
 implementation
@@ -114,6 +117,16 @@ begin
   Result := TPath.Combine(lPath, ChangeFileExt(lModuleName, lExt));
 end;
 
+function TLoggerProFileAppender.IsEnabled: Boolean;
+begin
+  Result := FEnabled;
+end;
+
+procedure TLoggerProFileAppender.SetEnabled(const Value: Boolean);
+begin
+  FEnabled := Value;
+end;
+
 procedure TLoggerProFileAppender.Setup;
 begin
   FFormatSettings.DateSeparator := '-';
@@ -141,6 +154,9 @@ var
   lWriter: TStreamWriter;
   lLogFileName: string;
 begin
+  if not FEnabled then
+    Exit;
+
   if not FWritersDictionary.TryGetValue(aLogItem.LogTag, lWriter) then
   begin
     AddWriter(aLogItem, lWriter, lLogFileName);

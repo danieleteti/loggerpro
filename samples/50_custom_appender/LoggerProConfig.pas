@@ -14,10 +14,14 @@ uses
 
 type
   TMyCustomAppender = class(TInterfacedObject, ILogAppender)
+  private
+    FEnabled: Boolean;
   public
     procedure Setup;
     procedure TearDown;
     procedure WriteLog(const aLogItem: TLogItem);
+    procedure SetEnabled(const Value: Boolean);
+    function IsEnabled: Boolean;
 
   end;
 
@@ -30,6 +34,16 @@ begin
 end;
 
 { TMyCustomAppender }
+
+function TMyCustomAppender.IsEnabled: Boolean;
+begin
+  Result := FEnabled;
+end;
+
+procedure TMyCustomAppender.SetEnabled(const Value: Boolean);
+begin
+  FEnabled := Value;
+end;
 
 procedure TMyCustomAppender.Setup;
 begin
@@ -44,7 +58,7 @@ end;
 procedure TMyCustomAppender.WriteLog(const aLogItem: TLogItem);
 begin
   // uncomment this to see what happend if an appender raise an exception
-  //raise Exception.Create('Kill LoggerPro');
+  // raise Exception.Create('Kill LoggerPro');
 
   // uncomment this to see what happend if an appender is slow
   Sleep(2000);

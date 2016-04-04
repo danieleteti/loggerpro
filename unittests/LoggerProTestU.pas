@@ -42,7 +42,7 @@ begin
   Assert.AreEqual(A.LogTag, B.LogTag, 'LogTag is different');
   Assert.AreEqual(A.TimeStamp, B.TimeStamp, 'TimeStamp is different');
   Assert.AreEqual(A.ThreadID, B.ThreadID, 'ThreadID is different');
-  Assert.AreEqual(A.RetriesCount, B.RetriesCount, 'RetriesCount is different');
+  Result := True;
 end;
 
 procedure TLoggerProTest.Setup;
@@ -150,8 +150,12 @@ procedure TLoggerProTest.TestOnAppenderError;
 var
   lLog: ILogWriter;
   I: Integer;
+  lSkipped: Int64;
   lEventsHandlers: TLoggerProEventsHandler;
+  lAppenders: TArray<String>;
+  lSavedLoggerProAppenderQueueSize: Cardinal;
 begin
+  lSkipped := 0;
   lEventsHandlers := TLoggerProEventsHandler.Create;
   try
     lEventsHandlers.OnAppenderError :=
@@ -159,18 +163,26 @@ begin
         const FailedLogItem: TLogItem; const Reason: TLogErrorReason;
         var Action: TLogErrorAction)
       begin
-        if FailedLogItem.RetriesCount > 0 then
-          Action := TLogErrorAction.Skip
+        if lSkipped > 10 then
+          Action := TLogErrorAction.DisableAppender
         else
-          Action := TLogErrorAction.Retry;
+          Action := TLogErrorAction.Skip;
+        TInterlocked.Increment(lSkipped);
       end;
 
-    lLog := BuildLogWriter([TMyVerySlowAppender.Create(100000)],
-      lEventsHandlers);
-    for I := 1 to 2 do
+    lSavedLoggerProAppenderQueueSize := DefaultLoggerProAppenderQueueSize;
+    DefaultLoggerProAppenderQueueSize := 10;
+    lLog := BuildLogWriter([TMyVerySlowAppender.Create(1)], lEventsHandlers);
+    DefaultLoggerProAppenderQueueSize := lSavedLoggerProAppenderQueueSize;
+    for I := 1 to 1000 do
     begin
-      lLog.Debug('log message', 'tag');
+      lLog.Debug('log message ' + I.ToString, 'tag');
     end;
+
+    lAppenders := lLog.GetAppendersClassNames;
+    Assert.AreEqual(1, Length(lAppenders));
+    Assert.AreEqual('TMyVerySlowAppender', lAppenders[0]);
+    Assert.AreEqual('disabled', lLog.GetAppenderStatus(lAppenders[0]));
     lLog := nil;
   finally
     lEventsHandlers.Free;
@@ -183,7 +195,7 @@ var
   lLogItem: TLogItem;
   lClonedLogItem: TLogItem;
 begin
-  lLogItem := TLogItem.Create(TLogType.Debug, 'message', 'tag', 1);
+  lLogItem := TLogItem.Create(TLogType.Debug, 'message', 'tag');
   try
     lClonedLogItem := lLogItem.Clone;
     try
@@ -201,7 +213,7 @@ procedure TLoggerProTest.TestTLogItemTypeAsString(aLogType: Byte;
 var
   lLogItem: TLogItem;
 begin
-  lLogItem := TLogItem.Create(TLogType(aLogType), 'message', 'tag', 1);
+  lLogItem := TLogItem.Create(TLogType(aLogType), 'message', 'tag');
   try
     Assert.AreEqual(aExpected, lLogItem.LogTypeAsString);
   finally

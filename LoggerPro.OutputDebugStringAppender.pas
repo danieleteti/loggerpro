@@ -1,7 +1,6 @@
 unit LoggerPro.OutputDebugStringAppender;
-{<@abstract(The unit to include if you want to use @link(TLoggerProOutputDebugStringAppender))
-@author(Daniele Teti)}
-
+{ <@abstract(The unit to include if you want to use @link(TLoggerProOutputDebugStringAppender))
+  @author(Daniele Teti) }
 
 interface
 
@@ -12,11 +11,14 @@ type
   TLoggerProOutputDebugStringAppender = class(TInterfacedObject, ILogAppender)
   private
     FModuleName: string;
+    FEnabled: Boolean;
   public
     constructor Create;
     procedure Setup;
     procedure TearDown;
     procedure WriteLog(const aLogItem: TLogItem);
+    procedure SetEnabled(const Value: Boolean);
+    function IsEnabled: Boolean;
   end;
 
 implementation
@@ -33,6 +35,16 @@ begin
   inherited Create;
 end;
 
+function TLoggerProOutputDebugStringAppender.IsEnabled: Boolean;
+begin
+  Result := FEnabled;
+end;
+
+procedure TLoggerProOutputDebugStringAppender.SetEnabled(const Value: Boolean);
+begin
+  FEnabled := Value;
+end;
+
 procedure TLoggerProOutputDebugStringAppender.Setup;
 begin
   FModuleName := TPath.GetFileName(GetModuleName(HInstance));
@@ -43,13 +55,14 @@ begin
   // do nothing
 end;
 
-procedure TLoggerProOutputDebugStringAppender.WriteLog(const aLogItem: TLogItem);
+procedure TLoggerProOutputDebugStringAppender.WriteLog(const aLogItem
+  : TLogItem);
 var
   lLog: string;
 begin
-  lLog := Format('(' + FModuleName + ') => ' + DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp),
-    aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
-    aLogItem.LogTag]);
+  lLog := Format('(' + FModuleName + ') => ' + DEFAULT_LOG_FORMAT,
+    [datetimetostr(aLogItem.TimeStamp), aLogItem.ThreadID,
+    aLogItem.LogTypeAsString, aLogItem.LogMessage, aLogItem.LogTag]);
   OutputDebugString(PChar(lLog));
 end;
 

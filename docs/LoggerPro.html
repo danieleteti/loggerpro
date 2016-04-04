@@ -9,11 +9,11 @@
 <body>
 <table class="container"><tr><td class="navigation">
 <h2>LoggerPro</h2><p><a href="AllUnits.html" class="navigation">Units</a></p><p><a href="ClassHierarchy.html" class="navigation">Class Hierarchy</a></p><p><a href="AllClasses.html" class="navigation">Classes, Interfaces, Objects and Records</a></p><p><a href="AllTypes.html" class="navigation">Types</a></p><p><a href="AllVariables.html" class="navigation">Variables</a></p><p><a href="AllConstants.html" class="navigation">Constants</a></p><p><a href="AllFunctions.html" class="navigation">Functions and Procedures</a></p><p><a href="AllIdentifiers.html" class="navigation">Identifiers</a></p></td><td class="content">
-<h2>LoggerPro (beta 2)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
+<h2>LoggerPro (beta 3)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
 <h1 class="unit">Unit LoggerPro</h1>
 <table class="sections wide_list">
 <tr>
-<td><a class="section" href="#PasDoc-Description">Description</a></td><td><a class="section" href="#PasDoc-Uses">Uses</a></td><td><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></td><td><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></td><td><a class="section" href="#PasDoc-Types">Types</a></td><td>Constants</td><td>Variables</td></tr></table>
+<td><a class="section" href="#PasDoc-Description">Description</a></td><td><a class="section" href="#PasDoc-Uses">Uses</a></td><td><a class="section" href="#PasDoc-Classes">Classes, Interfaces, Objects and Records</a></td><td><a class="section" href="#PasDoc-FuncsProcs">Functions and Procedures</a></td><td><a class="section" href="#PasDoc-Types">Types</a></td><td>Constants</td><td><a class="section" href="#PasDoc-Variables">Variables</a></td></tr></table>
 <a name="PasDoc-Description"></a><h2 class="description">Description</h2>
 &nbsp;<a name="PasDoc-Uses"></a><h2 class="uses">Uses</h2>
 <ul class="useslist"><li>System.Generics.Collections</li><li>System.SysUtils</li><li>System.Classes</li></ul><h2 class="overview">Overview</h2>
@@ -28,22 +28,26 @@
 <td class="itemdesc">Represent the single log item</td>
 </tr>
 <tr class="list2">
+<td class="itemname">Class&nbsp;<a class="bold" href="LoggerPro.TLoggerProEventsHandler.html"><code>TLoggerProEventsHandler</code></a></td>
+<td class="itemdesc">&nbsp;</td>
+</tr>
+<tr class="list">
 <td class="itemname">Interface&nbsp;<a class="bold" href="LoggerPro.ILogAppender.html"><code>ILogAppender</code></a></td>
 <td class="itemdesc">Interface implemented by all the classes used as appenders</td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname">Class&nbsp;<a class="bold" href="LoggerPro.ELoggerPro.html"><code>ELoggerPro</code></a></td>
 <td class="itemdesc">&nbsp;</td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname">Interface&nbsp;<a class="bold" href="LoggerPro.ILogWriter.html"><code>ILogWriter</code></a></td>
 <td class="itemdesc">&nbsp;</td>
 </tr>
-<tr class="list">
+<tr class="list2">
 <td class="itemname">Class&nbsp;<a class="bold" href="LoggerPro.TLoggerThread.html"><code>TLoggerThread</code></a></td>
 <td class="itemdesc">&nbsp;</td>
 </tr>
-<tr class="list2">
+<tr class="list">
 <td class="itemname">Class&nbsp;<a class="bold" href="LoggerPro.TLogWriter.html"><code>TLogWriter</code></a></td>
 <td class="itemdesc">&nbsp;</td>
 </tr>
@@ -51,7 +55,7 @@
 <a name="PasDoc-FuncsProcs"></a><h3 class="summary">Functions and Procedures</h3>
 <table class="summary wide_list">
 <tr class="list">
-<td class="itemcode"><code>function <b><a  href="LoggerPro.html#BuildLogWriter">BuildLogWriter</a></b>(aAppenders: array of <a  href="LoggerPro.ILogAppender.html">ILogAppender</a>; aLogLevel: <a  href="LoggerPro.html#TLogType">TLogType</a> = TLogType.Debug): <a  href="LoggerPro.ILogWriter.html">ILogWriter</a>;</code></td>
+<td class="itemcode"><code>function <b><a  href="LoggerPro.html#BuildLogWriter">BuildLogWriter</a></b>(aAppenders: array of <a  href="LoggerPro.ILogAppender.html">ILogAppender</a>; aEventsHandlers: <a  href="LoggerPro.TLoggerProEventsHandler.html">TLoggerProEventsHandler</a> = nil; aLogLevel: <a  href="LoggerPro.html#TLogType">TLogType</a> = TLogType.Debug): <a  href="LoggerPro.ILogWriter.html">ILogWriter</a>;</code></td>
 </tr>
 </table>
 <a name="PasDoc-Types"></a><h3 class="summary">Types</h3>
@@ -60,14 +64,34 @@
 <td class="itemcode"><code><b><a  href="LoggerPro.html#TLogType">TLogType</a></b> = (...);</code></td>
 </tr>
 <tr class="list2">
+<td class="itemcode"><code><b><a  href="LoggerPro.html#TLogErrorReason">TLogErrorReason</a></b> = (...);</code></td>
+</tr>
+<tr class="list">
+<td class="itemcode"><code><b><a  href="LoggerPro.html#TLogErrorAction">TLogErrorAction</a></b> = (...);</code></td>
+</tr>
+<tr class="list2">
+<td class="itemcode"><code><b><a  href="LoggerPro.html#TLoggerProAppenderErrorEvent">TLoggerProAppenderErrorEvent</a></b> = reference to procedure(const AppenderClassName
+    : String; const aFailedLogItem: <a  href="LoggerPro.TLogItem.html">TLogItem</a>; const Reason: <a  href="LoggerPro.html#TLogErrorReason">TLogErrorReason</a>;
+    var Action: <a  href="LoggerPro.html#TLogErrorAction">TLogErrorAction</a>);</code></td>
+</tr>
+<tr class="list">
 <td class="itemcode"><code><b><a  href="LoggerPro.html#TLogAppenderList">TLogAppenderList</a></b> = TList&lt;<a  href="LoggerPro.ILogAppender.html">ILogAppender</a>&gt;;</code></td>
+</tr>
+</table>
+<a name="PasDoc-Variables"></a><h3 class="summary">Variables</h3>
+<table class="summary wide_list">
+<tr class="list">
+<td class="itemcode"><code><b><a  href="LoggerPro.html#DefaultLoggerProMainQueueSize">DefaultLoggerProMainQueueSize</a></b>: Cardinal = 100000;</code></td>
+</tr>
+<tr class="list2">
+<td class="itemcode"><code><b><a  href="LoggerPro.html#DefaultLoggerProAppenderQueueSize">DefaultLoggerProAppenderQueueSize</a></b>: Cardinal = 10000;</code></td>
 </tr>
 </table>
 <h2 class="description">Description</h2>
 <h3 class="detail">Functions and Procedures</h3>
 <table class="detail wide_list">
 <tr class="list">
-<td class="itemcode"><a name="BuildLogWriter"></a><code>function <b>BuildLogWriter</b>(aAppenders: array of <a  href="LoggerPro.ILogAppender.html">ILogAppender</a>; aLogLevel: <a  href="LoggerPro.html#TLogType">TLogType</a> = TLogType.Debug): <a  href="LoggerPro.ILogWriter.html">ILogWriter</a>;</code></td>
+<td class="itemcode"><a name="BuildLogWriter"></a><code>function <b>BuildLogWriter</b>(aAppenders: array of <a  href="LoggerPro.ILogAppender.html">ILogAppender</a>; aEventsHandlers: <a  href="LoggerPro.TLoggerProEventsHandler.html">TLoggerProEventsHandler</a> = nil; aLogLevel: <a  href="LoggerPro.html#TLogType">TLogType</a> = TLogType.Debug): <a  href="LoggerPro.ILogWriter.html">ILogWriter</a>;</code></td>
 </tr>
 <tr><td colspan="1">
 <p>
@@ -76,35 +100,35 @@ Builds a new ILogWriter instance. Call this global function to start logging lik
  Here's a sample unit that you can use in your code </p>
 
 <pre class="longcode">
-<span class="pascal_keyword">unit</span> LoggerProConfig;
+    <span class="pascal_keyword">unit</span> LoggerProConfig;
 
-<span class="pascal_keyword">interface</span>
+    <span class="pascal_keyword">interface</span>
 
-<span class="pascal_keyword">uses</span>
-  LoggerPro;
+    <span class="pascal_keyword">uses</span>
+    LoggerPro;
 
-<span class="pascal_keyword">function</span> Log: ILogWriter;
+    <span class="pascal_keyword">function</span> Log: ILogWriter;
 
-<span class="pascal_keyword">implementation</span>
+    <span class="pascal_keyword">implementation</span>
 
-<span class="pascal_keyword">uses</span>
-  LoggerPro.FileAppender;
+    <span class="pascal_keyword">uses</span>
+    LoggerPro.FileAppender;
 
-<span class="pascal_keyword">var</span>
-  _Log: ILogWriter;
+    <span class="pascal_keyword">var</span>
+    _Log: ILogWriter;
 
-<span class="pascal_keyword">function</span> Log: ILogWriter;
-<span class="pascal_keyword">begin</span>
-  Result := _Log;
-<span class="pascal_keyword">end</span>;
+    <span class="pascal_keyword">function</span> Log: ILogWriter;
+    <span class="pascal_keyword">begin</span>
+    Result := _Log;
+    <span class="pascal_keyword">end</span>;
 
-<span class="pascal_keyword">initialization</span>
+    <span class="pascal_keyword">initialization</span>
 
-<span class="pascal_comment">//If you need other appenders, feel free to add them here in the array</span>
-_Log := BuildLogWriter([TLoggerProFileAppender.Create(<span class="pascal_numeric">10</span>, <span class="pascal_numeric">5</span>)]);
+    <span class="pascal_comment">//If you need other appenders, feel free to add them here in the array</span>
+    _Log := BuildLogWriter([TLoggerProFileAppender.Create(<span class="pascal_numeric">10</span>, <span class="pascal_numeric">5</span>)]);
 
-<span class="pascal_keyword">end</span>.
-  </pre>
+    <span class="pascal_keyword">end</span>.
+    </pre>
 
 <p>
 
@@ -141,7 +165,57 @@ Error: &nbsp;</li>
 </table>
 <table class="detail wide_list">
 <tr class="list">
+<td class="itemcode"><a name="TLogErrorReason"></a><code><b>TLogErrorReason</b> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+&nbsp;<h6 class="description_section">Values</h6>
+<ul>
+<li>
+QueueFull: &nbsp;</li>
+</ul>
+</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="itemcode"><a name="TLogErrorAction"></a><code><b>TLogErrorAction</b> = (...);</code></td>
+</tr>
+<tr><td colspan="1">
+&nbsp;<h6 class="description_section">Values</h6>
+<ul>
+<li>
+Skip: &nbsp;</li>
+<li>
+DisableAppender: &nbsp;</li>
+</ul>
+</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="itemcode"><a name="TLoggerProAppenderErrorEvent"></a><code><b>TLoggerProAppenderErrorEvent</b> = reference to procedure(const AppenderClassName
+    : String; const aFailedLogItem: <a  href="LoggerPro.TLogItem.html">TLogItem</a>; const Reason: <a  href="LoggerPro.html#TLogErrorReason">TLogErrorReason</a>;
+    var Action: <a  href="LoggerPro.html#TLogErrorAction">TLogErrorAction</a>);</code></td>
+</tr>
+<tr><td colspan="1">
+&nbsp;</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
 <td class="itemcode"><a name="TLogAppenderList"></a><code><b>TLogAppenderList</b> = TList&lt;<a  href="LoggerPro.ILogAppender.html">ILogAppender</a>&gt;;</code></td>
+</tr>
+<tr><td colspan="1">
+&nbsp;</td></tr>
+</table>
+<h3 class="detail">Variables</h3>
+<table class="detail wide_list">
+<tr class="list">
+<td class="itemcode"><a name="DefaultLoggerProMainQueueSize"></a><code><b>DefaultLoggerProMainQueueSize</b>: Cardinal = 100000;</code></td>
+</tr>
+<tr><td colspan="1">
+&nbsp;</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="itemcode"><a name="DefaultLoggerProAppenderQueueSize"></a><code><b>DefaultLoggerProAppenderQueueSize</b>: Cardinal = 10000;</code></td>
 </tr>
 <tr><td colspan="1">
 &nbsp;</td></tr>
