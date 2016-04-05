@@ -34,23 +34,21 @@ uses
 
 procedure TMultipleLoggersForm.btnApplicationLevelLogClick(Sender: TObject);
 begin
-  Log.Log(TLogType(Random(Ord(TLogType.Error)+1)),
-    'Message sent to the application level LoggerPro instance (random type)', 'APP');
+  Log.Log(TLogType(Random(Ord(TLogType.Error) + 1)),
+    'Message sent to the application level LoggerPro instance (random type)',
+    'APP');
 end;
 
 procedure TMultipleLoggersForm.btnFormLocalLogClick(Sender: TObject);
 begin
-  LocalLog.Log(
-  TLogType(Random(Ord(TLogType.Error)+1)),
-  'Message sent to the form local LoggerPro instance (random type)', 'tag');
+  LocalLog.Log(TLogType(Random(Ord(TLogType.Error) + 1)),
+    'Message sent to the form local LoggerPro instance (random type)', 'tag');
 end;
 
 procedure TMultipleLoggersForm.FormCreate(Sender: TObject);
-var
-  I: Integer;
 begin
-  FLogWriter := BuildLogWriter([TVCLMemoLogAppender.Create(Memo1)],
-    nil, TLogType.Info);
+  FLogWriter := BuildLogWriter([TVCLMemoLogAppender.Create(Memo1)], nil,
+    TLogType.Info);
   FLogWriter.Info('Local log correctly initialized', 'tag');
 end;
 

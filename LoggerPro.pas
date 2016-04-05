@@ -1,5 +1,5 @@
 unit LoggerPro;
-{ <@abstract(The main unit you should always include)
+{<@abstract(Contains the LoggerPro core. INclude this if you want to create your own logger, otherwise you can use the global one using @link(LoggerPro.GlobalLogger.pas))
   @author(Daniele Teti) }
 
 interface
@@ -93,6 +93,7 @@ type
     procedure Info(aMessage: String; aTag: String);
     procedure InfoFmt(aMessage: String; aParams: array of const; aTag: String);
     procedure Warn(aMessage: String; aTag: String);
+    procedure WarnFmt(aMessage: String; aParams: array of const; aTag: String);
     procedure Error(aMessage: String; aTag: String);
     procedure ErrorFmt(aMessage: String; aParams: array of const; aTag: String);
     procedure Log(aType: TLogType; aMessage: String; aTag: String);

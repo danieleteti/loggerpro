@@ -1,5 +1,5 @@
 unit LoggerPro.ConsoleAppender;
-{ <@abstract(The unit to include if you want to use @link(TLoggerProConsoleAppender))
+{<@abstract(The unit to include if you want to use @link(TLoggerProConsoleAppender))
   @author(Daniele Teti) }
 
 interface
@@ -10,6 +10,7 @@ uses
 type
   {
     @abstract(Logs to the console using 4 different colors for the different logs level)
+    To learn how to use this appender, check the sample @code(console_appender.dproj)
     @author(Daniele Teti - d.teti@bittime.it)
   }
   TLoggerProConsoleAppender = class(TInterfacedObject, ILogAppender)

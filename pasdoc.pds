@@ -60,12 +60,13 @@ Count=1
 Item_0=..\LoggerPro
 
 [Files]
-Count=5
+Count=6
 Item_0=LoggerPro.ConsoleAppender.pas
 Item_1=LoggerPro.FileAppender.pas
 Item_2=LoggerPro.OutputDebugStringAppender.pas
 Item_3=LoggerPro.pas
 Item_4=LoggerPro.VCLMemoAppender.pas
+Item_5=LoggerPro.GlobalLogger.pas
 
 [HyphenatedWords]
 Count=0

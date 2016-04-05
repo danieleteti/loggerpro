@@ -1,8 +1,8 @@
-program memo_appenders;
+program global_logger;
 
 uses
   Vcl.Forms,
-  MemoAppendersFormU in 'MemoAppendersFormU.pas' {MainForm};
+  MainFormU in 'MainFormU.pas' {MainForm};
 
 {$R *.res}
 
