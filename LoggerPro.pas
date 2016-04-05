@@ -91,8 +91,10 @@ type
     procedure Debug(aMessage: String; aTag: String);
     procedure DebugFmt(aMessage: String; aParams: array of const; aTag: String);
     procedure Info(aMessage: String; aTag: String);
+    procedure InfoFmt(aMessage: String; aParams: array of const; aTag: String);
     procedure Warn(aMessage: String; aTag: String);
     procedure Error(aMessage: String; aTag: String);
+    procedure ErrorFmt(aMessage: String; aParams: array of const; aTag: String);
     procedure Log(aType: TLogType; aMessage: String; aTag: String);
     function GetAppendersClassNames: TArray<String>;
     function GetAppenderStatus(const AppenderName: String): String;
