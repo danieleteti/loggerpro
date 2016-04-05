@@ -30,7 +30,7 @@ begin
 end.
 ```
 
-The most flexible/correct approach is not much complicated than the global logger ones. Check how is simple toto create a custom instance of logwriter
+The most flexible/correct approach is not much complicated than the global logger one. Check how is simple to create a custom instance of logwriter
 
 ```delphi
 program getting_started_console_appenders;
