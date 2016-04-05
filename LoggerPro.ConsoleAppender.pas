@@ -71,7 +71,9 @@ begin
     procedure
     begin
       if GetStdHandle(STD_OUTPUT_HANDLE) = 0 then
-        AllocConsole;
+        AllocConsole
+      else
+        SetEnabled(False);
     end);
 end;
 

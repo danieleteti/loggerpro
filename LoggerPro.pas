@@ -355,8 +355,11 @@ begin
   begin
     lLogItem := TLogItem.Create(aType, aMessage, aTag);
     if FQueue.PushItem(lLogItem) = TWaitResult.wrTimeout then
+    begin
+      FreeAndNil(lLogItem);
       raise ELoggerPro.Create
         ('Main logs queue is full. Hints: Are there appenders? Are these appenders fast enough considering the log item production?');
+    end;
   end;
 end;
 
@@ -578,10 +581,16 @@ end;
 
 function TLoggerThread.TAppenderDecorator.WriteLog(const aLogItem
   : TLogItem): Boolean;
+var
+  lLogItem: TLogItem;
 begin
+  lLogItem := aLogItem.Clone;
   Result := FAppenderQueue.PushItem(aLogItem.Clone) = TWaitResult.wrSignaled;
   if not Result then
+  begin
+    lLogItem.Free;
     FFailsCount := FFailsCount + 1
+  end
   else
     FFailsCount := 0;
 end;
