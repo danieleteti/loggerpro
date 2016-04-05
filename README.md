@@ -30,6 +30,54 @@ begin
 end.
 ```
 
+The most flexible/correct approach is not much complicated than the global logger ones. Check how is simple toto create a custom instance of logwriter
+
+```delphi
+program getting_started_console_appenders;
+
+{$APPTYPE CONSOLE}
+
+uses
+  System.SysUtils,
+  LoggerPro, //LoggerPro core
+  LoggerPro.FileAppender, //File appender
+  LoggerPro.OutputDebugStringAppender; //OutputDebugString appender
+
+var
+  Log: ILogWriter;
+
+begin
+  Log := BuildLogWriter([TLoggerProFileAppender.Create,
+    TLoggerProOutputDebugStringAppender.Create]);
+
+  try
+    Log.Debug('Debug message', 'main');
+    Log.Info('Info message', 'main');
+    Log.Warn('Warning message', 'main');
+    Log.Error('Error message', 'errors');
+    WriteLn('Check ');
+    WriteLn('  "getting_started_console.00.main.log"');
+    WriteLn('  "getting_started_console.00.errors.log"');
+
+    if DebugHook <> 0 then //tellinform the user where his/her logs are
+    begin
+      WriteLn('also, you logs have been sent to the current debugger, check the Delphi''s EventLog window to see them.');
+    end
+    else
+    begin
+      WriteLn('..seems that no debugger is present. The logs can be seen using DebugView.');
+      WriteLn('Download it from here https://technet.microsoft.com/en-us/sysinternals/debugview.aspx');
+      WriteLn('Learn how to use http://tedgustaf.com/blog/2011/5/use-debugview-to-view-debug-output-from-asp-net-web-application/');
+    end;
+    ReadLn;
+  except
+    on E: Exception do
+      WriteLn(E.ClassName, ': ', E.Message);
+  end;
+
+end.
+```
+
 ###Warning!
 It is still in beta stage
 
