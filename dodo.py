@@ -75,7 +75,8 @@ def task_build():
     return {
         'actions': [create_build_tag,
             "echo %%date%% %%time:~0,8%% > LOGGERPRO-BUILD-TIMESTAMP.TXT",            
-            buildProjects],
+            buildProjects,
+						"unittests\\Win32\\Debug\\UnitTests.exe -exit:Continue"],
 	'params':[{'name':'version',
 	           'short':'v',
 	           'long':'version',

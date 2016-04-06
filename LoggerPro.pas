@@ -34,7 +34,7 @@ type
     function GetLogTypeAsString: String;
   public
     function Clone: TLogItem;
-    { @abstract(The type of the log)
+    {@abstract(The type of the log)
       Log can be one of the following types:
       @unorderedlist(
       @item(DEBUG)
@@ -585,7 +585,7 @@ var
   lLogItem: TLogItem;
 begin
   lLogItem := aLogItem.Clone;
-  Result := FAppenderQueue.PushItem(aLogItem.Clone) = TWaitResult.wrSignaled;
+  Result := FAppenderQueue.PushItem(lLogItem) = TWaitResult.wrSignaled;
   if not Result then
   begin
     lLogItem.Free;
