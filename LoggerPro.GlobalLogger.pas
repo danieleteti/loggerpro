@@ -2,15 +2,15 @@ unit LoggerPro.GlobalLogger;
 {<@abstract(Contains the global logger as a thread safe singleton)
   Use the global logger for fast&dirty logging, but consider to use your own
   instance of @link(ILogWriter) (created using @link(BuildLogWriter)) for all your serious logging needs.
- @author(Daniele Teti - d.teti@bittime.it)
+  @author(Daniele Teti - d.teti@bittime.it)
 }
 
 interface
 
 uses
   LoggerPro;
-{@abstract(The global logger. Just uses @link(Logger.GlobalLogger) and you can start to log using @code(Log) function.)
-The global logger is configured with a @link(TLoggerProFileAppender) using default settings.
+{ @abstract(The global logger. Just uses @link(Logger.GlobalLogger) and you can start to log using @code(Log) function.)
+  The global logger is configured with a @link(TLoggerProFileAppender) using default settings.
 }
 function Log: ILogWriter;
 
@@ -31,8 +31,7 @@ begin
     try
       if _Logger = nil then // double check
       begin
-        _Logger := BuildLogWriter([TLoggerProFileAppender.Create(5, 1000,
-          [TFileAppenderOption.LogsInTheSameFolder])]);
+        _Logger := BuildLogWriter([TLoggerProFileAppender.Create]);
       end;
     finally
       TMonitor.Exit(_Lock);

@@ -1,5 +1,5 @@
 unit LoggerPro.FileAppender;
-{<@abstract(The unit to include if you want to use @link(TLoggerProFileAppender))
+{ <@abstract(The unit to include if you want to use @link(TLoggerProFileAppender))
   @author(Daniele Teti) }
 
 interface
@@ -30,12 +30,12 @@ type
 
   }
 
-  TFileAppenderOption = (IncludePID, LogsInTheSameFolder);
+  TFileAppenderOption = (IncludePID);
   TFileAppenderOptions = set of TFileAppenderOption;
 
-  {@abstract(The default file appender)
-   To learn how to use this appender, check the sample @code(file_appender.dproj)
-   }
+  { @abstract(The default file appender)
+    To learn how to use this appender, check the sample @code(file_appender.dproj)
+  }
   TLoggerProFileAppender = class(TInterfacedObject, ILogAppender)
   private
     FFormatSettings: TFormatSettings;
@@ -45,6 +45,7 @@ type
     FLogFormat: string;
     FFileAppenderOptions: TFileAppenderOptions;
     FEnabled: Boolean;
+    FLogsFolder: string;
     function CreateWriter(const aFileName: String): TStreamWriter;
     procedure AddWriter(const aLogItem: TLogItem; var lWriter: TStreamWriter;
       var lLogFileName: string);
@@ -76,8 +77,7 @@ type
     constructor Create(aMaxBackupFileCount
       : Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB;
-      aFileAppenderOptions: TFileAppenderOptions =
-      [TFileAppenderOption.LogsInTheSameFolder];
+      aLogsFolder: String = ''; aFileAppenderOptions: TFileAppenderOptions = [];
       aLogFormat: String = DEFAULT_LOG_FORMAT);
     procedure Setup;
     procedure TearDown;
@@ -106,16 +106,7 @@ begin
   if TFileAppenderOption.IncludePID in FFileAppenderOptions then
     lFormat := '.PID-' + IntToStr(GetCurrentProcessID) + lFormat;
 
-  if not(TFileAppenderOption.LogsInTheSameFolder in FFileAppenderOptions) then
-  begin
-    lPath := TPath.Combine(TPath.GetHomePath, lModuleName + '_log');
-    TDirectory.CreateDirectory(lPath);
-  end
-  else
-  begin
-    lPath := TPath.GetDirectoryName(GetModuleName(HInstance));
-  end;
-
+  lPath := FLogsFolder;
   lExt := Format(lFormat, [aFileNumber, aTag]);
   Result := TPath.Combine(lPath, ChangeFileExt(lModuleName, lExt));
 end;
@@ -132,6 +123,10 @@ end;
 
 procedure TLoggerProFileAppender.Setup;
 begin
+  if FLogsFolder.IsEmpty then
+    FLogsFolder := TPath.GetDirectoryName(GetModuleName(HInstance));
+  if not TDirectory.Exists(FLogsFolder) then
+    TDirectory.CreateDirectory(FLogsFolder);
   FFormatSettings.DateSeparator := '-';
   FFormatSettings.TimeSeparator := ':';
   FFormatSettings.ShortDateFormat := 'YYY-MM-DD HH:NN:SS:ZZZ';
@@ -245,10 +240,11 @@ begin
 end;
 
 constructor TLoggerProFileAppender.Create(aMaxBackupFileCount: Integer;
-  aMaxFileSizeInKiloByte: Integer; aFileAppenderOptions: TFileAppenderOptions;
-  aLogFormat: String);
+  aMaxFileSizeInKiloByte: Integer; aLogsFolder: String;
+  aFileAppenderOptions: TFileAppenderOptions; aLogFormat: String);
 begin
   inherited Create;
+  FLogsFolder := aLogsFolder;
   FMaxBackupFileCount := aMaxBackupFileCount;
   FMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
   FLogFormat := aLogFormat;
