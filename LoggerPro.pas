@@ -21,10 +21,11 @@ type
     Each call to some kind of log method is wrapped in a @link(TLogItem)
     instance and passed down the layour of LoggerPro. }
   TLogItem = class sealed
+  protected
     constructor Create(aType: TLogType; aMessage: String;
-      aTag: String); overload;
+                       aTag: String); overload;
     constructor Create(aType: TLogType; aMessage: String; aTag: String;
-      aTimeStamp: TDateTime; aThreadID: Cardinal); overload;
+                       aTimeStamp: TDateTime; aThreadID: Cardinal); overload;
   private
     FType: TLogType;
     FMessage: string;
