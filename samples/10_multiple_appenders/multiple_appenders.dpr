@@ -2,8 +2,8 @@ program multiple_appenders;
 
 uses
   Vcl.Forms,
-  MainFormU in '..\01_global_logger\MainFormU.pas' {MainForm},
-  LoggerProConfig in 'LoggerProConfig.pas';
+  LoggerProConfig in 'LoggerProConfig.pas',
+  MainFormU in '..\common\MainFormU.pas' {MainForm};
 
 {$R *.res}
 

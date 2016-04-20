@@ -155,6 +155,8 @@ var
   lAppenders: TArray<String>;
   lSavedLoggerProAppenderQueueSize: Cardinal;
 begin
+  lSavedLoggerProAppenderQueueSize := DefaultLoggerProAppenderQueueSize;
+  DefaultLoggerProAppenderQueueSize := 10;
   lSkipped := 0;
   lEventsHandlers := TLoggerProEventsHandler.Create;
   try
@@ -170,21 +172,23 @@ begin
         TInterlocked.Increment(lSkipped);
       end;
 
-    lSavedLoggerProAppenderQueueSize := DefaultLoggerProAppenderQueueSize;
-    DefaultLoggerProAppenderQueueSize := 10;
     lLog := BuildLogWriter([TMyVerySlowAppender.Create(1)], lEventsHandlers);
-    DefaultLoggerProAppenderQueueSize := lSavedLoggerProAppenderQueueSize;
     for I := 1 to 1000 do
     begin
       lLog.Debug('log message ' + I.ToString, 'tag');
     end;
 
     lAppenders := lLog.GetAppendersClassNames;
+
+    while TInterlocked.Read(lSkipped) <= 10 do
+      Sleep(100);
+
     Assert.AreEqual(1, Length(lAppenders));
     Assert.AreEqual('TMyVerySlowAppender', lAppenders[0]);
     Assert.AreEqual('disabled', lLog.GetAppenderStatus(lAppenders[0]));
     lLog := nil;
   finally
+    DefaultLoggerProAppenderQueueSize := lSavedLoggerProAppenderQueueSize;
     lEventsHandlers.Free;
   end;
 

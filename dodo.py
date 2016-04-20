@@ -59,6 +59,11 @@ def buildProjects():
     return True
 
 
+def build_unit_tests():
+    res = buildProject('unittests\\UnitTests.dproj')
+    return res
+
+
 def create_build_tag(version):
     global GlobalBuildVersion
     GlobalBuildVersion = version
@@ -85,3 +90,19 @@ def task_build():
              ],						
         'verbosity': 2
         }
+
+def task_unittests():
+    '''Use: doit unittests. Builds unittests project and run it.'''    
+    return {
+        'actions': [
+            build_unit_tests,
+			"unittests\\Win32\\Debug\\UnitTests.exe -exit:Continue"],
+	    'params':[{'name':'version',
+	        'short':'v',
+	        'long':'version',
+            'type':str,
+            'default':'DEVELOPMENT'}
+        ],
+        'verbosity': 2
+        }
+				

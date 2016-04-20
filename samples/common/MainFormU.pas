@@ -69,7 +69,7 @@ begin
       I: Integer;
       lThreadID: String;
     begin
-      lThreadID := IntToStr(TThread.Current.ThreadID);
+      lThreadID := IntToStr(TThread.CurrentThread.ThreadID);
       for I := 1 to 200 do
       begin
         Log.Debug('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID,
