@@ -391,7 +391,7 @@ end;
 
 function TLogItem.Clone: TLogItem;
 begin
-  Result := TLogItem.Create(FType, FMessage, FTag);
+  Result := TLogItem.Create(FType, FMessage, FTag, FTimeStamp, FThreadID);
 end;
 
 constructor TLogItem.Create(aType: TLogType; aMessage, aTag: String);
