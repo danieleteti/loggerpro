@@ -76,7 +76,7 @@ def create_build_tag(version):
 #############################################################################################################################
 
 def task_build():
-    '''Use: doit build -v <VERSION> -> Builds all the projects, and "HOAsys Tools" setup. Then creates SFX archive.'''    
+    '''Use: doit build -v <VERSION> -> Builds all the projects. Then creates SFX archive.'''    
     return {
         'actions': [create_build_tag,
             "echo %%date%% %%time:~0,8%% > LOGGERPRO-BUILD-TIMESTAMP.TXT",            
