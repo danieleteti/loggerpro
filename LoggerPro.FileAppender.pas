@@ -123,7 +123,7 @@ end;
 
 procedure TLoggerProFileAppender.Setup;
 begin
-  if FLogsFolder.IsEmpty then
+  if FLogsFolder = '' then
     FLogsFolder := TPath.GetDirectoryName(GetModuleName(HInstance));
   if not TDirectory.Exists(FLogsFolder) then
     TDirectory.CreateDirectory(FLogsFolder);

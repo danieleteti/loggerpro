@@ -1,5 +1,5 @@
 unit LoggerPro;
-{ <@abstract(Contains the LoggerPro core. INclude this if you want to create your own logger, otherwise you can use the global one using @link(LoggerPro.GlobalLogger.pas))
+{<@abstract(Contains the LoggerPro core. Include this if you want to create your own logger, otherwise you can use the global one using @link(LoggerPro.GlobalLogger.pas))
   @author(Daniele Teti) }
 
 interface
