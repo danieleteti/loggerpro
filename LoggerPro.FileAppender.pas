@@ -1,5 +1,5 @@
 unit LoggerPro.FileAppender;
-{ <@abstract(The unit to include if you want to use @link(TLoggerProFileAppender))
+{<@abstract(The unit to include if you want to use @link(TLoggerProFileAppender))
   @author(Daniele Teti) }
 
 interface

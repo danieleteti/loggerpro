@@ -1,5 +1,5 @@
 unit LoggerPro.VCLMemoAppender;
-{ <@abstract(The unit to include if you want to use the @link(TVCLMemoLogAppender))
+{<@abstract(The unit to include if you want to use the @link(TVCLMemoLogAppender))
   @author(Daniele Teti) }
 
 interface

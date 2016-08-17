@@ -17,7 +17,8 @@ uses
   LoggerPro.OutputDebugStringAppender in '..\LoggerPro.OutputDebugStringAppender.pas',
   LoggerPro in '..\LoggerPro.pas',
   LoggerPro.VCLMemoAppender in '..\LoggerPro.VCLMemoAppender.pas',
-  TestSupportAppendersU in 'TestSupportAppendersU.pas';
+  TestSupportAppendersU in 'TestSupportAppendersU.pas',
+  LoggerPro.GlobalLogger in '..\LoggerPro.GlobalLogger.pas';
 
 var
   runner : ITestRunner;

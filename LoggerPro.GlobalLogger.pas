@@ -1,5 +1,5 @@
 unit LoggerPro.GlobalLogger;
-{ <@abstract(Contains the global logger as a thread safe singleton)
+{<@abstract(Contains the global logger as a thread safe singleton)
   Use the global logger for fast&dirty logging, but consider to use your own
   instance of @link(ILogWriter) (created using @link(BuildLogWriter)) for all your serious logging needs.
   @author(Daniele Teti - d.teti@bittime.it)

@@ -9,7 +9,7 @@
 <body>
 <table class="container"><tr><td class="navigation">
 <h2>LoggerPro</h2><p><a href="AllUnits.html" class="navigation">Units</a></p><p><a href="ClassHierarchy.html" class="navigation">Class Hierarchy</a></p><p><a href="AllClasses.html" class="navigation">Classes, Interfaces, Objects and Records</a></p><p><a href="AllTypes.html" class="navigation">Types</a></p><p><a href="AllVariables.html" class="navigation">Variables</a></p><p><a href="AllConstants.html" class="navigation">Constants</a></p><p><a href="AllFunctions.html" class="navigation">Functions and Procedures</a></p><p><a href="AllIdentifiers.html" class="navigation">Identifiers</a></p></td><td class="content">
-<h2>LoggerPro (beta 4)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
+<h2>LoggerPro (RC5)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
 <a name="TLoggerThread"></a><h1 class="cio">Class TLoggerThread</h1>
 <table class="sections wide_list">
 <tr>
@@ -28,7 +28,11 @@
 <table class="summary wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>constructor <b><a  href="LoggerPro.TLoggerThread.html#Create">Create</a></b>(aQueue: TThreadedQueue&lt;<a  href="LoggerPro.TLogItem.html">TLogItem</a>&gt;; aAppenders: <a  href="LoggerPro.html#TLogAppenderList">TLogAppenderList</a>);</code></td>
+<td class="itemcode"><code>constructor <b><a  href="LoggerPro.TLoggerThread.html#Create">Create</a></b>(aAppenders: <a  href="LoggerPro.html#TLogAppenderList">TLogAppenderList</a>);</code></td>
+</tr>
+<tr class="list2">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><code>destructor <b><a  href="LoggerPro.TLoggerThread.html#Destroy">Destroy</a></b>; override;</code></td>
 </tr>
 </table>
 <a name="PasDoc-Properties"></a><h3 class="summary">Properties</h3>
@@ -38,13 +42,25 @@
 <td class="itemcode"><code>property <b><a  href="LoggerPro.TLoggerThread.html#EventsHandlers">EventsHandlers</a></b>: <a  href="LoggerPro.TLoggerProEventsHandler.html">TLoggerProEventsHandler</a> read FEventsHandlers
       write SetEventsHandlers;</code></td>
 </tr>
+<tr class="list2">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><code>property <b><a  href="LoggerPro.TLoggerThread.html#LogWriterQueue">LogWriterQueue</a></b>: TThreadedQueue&lt;<a  href="LoggerPro.TLogItem.html">TLogItem</a>&gt; read FQueue;</code></td>
+</tr>
 </table>
 <h2 class="description">Description</h2>
 <h3 class="detail">Methods</h3>
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="Create"></a><code>constructor <b>Create</b>(aQueue: TThreadedQueue&lt;<a  href="LoggerPro.TLogItem.html">TLogItem</a>&gt;; aAppenders: <a  href="LoggerPro.html#TLogAppenderList">TLogAppenderList</a>);</code></td>
+<td class="itemcode"><a name="Create"></a><code>constructor <b>Create</b>(aAppenders: <a  href="LoggerPro.html#TLogAppenderList">TLogAppenderList</a>);</code></td>
+</tr>
+<tr><td colspan="2">
+&nbsp;</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><a name="Destroy"></a><code>destructor <b>Destroy</b>; override;</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -55,6 +71,14 @@
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
 <td class="itemcode"><a name="EventsHandlers"></a><code>property <b>EventsHandlers</b>: <a  href="LoggerPro.TLoggerProEventsHandler.html">TLoggerProEventsHandler</a> read FEventsHandlers
       write SetEventsHandlers;</code></td>
+</tr>
+<tr><td colspan="2">
+&nbsp;</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><a name="LogWriterQueue"></a><code>property <b>LogWriterQueue</b>: TThreadedQueue&lt;<a  href="LoggerPro.TLogItem.html">TLogItem</a>&gt; read FQueue;</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>

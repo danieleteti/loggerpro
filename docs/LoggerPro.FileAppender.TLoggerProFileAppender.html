@@ -9,7 +9,7 @@
 <body>
 <table class="container"><tr><td class="navigation">
 <h2>LoggerPro</h2><p><a href="AllUnits.html" class="navigation">Units</a></p><p><a href="ClassHierarchy.html" class="navigation">Class Hierarchy</a></p><p><a href="AllClasses.html" class="navigation">Classes, Interfaces, Objects and Records</a></p><p><a href="AllTypes.html" class="navigation">Types</a></p><p><a href="AllVariables.html" class="navigation">Variables</a></p><p><a href="AllConstants.html" class="navigation">Constants</a></p><p><a href="AllFunctions.html" class="navigation">Functions and Procedures</a></p><p><a href="AllIdentifiers.html" class="navigation">Identifiers</a></p></td><td class="content">
-<h2>LoggerPro (beta 4)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
+<h2>LoggerPro (RC5)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
 <a name="TLoggerProFileAppender"></a><h1 class="cio">Class TLoggerProFileAppender</h1>
 <table class="sections wide_list">
 <tr>
@@ -47,7 +47,7 @@ The default file appender</p>
 <table class="summary wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>constructor <b><a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#Create">Create</a></b>(aMaxBackupFileCount : Integer = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_MAX_BACKUP_FILE_COUNT">DEFAULT_MAX_BACKUP_FILE_COUNT</a>; aMaxFileSizeInKiloByte: Integer = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_MAX_FILE_SIZE_KB">DEFAULT_MAX_FILE_SIZE_KB</a>; aFileAppenderOptions: <a  href="LoggerPro.FileAppender.html#TFileAppenderOptions">TFileAppenderOptions</a> = [TFileAppenderOption.LogsInTheSameFolder]; aLogFormat: String = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_LOG_FORMAT">DEFAULT_LOG_FORMAT</a>);</code></td>
+<td class="itemcode"><code>constructor <b><a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#Create">Create</a></b>(aMaxBackupFileCount : Integer = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_MAX_BACKUP_FILE_COUNT">DEFAULT_MAX_BACKUP_FILE_COUNT</a>; aMaxFileSizeInKiloByte: Integer = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_MAX_FILE_SIZE_KB">DEFAULT_MAX_FILE_SIZE_KB</a>; aLogsFolder: String = ''; aFileAppenderOptions: <a  href="LoggerPro.FileAppender.html#TFileAppenderOptions">TFileAppenderOptions</a> = []; aLogFormat: String = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_LOG_FORMAT">DEFAULT_LOG_FORMAT</a>);</code></td>
 </tr>
 <tr class="list2">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
@@ -120,7 +120,7 @@ Defines the max size of each log file</p>
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="Create"></a><code>constructor <b>Create</b>(aMaxBackupFileCount : Integer = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_MAX_BACKUP_FILE_COUNT">DEFAULT_MAX_BACKUP_FILE_COUNT</a>; aMaxFileSizeInKiloByte: Integer = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_MAX_FILE_SIZE_KB">DEFAULT_MAX_FILE_SIZE_KB</a>; aFileAppenderOptions: <a  href="LoggerPro.FileAppender.html#TFileAppenderOptions">TFileAppenderOptions</a> = [TFileAppenderOption.LogsInTheSameFolder]; aLogFormat: String = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_LOG_FORMAT">DEFAULT_LOG_FORMAT</a>);</code></td>
+<td class="itemcode"><a name="Create"></a><code>constructor <b>Create</b>(aMaxBackupFileCount : Integer = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_MAX_BACKUP_FILE_COUNT">DEFAULT_MAX_BACKUP_FILE_COUNT</a>; aMaxFileSizeInKiloByte: Integer = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_MAX_FILE_SIZE_KB">DEFAULT_MAX_FILE_SIZE_KB</a>; aLogsFolder: String = ''; aFileAppenderOptions: <a  href="LoggerPro.FileAppender.html#TFileAppenderOptions">TFileAppenderOptions</a> = []; aLogFormat: String = <a  href="LoggerPro.FileAppender.TLoggerProFileAppender.html#DEFAULT_LOG_FORMAT">DEFAULT_LOG_FORMAT</a>);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
