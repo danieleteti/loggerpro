@@ -1,5 +1,17 @@
 # LoggerPro for Delphi
-An modern and pluggable logging framework for Delphi XE2+
+An modern and pluggable logging framework for Delphi
+
+## Compatibility
+LoggerPro is compatibile with
+- Delphi XE2
+- Delphi XE3
+- Delphi XE4
+- Delphi XE5
+- Delphi XE6
+- Delphi XE7
+- Delphi XE8
+- Delphi 10 Seattle
+- Delphi 10.1 Berlin
 
 ## Getting started
 ```delphi
@@ -84,6 +96,11 @@ The framework contains the following built-in log appenders
 - Console (`TLoggerProConsoleAppender`)
 - OutputDebugString (`TLoggerProOutputDebugStringAppender`)
 - VCL Memo (`TVCLMemoLogAppender`)
+
+Next appenders in the development pipeline
+- Redis Appender (to aggregate logs from different instances on a single Redis instance)
+- Email Logger (to send email as log, very useful for fatal errors)
+- RESTful Appender (to send logs to a rest endpoint using a specific request format, so that you can implement log server in DelphiMVCFramework, PHP, Java, Python, Node etc)
 
 The log writer and all the appenders are asycnhronous.
 
