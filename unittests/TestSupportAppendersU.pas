@@ -6,33 +6,27 @@ uses
   LoggerPro, System.SysUtils;
 
 type
-  TMyAppender = class(TInterfacedObject, ILogAppender)
+  TMyAppender = class(TLoggerProAppenderBase)
   private
     FSetupCallback: TProc;
     FTearDownCallback: TProc;
     FWriteLogCallback: TProc<TLogItem>;
-    FEnabled: Boolean;
   public
     constructor Create(aSetupCallback, aTearDownCallback: TProc;
-      aWriteLogCallback: TProc<TLogItem>);
-    procedure Setup;
-    procedure TearDown;
-    procedure WriteLog(const aLogItem: TLogItem);
-    procedure SetEnabled(const Value: Boolean);
-    function IsEnabled: Boolean;
+      aWriteLogCallback: TProc<TLogItem>); reintroduce;
+    procedure Setup; override;
+    procedure TearDown; override;
+    procedure WriteLog(const aLogItem: TLogItem); override;
   end;
 
-  TMyVerySlowAppender = class(TInterfacedObject, ILogAppender)
+  TMyVerySlowAppender = class(TLoggerProAppenderBase)
   private
     FDelay: Cardinal;
-    FEnabled: Boolean;
   public
-    constructor Create(const aDelay: Cardinal);
-    procedure Setup;
-    procedure TearDown;
-    procedure WriteLog(const aLogItem: TLogItem);
-    procedure SetEnabled(const Value: Boolean);
-    function IsEnabled: Boolean;
+    constructor Create(const aDelay: Cardinal); reintroduce;
+    procedure Setup; override;
+    procedure TearDown; override;
+    procedure WriteLog(const aLogItem: TLogItem); override;
   end;
 
 implementation
@@ -46,16 +40,6 @@ begin
   FSetupCallback := aSetupCallback;
   FTearDownCallback := aTearDownCallback;
   FWriteLogCallback := aWriteLogCallback;
-end;
-
-function TMyAppender.IsEnabled: Boolean;
-begin
-  Result := FEnabled;
-end;
-
-procedure TMyAppender.SetEnabled(const Value: Boolean);
-begin
-  FEnabled := Value;
 end;
 
 procedure TMyAppender.Setup;
@@ -80,16 +64,6 @@ begin
   FDelay := aDelay;
 end;
 
-function TMyVerySlowAppender.IsEnabled: Boolean;
-begin
-  Result := FEnabled;
-end;
-
-procedure TMyVerySlowAppender.SetEnabled(const Value: Boolean);
-begin
-  FEnabled := Value;
-end;
-
 procedure TMyVerySlowAppender.Setup;
 begin
 
@@ -102,7 +76,7 @@ end;
 
 procedure TMyVerySlowAppender.WriteLog(const aLogItem: TLogItem);
 begin
-  if FEnabled then
+  if IsEnabled then
     Sleep(FDelay);
 end;
 

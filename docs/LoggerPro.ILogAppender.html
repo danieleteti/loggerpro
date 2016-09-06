@@ -9,7 +9,7 @@
 <body>
 <table class="container"><tr><td class="navigation">
 <h2>LoggerPro</h2><p><a href="AllUnits.html" class="navigation">Units</a></p><p><a href="ClassHierarchy.html" class="navigation">Class Hierarchy</a></p><p><a href="AllClasses.html" class="navigation">Classes, Interfaces, Objects and Records</a></p><p><a href="AllTypes.html" class="navigation">Types</a></p><p><a href="AllVariables.html" class="navigation">Variables</a></p><p><a href="AllConstants.html" class="navigation">Constants</a></p><p><a href="AllFunctions.html" class="navigation">Functions and Procedures</a></p><p><a href="AllIdentifiers.html" class="navigation">Identifiers</a></p></td><td class="content">
-<h2>LoggerPro (RC5)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
+<h2>LoggerPro (1.0)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
 <a name="ILogAppender"></a><h1 class="cio">Interface ILogAppender</h1>
 <table class="sections wide_list">
 <tr>
@@ -52,6 +52,14 @@ Interface implemented by all the classes used as appenders</p>
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
 <td class="itemcode"><code>function <b><a  href="LoggerPro.ILogAppender.html#IsEnabled">IsEnabled</a></b>: Boolean;</code></td>
+</tr>
+<tr class="list2">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogAppender.html#SetLogLevel">SetLogLevel</a></b>(const Value: <a  href="LoggerPro.html#TLogType">TLogType</a>);</code></td>
+</tr>
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><code>function <b><a  href="LoggerPro.ILogAppender.html#GetLogLevel">GetLogLevel</a></b>: <a  href="LoggerPro.html#TLogType">TLogType</a>;</code></td>
 </tr>
 </table>
 <h2 class="description">Description</h2>
@@ -106,6 +114,26 @@ This method is internally called by LoggerPro to deinitialize the appender</p>
 <tr><td colspan="2">
 <p>
 (Returns if the logappender is currently enabled or not.</p>
+</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><a name="SetLogLevel"></a><code>procedure <b>SetLogLevel</b>(const Value: <a  href="LoggerPro.html#TLogType">TLogType</a>);</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+(Set a custom log level for this appender. This value must be lower than the global LogWriter log level.</p>
+</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><a name="GetLogLevel"></a><code>function <b>GetLogLevel</b>: <a  href="LoggerPro.html#TLogType">TLogType</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+<p>
+(Get the loglevel for the appender.</p>
 </td></tr>
 </table>
 Copyright 2016 Daniele Teti

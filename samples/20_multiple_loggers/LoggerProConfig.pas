@@ -27,6 +27,10 @@ begin
   _Log := BuildLogWriter([TLoggerProFileAppender.Create,
     TLoggerProConsoleAppender.Create,
     TLoggerProOutputDebugStringAppender.Create]);
+  // only errors on console
+  _Log.Appenders[1].SetLogLevel(TLogType.Error);
+  // only warnings or errors on outputdebugstring
+  _Log.Appenders[2].SetLogLevel(TLogType.Warning);
 end;
 
 initialization

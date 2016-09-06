@@ -13,16 +13,11 @@ uses
   LoggerPro.ConsoleAppender, System.SysUtils;
 
 type
-  TMyCustomAppender = class(TInterfacedObject, ILogAppender)
-  private
-    FEnabled: Boolean;
+  TMyCustomAppender = class(TLoggerProAppenderBase)
   public
-    procedure Setup;
-    procedure TearDown;
-    procedure WriteLog(const aLogItem: TLogItem);
-    procedure SetEnabled(const Value: Boolean);
-    function IsEnabled: Boolean;
-
+    procedure Setup; override;
+    procedure TearDown; override;
+    procedure WriteLog(const aLogItem: TLogItem); override;
   end;
 
 var
@@ -34,17 +29,6 @@ begin
 end;
 
 { TMyCustomAppender }
-
-function TMyCustomAppender.IsEnabled: Boolean;
-begin
-  Result := FEnabled;
-end;
-
-procedure TMyCustomAppender.SetEnabled(const Value: Boolean);
-begin
-  FEnabled := Value;
-end;
-
 procedure TMyCustomAppender.Setup;
 begin
   //

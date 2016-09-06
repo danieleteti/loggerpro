@@ -1,5 +1,5 @@
 unit LoggerPro;
-{<@abstract(Contains the LoggerPro core. Include this if you want to create your own logger, otherwise you can use the global one using @link(LoggerPro.GlobalLogger.pas))
+{ <@abstract(Contains the LoggerPro core. Include this if you want to create your own logger, otherwise you can use the global one using @link(LoggerPro.GlobalLogger.pas))
   @author(Daniele Teti) }
 
 interface
@@ -27,11 +27,11 @@ type
     FTag: string;
     FTimeStamp: TDateTime;
     FThreadID: Cardinal;
-    function GetLogTypeAsString: String;
+    function GetLogTypeAsString: string;
   public
-    constructor Create(aType: TLogType; aMessage: String;
-      aTag: String); overload;
-    constructor Create(aType: TLogType; aMessage: String; aTag: String;
+    constructor Create(aType: TLogType; aMessage: string;
+      aTag: string); overload;
+    constructor Create(aType: TLogType; aMessage: string; aTag: string;
       aTimeStamp: TDateTime; aThreadID: Cardinal); overload;
 
     function Clone: TLogItem;
@@ -45,19 +45,19 @@ type
       ) }
     property LogType: TLogType read FType;
     { @abstract(The text of the log message) }
-    property LogMessage: String read FMessage;
+    property LogMessage: string read FMessage;
     { @abstract(The tag of the log message) }
-    property LogTag: String read FTag;
+    property LogTag: string read FTag;
     { @abstract(The timestamp when the @link(TLogItem) is generated) }
     property TimeStamp: TDateTime read FTimeStamp;
     { @abstract(The IDof the thread which generated the log item) }
     property ThreadID: Cardinal read FThreadID;
     { @abstract(The type of the log converted in string) }
-    property LogTypeAsString: String read GetLogTypeAsString;
+    property LogTypeAsString: string read GetLogTypeAsString;
   end;
 
   TLoggerProAppenderErrorEvent = reference to procedure(const AppenderClassName
-    : String; const aFailedLogItem: TLogItem; const Reason: TLogErrorReason;
+    : string; const aFailedLogItem: TLogItem; const Reason: TLogErrorReason;
     var Action: TLogErrorAction);
 
   TLoggerProEventsHandler = class sealed
@@ -81,6 +81,10 @@ type
     procedure SetEnabled(const Value: Boolean);
     { @abstract(Returns if the logappender is currently enabled or not. }
     function IsEnabled: Boolean;
+    { @abstract(Set a custom log level for this appender. This value must be lower than the global LogWriter log level. }
+    procedure SetLogLevel(const Value: TLogType);
+    { @abstract(Get the loglevel for the appender. }
+    function GetLogLevel: TLogType;
   end;
 
   ELoggerPro = class(Exception)
@@ -89,17 +93,20 @@ type
 
   ILogWriter = interface
     ['{A717A040-4493-458F-91B2-6F6E2AFB496F}']
-    procedure Debug(aMessage: String; aTag: String);
-    procedure DebugFmt(aMessage: String; aParams: array of const; aTag: String);
-    procedure Info(aMessage: String; aTag: String);
-    procedure InfoFmt(aMessage: String; aParams: array of const; aTag: String);
-    procedure Warn(aMessage: String; aTag: String);
-    procedure WarnFmt(aMessage: String; aParams: array of const; aTag: String);
-    procedure Error(aMessage: String; aTag: String);
-    procedure ErrorFmt(aMessage: String; aParams: array of const; aTag: String);
-    procedure Log(aType: TLogType; aMessage: String; aTag: String);
-    function GetAppendersClassNames: TArray<String>;
-    function GetAppenderStatus(const AppenderName: String): String;
+    procedure Debug(aMessage: string; aTag: string);
+    procedure DebugFmt(aMessage: string; aParams: array of const; aTag: string);
+    procedure Info(aMessage: string; aTag: string);
+    procedure InfoFmt(aMessage: string; aParams: array of const; aTag: string);
+    procedure Warn(aMessage: string; aTag: string);
+    procedure WarnFmt(aMessage: string; aParams: array of const; aTag: string);
+    procedure Error(aMessage: string; aTag: string);
+    procedure ErrorFmt(aMessage: string; aParams: array of const; aTag: string);
+    procedure Log(aType: TLogType; aMessage: string; aTag: string);
+    function GetAppendersClassNames: TArray<string>;
+    function GetAppenderStatus(const AppenderName: string): string;
+    function GetAppenders(const Index: Integer): ILogAppender;
+    property Appenders[const index: Integer]: ILogAppender read GetAppenders;
+    function AppendersCount(): Integer;
   end;
 
   TLogAppenderList = TList<ILogAppender>;
@@ -122,13 +129,14 @@ type
       property Queue: TThreadedQueue<TLogItem> read FAppenderQueue;
       property FailsCount: Cardinal read FFailsCount;
       property Enabled: Boolean read FEnabled write SetEnabled;
+      function GetLogLevel: TLogType;
     end;
   private
     FQueue: TThreadedQueue<TLogItem>;
     FAppenders: TLogAppenderList;
     FEventsHandlers: TLoggerProEventsHandler;
     function BuildAppendersDecorator: TObjectList<TAppenderDecorator>;
-    procedure DoOnAppenderError(const FailAppenderClassName: String;
+    procedure DoOnAppenderError(const FailAppenderClassName: string;
       const aFailedLogItem: TLogItem; const aReason: TLogErrorReason;
       var aAction: TLogErrorAction);
     procedure SetEventsHandlers(const Value: TLoggerProEventsHandler);
@@ -150,32 +158,50 @@ type
     FFreeAllowed: Boolean;
     FLogLevel: TLogType;
     procedure Initialize(aEventsHandler: TLoggerProEventsHandler);
-    function GetAppendersClassNames: TArray<String>;
-    function GetAppenderStatus(const AppenderName: String): String;
+    function GetAppendersClassNames: TArray<string>;
+    function GetAppenderStatus(const AppenderName: string): string;
   public
+    function GetAppenders(const Index: Integer): ILogAppender;
+    function AppendersCount(): Integer;
     constructor Create(aLogLevel: TLogType = TLogType.Debug); overload;
     constructor Create(aLogAppenders: TLogAppenderList;
       aLogLevel: TLogType = TLogType.Debug); overload;
     destructor Destroy; override;
-    procedure Debug(aMessage: String; aTag: String);
+    procedure Debug(aMessage: string; aTag: string);
     procedure DebugFmt(aMessage: string; aParams: array of TVarRec;
       aTag: string);
 
-    procedure Info(aMessage: String; aTag: String);
+    procedure Info(aMessage: string; aTag: string);
     procedure InfoFmt(aMessage: string; aParams: array of TVarRec;
       aTag: string);
 
-    procedure Warn(aMessage: String; aTag: String);
+    procedure Warn(aMessage: string; aTag: string);
     procedure WarnFmt(aMessage: string; aParams: array of TVarRec;
       aTag: string);
 
-    procedure Error(aMessage: String; aTag: String);
+    procedure Error(aMessage: string; aTag: string);
     procedure ErrorFmt(aMessage: string; aParams: array of TVarRec;
       aTag: string);
 
-    procedure Log(aType: TLogType; aMessage: String; aTag: String);
-    procedure LogFmt(aType: TLogType; aMessage: String; aParams: array of const;
-      aTag: String);
+    procedure Log(aType: TLogType; aMessage: string; aTag: string);
+    procedure LogFmt(aType: TLogType; aMessage: string; aParams: array of const;
+      aTag: string);
+  end;
+
+  TLoggerProAppenderBase = class abstract(TInterfacedObject, ILogAppender)
+  private
+    FLogLevel: TLogType;
+    FEnabled: Boolean;
+  public
+    constructor Create; virtual;
+    procedure Setup; virtual; abstract;
+    procedure WriteLog(const aLogItem: TLogItem); virtual; abstract;
+    procedure TearDown; virtual; abstract;
+    procedure SetEnabled(const Value: Boolean);
+    function IsEnabled: Boolean;
+    procedure SetLogLevel(const Value: TLogType);
+    function GetLogLevel: TLogType; inline;
+    property LogLevel: TLogType read GetLogLevel write SetLogLevel;
   end;
 
   { @abstract(Builds a new ILogWriter instance. Call this global function to start logging like a pro.)
@@ -251,6 +277,11 @@ end;
 
 { TLogger.TLogWriter }
 
+function TLogWriter.AppendersCount: Integer;
+begin
+  Result := Self.FLogAppenders.Count;
+end;
+
 constructor TLogWriter.Create(aLogAppenders: TLogAppenderList;
   aLogLevel: TLogType);
 begin
@@ -265,7 +296,7 @@ begin
   Create(TLogAppenderList.Create, aLogLevel);
 end;
 
-procedure TLogWriter.Debug(aMessage, aTag: String);
+procedure TLogWriter.Debug(aMessage, aTag: string);
 begin
   Log(TLogType.Debug, aMessage, aTag);
 end;
@@ -285,7 +316,7 @@ begin
   inherited;
 end;
 
-procedure TLogWriter.Error(aMessage, aTag: String);
+procedure TLogWriter.Error(aMessage, aTag: string);
 begin
   Log(TLogType.Error, aMessage, aTag);
 end;
@@ -296,7 +327,12 @@ begin
   LogFmt(TLogType.Error, aMessage, aParams, aTag);
 end;
 
-function TLogWriter.GetAppendersClassNames: TArray<String>;
+function TLogWriter.GetAppenders(const Index: Integer): ILogAppender;
+begin
+  Result := Self.FLogAppenders[index];
+end;
+
+function TLogWriter.GetAppendersClassNames: TArray<string>;
 var
   I: Cardinal;
 begin
@@ -312,7 +348,7 @@ begin
   end;
 end;
 
-function TLogWriter.GetAppenderStatus(const AppenderName: String): String;
+function TLogWriter.GetAppenderStatus(const AppenderName: string): string;
 var
   I: Integer;
 begin
@@ -321,8 +357,8 @@ begin
     Result := '';
     for I := 0 to FLogAppenders.Count - 1 do
     begin
-      //if TObject(FLogAppenders[I]).ClassName.Equals(AppenderName) then
-      if SameText(TObject(FLogAppenders[I]).ClassName, AppenderName) then //XE2+ Compatibility
+      // if TObject(FLogAppenders[I]).ClassName.Equals(AppenderName) then
+      if SameText(TObject(FLogAppenders[I]).ClassName, AppenderName) then // XE2+ Compatibility
       begin
         if FLogAppenders[I].IsEnabled then
           Result := 'enabled'
@@ -336,7 +372,7 @@ begin
   end;
 end;
 
-procedure TLogWriter.Info(aMessage, aTag: String);
+procedure TLogWriter.Info(aMessage, aTag: string);
 begin
   Log(TLogType.Info, aMessage, aTag);
 end;
@@ -347,7 +383,7 @@ begin
   LogFmt(TLogType.Info, aMessage, aParams, aTag);
 end;
 
-procedure TLogWriter.Log(aType: TLogType; aMessage, aTag: String);
+procedure TLogWriter.Log(aType: TLogType; aMessage, aTag: string);
 var
   lLogItem: TLogItem;
 begin
@@ -364,8 +400,8 @@ begin
   end;
 end;
 
-procedure TLogWriter.LogFmt(aType: TLogType; aMessage: String;
-  aParams: array of const; aTag: String);
+procedure TLogWriter.LogFmt(aType: TLogType; aMessage: string;
+  aParams: array of const; aTag: string);
 begin
   Log(aType, Format(aMessage, aParams), aTag);
 end;
@@ -377,7 +413,7 @@ begin
   FLoggerThread.Start;
 end;
 
-procedure TLogWriter.Warn(aMessage, aTag: String);
+procedure TLogWriter.Warn(aMessage, aTag: string);
 begin
   Log(TLogType.Warning, aMessage, aTag);
 end;
@@ -395,7 +431,7 @@ begin
   Result := TLogItem.Create(FType, FMessage, FTag, FTimeStamp, FThreadID);
 end;
 
-constructor TLogItem.Create(aType: TLogType; aMessage, aTag: String);
+constructor TLogItem.Create(aType: TLogType; aMessage, aTag: string);
 begin
   Create(aType, aMessage, aTag, now, TThread.CurrentThread.ThreadID);
 end;
@@ -417,7 +453,7 @@ begin
   inherited;
 end;
 
-procedure TLoggerThread.DoOnAppenderError(const FailAppenderClassName: String;
+procedure TLoggerThread.DoOnAppenderError(const FailAppenderClassName: string;
   const aFailedLogItem: TLogItem; const aReason: TLogErrorReason;
   var aAction: TLogErrorAction);
 begin
@@ -448,7 +484,8 @@ begin
           try
             for I := 0 to lAppendersDecorators.Count - 1 do
             begin
-              if lAppendersDecorators[I].Enabled then
+              if (lAppendersDecorators[I].Enabled) and
+                (lLogItem.LogType >= lAppendersDecorators[I].GetLogLevel) then
               begin
                 if not lAppendersDecorators[I].WriteLog(lLogItem) then
                 begin
@@ -501,7 +538,7 @@ begin
   end;
 end;
 
-constructor TLogItem.Create(aType: TLogType; aMessage, aTag: String;
+constructor TLogItem.Create(aType: TLogType; aMessage, aTag: string;
   aTimeStamp: TDateTime; aThreadID: Cardinal);
 begin
   inherited Create;
@@ -512,7 +549,7 @@ begin
   FThreadID := aThreadID;
 end;
 
-function TLogItem.GetLogTypeAsString: String;
+function TLogItem.GetLogTypeAsString: string;
 begin
   case FType of
     TLogType.Debug:
@@ -580,6 +617,11 @@ begin
   inherited;
 end;
 
+function TLoggerThread.TAppenderDecorator.GetLogLevel: TLogType;
+begin
+  Result := FLogAppender.GetLogLevel;
+end;
+
 procedure TLoggerThread.TAppenderDecorator.SetEnabled(const Value: Boolean);
 begin
   FEnabled := Value;
@@ -600,6 +642,35 @@ begin
   end
   else
     FFailsCount := 0;
+end;
+
+{ TLoggerProAppenderBase }
+
+constructor TLoggerProAppenderBase.Create;
+begin
+  inherited;
+  Self.FEnabled := true;
+  Self.FLogLevel := TLogType.Debug;
+end;
+
+function TLoggerProAppenderBase.GetLogLevel: TLogType;
+begin
+  Result := FLogLevel;
+end;
+
+function TLoggerProAppenderBase.IsEnabled: Boolean;
+begin
+  Result := FEnabled;
+end;
+
+procedure TLoggerProAppenderBase.SetEnabled(const Value: Boolean);
+begin
+  FEnabled := Value;
+end;
+
+procedure TLoggerProAppenderBase.SetLogLevel(const Value: TLogType);
+begin
+  FLogLevel := Value;
 end;
 
 end.

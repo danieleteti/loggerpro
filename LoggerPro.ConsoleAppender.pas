@@ -1,5 +1,5 @@
 unit LoggerPro.ConsoleAppender;
-{<@abstract(The unit to include if you want to use @link(TLoggerProConsoleAppender))
+{ <@abstract(The unit to include if you want to use @link(TLoggerProConsoleAppender))
   @author(Daniele Teti) }
 
 interface
@@ -13,18 +13,14 @@ type
     To learn how to use this appender, check the sample @code(console_appender.dproj)
     @author(Daniele Teti - d.teti@bittime.it)
   }
-  TLoggerProConsoleAppender = class(TInterfacedObject, ILogAppender)
-  private
-    FEnabled: Boolean;
+  TLoggerProConsoleAppender = class(TLoggerProAppenderBase)
   protected
     procedure SetColor(const Color: Integer);
   public
-    constructor Create;
-    procedure Setup;
-    procedure TearDown;
-    procedure WriteLog(const aLogItem: TLogItem);
-    procedure SetEnabled(const Value: Boolean);
-    function IsEnabled: Boolean;
+    constructor Create; override;
+    procedure Setup; override;
+    procedure TearDown; override;
+    procedure WriteLog(const aLogItem: TLogItem); override;
   end;
 
 implementation
@@ -50,19 +46,9 @@ begin
   inherited Create;
 end;
 
-function TLoggerProConsoleAppender.IsEnabled: Boolean;
-begin
-  Result := FEnabled;
-end;
-
 procedure TLoggerProConsoleAppender.SetColor(const Color: Integer);
 begin
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), Color);
-end;
-
-procedure TLoggerProConsoleAppender.SetEnabled(const Value: Boolean);
-begin
-  FEnabled := Value;
 end;
 
 procedure TLoggerProConsoleAppender.Setup;

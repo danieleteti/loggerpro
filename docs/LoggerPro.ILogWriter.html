@@ -9,11 +9,11 @@
 <body>
 <table class="container"><tr><td class="navigation">
 <h2>LoggerPro</h2><p><a href="AllUnits.html" class="navigation">Units</a></p><p><a href="ClassHierarchy.html" class="navigation">Class Hierarchy</a></p><p><a href="AllClasses.html" class="navigation">Classes, Interfaces, Objects and Records</a></p><p><a href="AllTypes.html" class="navigation">Types</a></p><p><a href="AllVariables.html" class="navigation">Variables</a></p><p><a href="AllConstants.html" class="navigation">Constants</a></p><p><a href="AllFunctions.html" class="navigation">Functions and Procedures</a></p><p><a href="AllIdentifiers.html" class="navigation">Identifiers</a></p></td><td class="content">
-<h2>LoggerPro (RC5)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
+<h2>LoggerPro (1.0)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
 <a name="ILogWriter"></a><h1 class="cio">Interface ILogWriter</h1>
 <table class="sections wide_list">
 <tr>
-<td><a class="section" href="#PasDoc-Description">Description</a></td><td><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></td><td>Fields</td><td><a class="section" href="#PasDoc-Methods">Methods</a></td><td>Properties</td></tr></table>
+<td><a class="section" href="#PasDoc-Description">Description</a></td><td><a class="section" href="#PasDoc-Hierarchy">Hierarchy</a></td><td>Fields</td><td><a class="section" href="#PasDoc-Methods">Methods</a></td><td><a class="section" href="#PasDoc-Properties">Properties</a></td></tr></table>
 <a name="PasDoc-Description"></a><h2 class="unit">Unit</h2>
 <p class="unitlink">
 <a  href="LoggerPro.html">LoggerPro</a></p>
@@ -33,47 +33,62 @@
 <table class="summary wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Debug">Debug</a></b>(aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Debug">Debug</a></b>(aMessage: string; aTag: string);</code></td>
 </tr>
 <tr class="list2">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#DebugFmt">DebugFmt</a></b>(aMessage: String; aParams: array of const; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#DebugFmt">DebugFmt</a></b>(aMessage: string; aParams: array of const; aTag: string);</code></td>
 </tr>
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Info">Info</a></b>(aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Info">Info</a></b>(aMessage: string; aTag: string);</code></td>
 </tr>
 <tr class="list2">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#InfoFmt">InfoFmt</a></b>(aMessage: String; aParams: array of const; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#InfoFmt">InfoFmt</a></b>(aMessage: string; aParams: array of const; aTag: string);</code></td>
 </tr>
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Warn">Warn</a></b>(aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Warn">Warn</a></b>(aMessage: string; aTag: string);</code></td>
 </tr>
 <tr class="list2">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#WarnFmt">WarnFmt</a></b>(aMessage: String; aParams: array of const; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#WarnFmt">WarnFmt</a></b>(aMessage: string; aParams: array of const; aTag: string);</code></td>
 </tr>
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Error">Error</a></b>(aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Error">Error</a></b>(aMessage: string; aTag: string);</code></td>
 </tr>
 <tr class="list2">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#ErrorFmt">ErrorFmt</a></b>(aMessage: String; aParams: array of const; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#ErrorFmt">ErrorFmt</a></b>(aMessage: string; aParams: array of const; aTag: string);</code></td>
 </tr>
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Log">Log</a></b>(aType: <a  href="LoggerPro.html#TLogType">TLogType</a>; aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><code>procedure <b><a  href="LoggerPro.ILogWriter.html#Log">Log</a></b>(aType: <a  href="LoggerPro.html#TLogType">TLogType</a>; aMessage: string; aTag: string);</code></td>
 </tr>
 <tr class="list2">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>function <b><a  href="LoggerPro.ILogWriter.html#GetAppendersClassNames">GetAppendersClassNames</a></b>: TArray&lt;String&gt;;</code></td>
+<td class="itemcode"><code>function <b><a  href="LoggerPro.ILogWriter.html#GetAppendersClassNames">GetAppendersClassNames</a></b>: TArray&lt;string&gt;;</code></td>
 </tr>
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><code>function <b><a  href="LoggerPro.ILogWriter.html#GetAppenderStatus">GetAppenderStatus</a></b>(const AppenderName: String): String;</code></td>
+<td class="itemcode"><code>function <b><a  href="LoggerPro.ILogWriter.html#GetAppenderStatus">GetAppenderStatus</a></b>(const AppenderName: string): string;</code></td>
+</tr>
+<tr class="list2">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><code>function <b><a  href="LoggerPro.ILogWriter.html#GetAppenders">GetAppenders</a></b>(const Index: Integer): <a  href="LoggerPro.ILogAppender.html">ILogAppender</a>;</code></td>
+</tr>
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><code>function <b><a  href="LoggerPro.ILogWriter.html#AppendersCount">AppendersCount</a></b>(): Integer;</code></td>
+</tr>
+</table>
+<a name="PasDoc-Properties"></a><h3 class="summary">Properties</h3>
+<table class="summary wide_list">
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><code>property <b><a  href="LoggerPro.ILogWriter.html#Appenders">Appenders</a></b>[constindex:Integer]: <a  href="LoggerPro.ILogAppender.html">ILogAppender</a> read <a  href="LoggerPro.ILogWriter.html#GetAppenders">GetAppenders</a>;</code></td>
 </tr>
 </table>
 <h2 class="description">Description</h2>
@@ -81,7 +96,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="Debug"></a><code>procedure <b>Debug</b>(aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><a name="Debug"></a><code>procedure <b>Debug</b>(aMessage: string; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -89,7 +104,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="DebugFmt"></a><code>procedure <b>DebugFmt</b>(aMessage: String; aParams: array of const; aTag: String);</code></td>
+<td class="itemcode"><a name="DebugFmt"></a><code>procedure <b>DebugFmt</b>(aMessage: string; aParams: array of const; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -97,7 +112,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="Info"></a><code>procedure <b>Info</b>(aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><a name="Info"></a><code>procedure <b>Info</b>(aMessage: string; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -105,7 +120,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="InfoFmt"></a><code>procedure <b>InfoFmt</b>(aMessage: String; aParams: array of const; aTag: String);</code></td>
+<td class="itemcode"><a name="InfoFmt"></a><code>procedure <b>InfoFmt</b>(aMessage: string; aParams: array of const; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -113,7 +128,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="Warn"></a><code>procedure <b>Warn</b>(aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><a name="Warn"></a><code>procedure <b>Warn</b>(aMessage: string; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -121,7 +136,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="WarnFmt"></a><code>procedure <b>WarnFmt</b>(aMessage: String; aParams: array of const; aTag: String);</code></td>
+<td class="itemcode"><a name="WarnFmt"></a><code>procedure <b>WarnFmt</b>(aMessage: string; aParams: array of const; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -129,7 +144,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="Error"></a><code>procedure <b>Error</b>(aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><a name="Error"></a><code>procedure <b>Error</b>(aMessage: string; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -137,7 +152,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="ErrorFmt"></a><code>procedure <b>ErrorFmt</b>(aMessage: String; aParams: array of const; aTag: String);</code></td>
+<td class="itemcode"><a name="ErrorFmt"></a><code>procedure <b>ErrorFmt</b>(aMessage: string; aParams: array of const; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -145,7 +160,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="Log"></a><code>procedure <b>Log</b>(aType: <a  href="LoggerPro.html#TLogType">TLogType</a>; aMessage: String; aTag: String);</code></td>
+<td class="itemcode"><a name="Log"></a><code>procedure <b>Log</b>(aType: <a  href="LoggerPro.html#TLogType">TLogType</a>; aMessage: string; aTag: string);</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -153,7 +168,7 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="GetAppendersClassNames"></a><code>function <b>GetAppendersClassNames</b>: TArray&lt;String&gt;;</code></td>
+<td class="itemcode"><a name="GetAppendersClassNames"></a><code>function <b>GetAppendersClassNames</b>: TArray&lt;string&gt;;</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>
@@ -161,7 +176,32 @@
 <table class="detail wide_list">
 <tr class="list">
 <td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
-<td class="itemcode"><a name="GetAppenderStatus"></a><code>function <b>GetAppenderStatus</b>(const AppenderName: String): String;</code></td>
+<td class="itemcode"><a name="GetAppenderStatus"></a><code>function <b>GetAppenderStatus</b>(const AppenderName: string): string;</code></td>
+</tr>
+<tr><td colspan="2">
+&nbsp;</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><a name="GetAppenders"></a><code>function <b>GetAppenders</b>(const Index: Integer): <a  href="LoggerPro.ILogAppender.html">ILogAppender</a>;</code></td>
+</tr>
+<tr><td colspan="2">
+&nbsp;</td></tr>
+</table>
+<table class="detail wide_list">
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><a name="AppendersCount"></a><code>function <b>AppendersCount</b>(): Integer;</code></td>
+</tr>
+<tr><td colspan="2">
+&nbsp;</td></tr>
+</table>
+<h3 class="detail">Properties</h3>
+<table class="detail wide_list">
+<tr class="list">
+<td class="visibility"><a  href="legend.html"><img  src="public.gif" alt="Public" title="Public"></a></td>
+<td class="itemcode"><a name="Appenders"></a><code>property <b>Appenders</b>[constindex:Integer]: <a  href="LoggerPro.ILogAppender.html">ILogAppender</a> read <a  href="LoggerPro.ILogWriter.html#GetAppenders">GetAppenders</a>;</code></td>
 </tr>
 <tr><td colspan="2">
 &nbsp;</td></tr>

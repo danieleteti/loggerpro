@@ -2,8 +2,8 @@ object MultipleLoggersForm: TMultipleLoggersForm
   Left = 0
   Top = 0
   Caption = 'MultipleLoggersForm'
-  ClientHeight = 201
-  ClientWidth = 583
+  ClientHeight = 350
+  ClientWidth = 900
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,15 +13,15 @@ object MultipleLoggersForm: TMultipleLoggersForm
   OldCreateOrder = False
   OnCreate = FormCreate
   DesignSize = (
-    583
-    201)
+    900
+    350)
   PixelsPerInch = 96
   TextHeight = 13
   object Memo1: TMemo
     Left = 8
     Top = 47
-    Width = 567
-    Height = 146
+    Width = 884
+    Height = 295
     Anchors = [akLeft, akTop, akRight, akBottom]
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -34,6 +34,8 @@ object MultipleLoggersForm: TMultipleLoggersForm
     ScrollBars = ssVertical
     TabOrder = 0
     WordWrap = False
+    ExplicitWidth = 567
+    ExplicitHeight = 146
   end
   object btnFormLocalLog: TButton
     Left = 8

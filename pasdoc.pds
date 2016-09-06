@@ -49,7 +49,7 @@ Item_3=CPU386
 
 [Header]
 Count=1
-Item_0=<h2>LoggerPro (RC5)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
+Item_0=<h2>LoggerPro (1.0)</h2><p>A simple, pluggable and modern logging framework for Delphi</p>
 
 [Footer]
 Count=1
