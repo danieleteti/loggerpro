@@ -358,7 +358,8 @@ begin
     for I := 0 to FLogAppenders.Count - 1 do
     begin
       // if TObject(FLogAppenders[I]).ClassName.Equals(AppenderName) then
-      if SameText(TObject(FLogAppenders[I]).ClassName, AppenderName) then // XE2+ Compatibility
+      if SameText(TObject(FLogAppenders[I]).ClassName, AppenderName) then
+      // XE2+ Compatibility
       begin
         if FLogAppenders[I].IsEnabled then
           Result := 'enabled'

@@ -86,7 +86,7 @@ type
 implementation
 
 uses
-  System.IOUtils, Winapi.Windows;
+  System.IOUtils, idGlobal;
 
 { TLoggerProFileAppender }
 
@@ -101,7 +101,7 @@ begin
   lModuleName := TPath.GetFileNameWithoutExtension(GetModuleName(HInstance));
 
   if TFileAppenderOption.IncludePID in FFileAppenderOptions then
-    lFormat := '.PID-' + IntToStr(GetCurrentProcessID) + lFormat;
+    lFormat := '.PID-' + IntToStr(CurrentProcessId).PadLeft(6, '0') + lFormat;
 
   lPath := FLogsFolder;
   lExt := Format(lFormat, [aFileNumber, aTag]);
@@ -127,8 +127,8 @@ begin
   FWritersDictionary.Free;
 end;
 
-procedure TLoggerProFileAppender.InternalWriteLog(const aStreamWriter: TStreamWriter;
-  const aValue: string);
+procedure TLoggerProFileAppender.InternalWriteLog(const aStreamWriter
+  : TStreamWriter; const aValue: string);
 begin
   aStreamWriter.WriteLine(aValue);
   aStreamWriter.Flush;
@@ -143,9 +143,9 @@ begin
   begin
     AddWriter(aLogItem, lWriter, lLogFileName);
   end;
-  InternalWriteLog(lWriter, Format(FLogFormat, [datetimetostr(aLogItem.TimeStamp,
-    FFormatSettings), aLogItem.ThreadID, aLogItem.LogTypeAsString,
-    aLogItem.LogMessage, aLogItem.LogTag]));
+  InternalWriteLog(lWriter, Format(FLogFormat,
+    [datetimetostr(aLogItem.TimeStamp, FFormatSettings), aLogItem.ThreadID,
+    aLogItem.LogTypeAsString, aLogItem.LogMessage, aLogItem.LogTag]));
 
   if lWriter.BaseStream.Size > FMaxFileSizeInKiloByte * 1024 then
   begin
@@ -212,7 +212,8 @@ begin
   RetryMove(lLogFileName, lRenamedFile);
   // read the writer
   AddWriter(aLogItem, lWriter, lLogFileName);
-  InternalWriteLog(lWriter, '#[START LOG ' + datetimetostr(Now, FFormatSettings) + ']');
+  InternalWriteLog(lWriter, '#[START LOG ' + datetimetostr(Now,
+    FFormatSettings) + ']');
 end;
 
 procedure TLoggerProFileAppender.AddWriter(const aLogItem: TLogItem;
