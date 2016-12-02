@@ -1,6 +1,7 @@
 unit LoggerPro;
 { <@abstract(Contains the LoggerPro core. Include this if you want to create your own logger, otherwise you can use the global one using @link(LoggerPro.GlobalLogger.pas))
   @author(Daniele Teti) }
+{$SCOPEDENUMS ON}
 
 interface
 
@@ -8,14 +9,13 @@ uses
   System.Generics.Collections, System.SysUtils, System.Classes;
 
 var
-  DefaultLoggerProMainQueueSize: Cardinal = 100000;
-  DefaultLoggerProAppenderQueueSize: Cardinal = 10000;
+  DefaultLoggerProMainQueueSize: Cardinal = 1000;
+  DefaultLoggerProAppenderQueueSize: Cardinal = 1000;
 
 type
-{$SCOPEDENUMS ON}
   TLogType = (Debug = 0, Info, Warning, Error);
   TLogErrorReason = (QueueFull);
-  TLogErrorAction = (Skip, DisableAppender);
+  TLogErrorAction = (SkipNewest, DiscardOlder);
 
   { @abstract(Represent the single log item)
     Each call to some kind of log method is wrapped in a @link(TLogItem)
@@ -76,19 +76,31 @@ type
     procedure WriteLog(const aLogItem: TLogItem);
     { @abstract(This method is internally called by LoggerPro to deinitialize the appender) }
     procedure TearDown;
-    { @abstract(Enable or disable the log appender. Is used internally by LoggerPro but must be
-      implemented by each logappender. A simple @code(if enabled then dolog) is enough }
-    procedure SetEnabled(const Value: Boolean);
-    { @abstract(Returns if the logappender is currently enabled or not. }
-    function IsEnabled: Boolean;
+    // { @abstract(Enable or disable the log appender. Is used internally by LoggerPro but must be
+    // implemented by each logappender. A simple @code(if enabled then dolog) is enough }
+    // procedure SetEnabled(const Value: Boolean);
+    // { @abstract(Returns if the logappender is currently enabled or not. }
+    // function IsEnabled: Boolean;
     { @abstract(Set a custom log level for this appender. This value must be lower than the global LogWriter log level. }
     procedure SetLogLevel(const Value: TLogType);
     { @abstract(Get the loglevel for the appender. }
     function GetLogLevel: TLogType;
+    { @abstract(If the appender is disabled, this method is called at each new
+      logitem. This method should not raise exceptions and should try to restart the appender
+      at specified time and only if some appropriate seconds/miutes are elapsed between the
+      LastErrorTimestamp. }
+    procedure TryToRestart(var Restarted: Boolean);
+
+    procedure SetLastErrorTimeStamp(const LastErrorTimeStamp: TDateTime);
+    function GetLastErrorTimeStamp: TDateTime;
+    property LastErrorTimeStamp: TDateTime read GetLastErrorTimeStamp write SetLastErrorTimeStamp;
   end;
 
   ELoggerPro = class(Exception)
 
+  end;
+
+  TAppenderQueue = class(TThreadedQueue<TLogItem>)
   end;
 
   ILogWriter = interface
@@ -111,31 +123,44 @@ type
 
   TLogAppenderList = TList<ILogAppender>;
 
+  TAppenderThread = class(TThread)
+  private
+    FLogAppender: ILogAppender;
+    FAppenderQueue: TAppenderQueue;
+    FFailing: Boolean;
+    procedure SetFailing(const Value: Boolean);
+  protected
+    procedure Execute; override;
+
+  type
+    TAppenderStatus = (BeforeSetup, Running, WaitAfterFail, ToRestart, BeforeTearDown);
+  public
+    constructor Create(aLogAppender: ILogAppender; aAppenderQueue: TAppenderQueue);
+    property Failing: Boolean read FFailing write SetFailing;
+  end;
+
   TLoggerThread = class(TThread)
   private type
-    TAppenderDecorator = class
+    TAppenderAdapter = class
     private
-      FAppenderQueue: TThreadedQueue<TLogItem>;
-      FAppenderThread: TThread;
+      FAppenderQueue: TAppenderQueue;
+      FAppenderThread: TAppenderThread;
       FLogAppender: ILogAppender;
       FTerminated: Boolean;
       FFailsCount: Cardinal;
-      FEnabled: Boolean;
-      procedure SetEnabled(const Value: Boolean);
     public
       constructor Create(aAppender: ILogAppender); virtual;
       destructor Destroy; override;
-      function WriteLog(const aLogItem: TLogItem): Boolean;
-      property Queue: TThreadedQueue<TLogItem> read FAppenderQueue;
+      function EnqueueLog(const aLogItem: TLogItem): Boolean;
+      property Queue: TAppenderQueue read FAppenderQueue;
       property FailsCount: Cardinal read FFailsCount;
-      property Enabled: Boolean read FEnabled write SetEnabled;
       function GetLogLevel: TLogType;
     end;
   private
     FQueue: TThreadedQueue<TLogItem>;
     FAppenders: TLogAppenderList;
     FEventsHandlers: TLoggerProEventsHandler;
-    function BuildAppendersDecorator: TObjectList<TAppenderDecorator>;
+    function BuildAppendersDecorator: TObjectList<TAppenderAdapter>;
     procedure DoOnAppenderError(const FailAppenderClassName: string;
       const aFailedLogItem: TLogItem; const aReason: TLogErrorReason;
       var aAction: TLogErrorAction);
@@ -192,15 +217,17 @@ type
   private
     FLogLevel: TLogType;
     FEnabled: Boolean;
+    FLastErrorTimeStamp: TDateTime;
   public
     constructor Create; virtual;
     procedure Setup; virtual; abstract;
     procedure WriteLog(const aLogItem: TLogItem); virtual; abstract;
     procedure TearDown; virtual; abstract;
-    procedure SetEnabled(const Value: Boolean);
-    function IsEnabled: Boolean;
+    procedure TryToRestart(var Restarted: Boolean); virtual;
     procedure SetLogLevel(const Value: TLogType);
     function GetLogLevel: TLogType; inline;
+    procedure SetLastErrorTimeStamp(const Value: TDateTime);
+    function GetLastErrorTimeStamp: TDateTime;
     property LogLevel: TLogType read GetLogLevel write SetLogLevel;
   end;
 
@@ -253,7 +280,7 @@ function BuildLogWriter(aAppenders: array of ILogAppender;
 implementation
 
 uses
-  System.Types, LoggerPro.FileAppender, System.SyncObjs;
+  System.Types, LoggerPro.FileAppender, System.SyncObjs, System.DateUtils;
 
 function BuildLogWriter(aAppenders: array of ILogAppender;
   aEventsHandlers: TLoggerProEventsHandler; aLogLevel: TLogType): ILogWriter;
@@ -361,10 +388,10 @@ begin
       if SameText(TObject(FLogAppenders[I]).ClassName, AppenderName) then
       // XE2+ Compatibility
       begin
-        if FLogAppenders[I].IsEnabled then
-          Result := 'enabled'
-        else
-          Result := 'disabled';
+        // if FLogAppenders[I].IsEnabled then
+        // Result := 'enabled'
+        // else
+        // Result := 'disabled';
         Exit;
       end;
     end;
@@ -471,7 +498,7 @@ var
   lQSize: Integer;
   lLogItem: TLogItem;
   I: Integer;
-  lAppendersDecorators: TObjectList<TAppenderDecorator>;
+  lAppendersDecorators: TObjectList<TAppenderAdapter>;
   lAction: TLogErrorAction;
 begin
   lAppendersDecorators := BuildAppendersDecorator;
@@ -485,23 +512,23 @@ begin
           try
             for I := 0 to lAppendersDecorators.Count - 1 do
             begin
-              if (lAppendersDecorators[I].Enabled) and
-                (lLogItem.LogType >= lAppendersDecorators[I].GetLogLevel) then
+              if lLogItem.LogType >= lAppendersDecorators[I].GetLogLevel then
               begin
-                if not lAppendersDecorators[I].WriteLog(lLogItem) then
+                if not lAppendersDecorators[I].EnqueueLog(lLogItem) then
                 begin
-                  lAction := TLogErrorAction.Skip; // default
+                  lAction := TLogErrorAction.SkipNewest; // default
                   DoOnAppenderError
                     (TObject(lAppendersDecorators[I].FLogAppender).ClassName,
                     lLogItem, TLogErrorReason.QueueFull, lAction);
                   case lAction of
-                    TLogErrorAction.Skip:
+                    TLogErrorAction.SkipNewest:
                       begin
-                        // just skip the message
+                        // just skip the new message
                       end;
-                    TLogErrorAction.DisableAppender:
+                    TLogErrorAction.DiscardOlder:
                       begin
-                        lAppendersDecorators[I].Enabled := False;
+                        // just remove the oldest log message
+                        lAppendersDecorators[I].Queue.PopItem.Free;
                       end;
                   end;
                 end;
@@ -523,15 +550,15 @@ begin
   FEventsHandlers := Value;
 end;
 
-function TLoggerThread.BuildAppendersDecorator: TObjectList<TAppenderDecorator>;
+function TLoggerThread.BuildAppendersDecorator: TObjectList<TAppenderAdapter>;
 var
   I: Integer;
 begin
-  Result := TObjectList<TAppenderDecorator>.Create(true);
+  Result := TObjectList<TAppenderAdapter>.Create(true);
   try
     for I := 0 to FAppenders.Count - 1 do
     begin
-      Result.Add(TAppenderDecorator.Create(FAppenders[I]));
+      Result.Add(TAppenderAdapter.Create(FAppenders[I]));
     end;
   except
     Result.Free;
@@ -568,68 +595,64 @@ end;
 
 { TLoggerThread.TAppenderDecorator }
 
-constructor TLoggerThread.TAppenderDecorator.Create(aAppender: ILogAppender);
+constructor TLoggerThread.TAppenderAdapter.Create(aAppender: ILogAppender);
 begin
   inherited Create;
   FFailsCount := 0;
   FLogAppender := aAppender;
-  FAppenderQueue := TThreadedQueue<TLogItem>.Create
+  FAppenderQueue := TAppenderQueue.Create
     (DefaultLoggerProAppenderQueueSize, 0, 500);
   FTerminated := False;
-  Enabled := true; // use the property here, do not set FEnabled!
-  FAppenderThread := TThread.CreateAnonymousThread(
-    procedure
-    var
-      lLogItem: TLogItem;
-    begin
-      FLogAppender.Setup;
-      try
-        while (not FTerminated) or (FAppenderQueue.QueueSize > 0) do
-        begin
-          if FAppenderQueue.PopItem(lLogItem) = TWaitResult.wrSignaled then
-          begin
-            if lLogItem <> nil then
-              try
-                try
-                  FLogAppender.WriteLog(lLogItem);
-                except
-                  Enabled := False;
-                end;
-              finally
-                lLogItem.Free;
-              end;
-          end;
-        end;
-      finally
-        FLogAppender.TearDown;
-      end;
-    end);
-  FAppenderThread.FreeOnTerminate := False;
-  FAppenderThread.Start;
+  FAppenderThread := TAppenderThread.Create(FLogAppender, FAppenderQueue);
+
+  // FAppenderThread := TThread.CreateAnonymousThread(
+  // procedure
+  // var
+  // lLogItem: TLogItem;
+  // begin
+  // FLogAppender.Setup;
+  // try
+  // while (not FTerminated) or (FAppenderQueue.QueueSize > 0) do
+  // begin
+  // if FAppenderQueue.PopItem(lLogItem) = TWaitResult.wrSignaled then
+  // begin
+  // if lLogItem <> nil then
+  // try
+  // try
+  // FLogAppender.WriteLog(lLogItem);
+  // except
+  // Enabled := False;
+  // end;
+  // finally
+  // lLogItem.Free;
+  // end;
+  // end;
+  // end;
+  // finally
+  // FLogAppender.TearDown;
+  // end;
+  // end);
+  // FAppenderThread.FreeOnTerminate := False;
+  // FAppenderThread.Start;
 end;
 
-destructor TLoggerThread.TAppenderDecorator.Destroy;
+destructor TLoggerThread.TAppenderAdapter.Destroy;
 begin
   FAppenderQueue.DoShutDown;
   FTerminated := true;
+  FAppenderThread.Terminate;
   FAppenderThread.WaitFor;
   FAppenderThread.Free;
   FAppenderQueue.Free;
   inherited;
 end;
 
-function TLoggerThread.TAppenderDecorator.GetLogLevel: TLogType;
+function TLoggerThread.TAppenderAdapter.GetLogLevel: TLogType;
 begin
   Result := FLogAppender.GetLogLevel;
 end;
 
-procedure TLoggerThread.TAppenderDecorator.SetEnabled(const Value: Boolean);
-begin
-  FEnabled := Value;
-  FLogAppender.SetEnabled(FEnabled);
-end;
-
-function TLoggerThread.TAppenderDecorator.WriteLog(const aLogItem
+function TLoggerThread.TAppenderAdapter.EnqueueLog(const aLogItem
   : TLogItem): Boolean;
 var
   lLogItem: TLogItem;
@@ -654,24 +677,122 @@ begin
   Self.FLogLevel := TLogType.Debug;
 end;
 
+function TLoggerProAppenderBase.GetLastErrorTimeStamp: TDateTime;
+begin
+  Result := FLastErrorTimeStamp;
+end;
+
 function TLoggerProAppenderBase.GetLogLevel: TLogType;
 begin
   Result := FLogLevel;
 end;
 
-function TLoggerProAppenderBase.IsEnabled: Boolean;
+procedure TLoggerProAppenderBase.SetLastErrorTimeStamp(const Value: TDateTime);
 begin
-  Result := FEnabled;
-end;
-
-procedure TLoggerProAppenderBase.SetEnabled(const Value: Boolean);
-begin
-  FEnabled := Value;
+  FLastErrorTimeStamp := Value;
 end;
 
 procedure TLoggerProAppenderBase.SetLogLevel(const Value: TLogType);
 begin
   FLogLevel := Value;
+end;
+
+procedure TLoggerProAppenderBase.TryToRestart(var Restarted: Boolean);
+begin
+  Restarted := False;
+  // do nothing "smart" here... descendant must implement specific "restart" strategies
+end;
+
+{ TAppenderThread }
+
+constructor TAppenderThread.Create(aLogAppender: ILogAppender;
+  aAppenderQueue: TAppenderQueue);
+begin
+  FLogAppender := aLogAppender;
+  FAppenderQueue := aAppenderQueue;
+  inherited Create(False);
+end;
+
+procedure TAppenderThread.Execute;
+var
+  lLogItem: TLogItem;
+  lRestarted: Boolean;
+  lStatus: TAppenderStatus;
+begin
+  lStatus := TAppenderStatus.BeforeSetup;
+  try
+    while (not Terminated) or (FAppenderQueue.QueueSize > 0) do
+    begin
+      { this state machine handles the status of the appender }
+      case lStatus of
+        TAppenderStatus.BeforeTearDown:
+          begin
+            Break;
+          end;
+
+        TAppenderStatus.BeforeSetup:
+          begin
+            try
+              FLogAppender.Setup;
+              lStatus := TAppenderStatus.Running;
+            except
+              Sleep(500); // wait before next setup call
+            end;
+          end;
+
+        TAppenderStatus.ToRestart:
+          begin
+            try
+              lRestarted := False;
+              FLogAppender.TryToRestart(lRestarted);
+              lStatus := TAppenderStatus.Running;
+              FLogAppender.LastErrorTimeStamp := 0;
+            except
+              lRestarted := False;
+              FLogAppender.LastErrorTimeStamp := now;
+              lStatus := TAppenderStatus.WaitAfterFail;
+            end;
+            Failing := not lRestarted;
+          end;
+
+        TAppenderStatus.WaitAfterFail:
+          begin
+            Sleep(500);
+            if SecondsBetween(now, FLogAppender.LastErrorTimeStamp) >= 5 then
+              lStatus := TAppenderStatus.ToRestart;
+          end;
+
+        TAppenderStatus.Running:
+          begin
+            if FAppenderQueue.PopItem(lLogItem) = TWaitResult.wrSignaled then
+            begin
+              if lLogItem <> nil then
+              begin
+                try
+                  try
+                    FLogAppender.WriteLog(lLogItem);
+                  except
+                    Failing := true;
+                    FLogAppender.LastErrorTimeStamp := now;
+                    lStatus := TAppenderStatus.WaitAfterFail;
+                    Continue;
+                  end;
+                finally
+                  lLogItem.Free;
+                end;
+              end;
+            end;
+          end;
+      end;
+    end;
+  finally
+    FLogAppender.TearDown;
+  end;
+end;
+
+procedure TAppenderThread.SetFailing(const Value: Boolean);
+begin
+  FFailing := Value;
 end;
 
 end.

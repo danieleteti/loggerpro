@@ -13,13 +13,17 @@ DOIT_CONFIG = {'verbosity': 2, 'default_tasks': ['build']}
 projects = [
             'unittests\\UnitTests.dproj',
             'samples\\01_global_logger\\global_logger.dproj',
-						'samples\\02_file_appender\\file_appender.dproj',
-						'samples\\03_console_appender\\console_appender.dproj',
-						'samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj',
-						'samples\\05_vcl_appenders\\memo_appender.dproj',
-						'samples\\10_multiple_appenders\\multiple_appenders.dproj',
-						'samples\\20_multiple_loggers\\multiple_loggers.dproj',
-						'samples\\50_custom_appender\\custom_appender.dproj'											
+			'samples\\02_file_appender\\file_appender.dproj',
+			'samples\\03_console_appender\\console_appender.dproj',
+			'samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj',
+			'samples\\05_vcl_appenders\\memo_appender.dproj',
+			'samples\\10_multiple_appenders\\multiple_appenders.dproj',
+			'samples\\20_multiple_loggers\\multiple_loggers.dproj',
+			'samples\\50_custom_appender\\custom_appender.dproj',
+            'samples\\60_logging_inside_dll\\MainProgram.dproj',
+            'samples\\60_logging_inside_dll\\mydll.dproj',
+            'samples\\90_remote_logging_with_redis\\RemoteRedisAppenderSample.dproj',
+            'samples\\90_remote_logging_with_redis\\redis_logs_viewer\\RedisLogsViewer.dproj'											
             ]
 release_path = "BUILD"
 ###############################################################################################

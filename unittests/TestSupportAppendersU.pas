@@ -76,8 +76,7 @@ end;
 
 procedure TMyVerySlowAppender.WriteLog(const aLogItem: TLogItem);
 begin
-  if IsEnabled then
-    Sleep(FDelay);
+//  Sleep(FDelay);
 end;
 
 end.

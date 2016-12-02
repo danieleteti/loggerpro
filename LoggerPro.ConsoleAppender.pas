@@ -59,7 +59,7 @@ begin
       if GetStdHandle(STD_OUTPUT_HANDLE) = 0 then
         AllocConsole
       else
-        SetEnabled(False);
+        raise ELoggerPro.Create('Cannot alloc console');
     end);
 end;
 

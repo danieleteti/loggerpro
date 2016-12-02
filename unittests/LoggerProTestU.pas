@@ -150,42 +150,72 @@ procedure TLoggerProTest.TestOnAppenderError;
 var
   lLog: ILogWriter;
   I: Integer;
-  lSkipped: Int64;
   lEventsHandlers: TLoggerProEventsHandler;
   lAppenders: TArray<String>;
   lSavedLoggerProAppenderQueueSize: Cardinal;
+  lOldestsDiscarded: Int64;
+  lNewestsSkipped: Int64;
+  lCount: Int64;
+  lTempCount: Int64;
 begin
+  lCount := 0;
   lSavedLoggerProAppenderQueueSize := DefaultLoggerProAppenderQueueSize;
-  DefaultLoggerProAppenderQueueSize := 10;
-  lSkipped := 0;
+  DefaultLoggerProAppenderQueueSize := 0;
+
+  lNewestsSkipped := 0;
+  lOldestsDiscarded := 0;
   lEventsHandlers := TLoggerProEventsHandler.Create;
   try
     lEventsHandlers.OnAppenderError :=
         procedure(const AppenderClassName: String;
         const FailedLogItem: TLogItem; const Reason: TLogErrorReason;
         var Action: TLogErrorAction)
+      var
+        lLocalCount: Int64;
       begin
-        if lSkipped > 10 then
-          Action := TLogErrorAction.DisableAppender
+        lLocalCount := TInterlocked.Add(lCount, 1);
+        if lLocalCount <= 20 then
+        begin
+          Action := TLogErrorAction.SkipNewest;
+          TInterlocked.Increment(lNewestsSkipped);
+        end
         else
-          Action := TLogErrorAction.Skip;
-        TInterlocked.Increment(lSkipped);
+        begin
+          Action := TLogErrorAction.DiscardOlder;
+          TInterlocked.Increment(lOldestsDiscarded);
+        end;
       end;
 
     lLog := BuildLogWriter([TMyVerySlowAppender.Create(1)], lEventsHandlers);
-    for I := 1 to 1000 do
+    for I := 1 to 40 do
     begin
       lLog.Debug('log message ' + I.ToString, 'tag');
     end;
 
-    lAppenders := lLog.GetAppendersClassNames;
+    while True do
+    begin
+      lTempCount := TInterlocked.Read(lNewestsSkipped);
+      if lTempCount < 20 then
+        Sleep(10)
+      else
+        break;
+    end;
 
-    while TInterlocked.Read(lSkipped) <= 10 do
+    while True do
+    begin
+      lTempCount := TInterlocked.Read(lOldestsDiscarded);
+      if lTempCount < 20 then
+        Sleep(10)
+      else
+        break;
+    end;
+
+    while TInterlocked.Read(lCount) < 40 do
       Sleep(100);
 
+    lAppenders := lLog.GetAppendersClassNames;
     Assert.AreEqual(1, Length(lAppenders));
     Assert.AreEqual('TMyVerySlowAppender', lAppenders[0]);
-    Assert.AreEqual('disabled', lLog.GetAppenderStatus(lAppenders[0]));
     lLog := nil;
   finally
     DefaultLoggerProAppenderQueueSize := lSavedLoggerProAppenderQueueSize;
