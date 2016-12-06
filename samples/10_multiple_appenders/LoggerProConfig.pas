@@ -23,10 +23,16 @@ begin
 end;
 
 procedure SetupLogger;
+const
+{$IFDEF DEBUG}
+  LOG_LEVEL = TLogType.Debug;
+{$ELSE}
+  LOG_LEVEL = TLogType.Warning;
+{$ENDIF}
 begin
   _Log := BuildLogWriter([TLoggerProFileAppender.Create,
     TLoggerProConsoleAppender.Create,
-    TLoggerProOutputDebugStringAppender.Create]);
+    TLoggerProOutputDebugStringAppender.Create], nil, LOG_LEVEL);
 end;
 
 initialization
