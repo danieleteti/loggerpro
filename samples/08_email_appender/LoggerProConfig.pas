@@ -40,7 +40,7 @@ begin
     Result.UseTLS := TIdUseTLS.utUseExplicitTLS;
     Result.AuthType := satDefault;
     Result.Username := 'daniele.teti@gmail.com';
-    Result.Password := 'Dan13l1n0';
+    Result.Password := '<yourpassword>';
   except
     Result.Free;
     raise;
