@@ -92,6 +92,15 @@ uses
 
 function TLoggerProFileAppender.GetLogFileName(const aTag: string;
   const aFileNumber: Integer): string;
+
+  function StringPadLeft(const S: string; TotalWidth: Integer; PaddingChar: Char): string;
+  begin
+    TotalWidth := TotalWidth - Length(S);
+    if TotalWidth > 0 then
+      Result := System.StringOfChar(PaddingChar, TotalWidth) + S
+    else
+      Result := S;
+  end;
 var
   lFormat, lExt: string;
   lModuleName: string;
@@ -101,7 +110,7 @@ begin
   lModuleName := TPath.GetFileNameWithoutExtension(GetModuleName(HInstance));
 
   if TFileAppenderOption.IncludePID in FFileAppenderOptions then
-    lFormat := '.PID-' + IntToStr(CurrentProcessId).PadLeft(6, '0') + lFormat;
+    lFormat := '.PID-' + StringPadLeft(IntToStr(CurrentProcessId), 6, '0') + lFormat;
 
   lPath := FLogsFolder;
   lExt := Format(lFormat, [aFileNumber, aTag]);
