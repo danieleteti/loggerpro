@@ -57,9 +57,9 @@ begin
     procedure
     begin
       if GetStdHandle(STD_OUTPUT_HANDLE) = 0 then
-        AllocConsole
-      else
-        raise ELoggerPro.Create('Cannot alloc console');
+        raise ELoggerPro.Create
+          ('Console not present' + slineBreak +
+          '[HINT: You can call "AllocConsole" to create a Console in a GUI application]');
     end);
 end;
 
