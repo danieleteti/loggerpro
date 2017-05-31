@@ -73,6 +73,10 @@ type
     { @abstract(Defines the max size of each log file)
       The actual meaning is: "If the file size is > than @link(DEFAULT_MAX_FILE_SIZE_KB) then rotate logs. }
     DEFAULT_MAX_FILE_SIZE_KB = 1000;
+    { @abstract(Milliseconds to wait between the RETRY_COUNT times. }
+    RETRY_DELAY = 200;
+    { @abstract(How much times we have to retry if the file is locked?. }
+    RETRY_COUNT = 5;
     constructor Create(aMaxBackupFileCount
       : Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB;
@@ -241,20 +245,42 @@ function TLoggerProFileAppender.CreateWriter(const aFileName: string)
 var
   lFileStream: TFileStream;
   lFileAccessMode: Word;
+  lRetries: Integer;
 begin
   lFileAccessMode := fmOpenWrite or fmShareDenyWrite;
   if not TFile.Exists(aFileName) then
     lFileAccessMode := lFileAccessMode or fmCreate;
 
-  lFileStream := TFileStream.Create(aFileName, lFileAccessMode);
-  try
-    lFileStream.Seek(0, TSeekOrigin.soEnd);
-    Result := TStreamWriter.Create(lFileStream, TEncoding.ANSI, 1024);
-    Result.AutoFlush := False;
-    Result.OwnStream;
-  except
-    lFileStream.Free;
-    raise;
+  // If the file si still blocked by a precedent execution or
+  // for some other reasons, we try to access the file for 5 times.
+  // If after 5 times (with a bit of delay in between) the file is still
+  // locked, then the exception is raised.
+  lRetries := 0;
+  while true do
+  begin
+    try
+      lFileStream := TFileStream.Create(aFileName, lFileAccessMode);
+      try
+        lFileStream.Seek(0, TSeekOrigin.soEnd);
+        Result := TStreamWriter.Create(lFileStream, TEncoding.ANSI, 1024);
+        Result.AutoFlush := False;
+        Result.OwnStream;
+        break;
+      except
+        lFileStream.Free;
+        raise;
+      end;
+    except
+      if lRetries = RETRY_COUNT then
+      begin
+        raise;
+      end
+      else
+      begin
+        Inc(lRetries);
+        Sleep(RETRY_DELAY); // just wait a little bit
+      end;
+    end;
   end;
 end;
 
