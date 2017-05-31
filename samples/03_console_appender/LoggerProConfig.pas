@@ -10,7 +10,7 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.ConsoleAppender;
+  LoggerPro.ConsoleAppender, Winapi.Windows;
 
 var
   _Log: ILogWriter;
@@ -22,6 +22,8 @@ end;
 
 initialization
 
-_Log := BuildLogWriter([TLoggerProConsoleAppender.Create])
+_Log := BuildLogWriter([TLoggerProConsoleAppender.Create]);
+if not IsConsole then
+  AllocConsole;
 
 end.
