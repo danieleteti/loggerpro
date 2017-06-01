@@ -1,6 +1,7 @@
 unit LoggerPro;
 { <@abstract(Contains the LoggerPro core. Include this if you want to create your own logger, otherwise you can use the global one using @link(LoggerPro.GlobalLogger.pas))
   @author(Daniele Teti) }
+
 {$SCOPEDENUMS ON}
 
 interface
@@ -718,71 +719,98 @@ var
   lLogItem: TLogItem;
   lRestarted: Boolean;
   lStatus: TAppenderStatus;
+  lSetupFailCount: Integer;
 begin
+  lSetupFailCount := 0;
   lStatus := TAppenderStatus.BeforeSetup;
   try
+    { the appender tries to log all the messages before terminate... }
     while (not Terminated) or (FAppenderQueue.QueueSize > 0) do
     begin
-      { this state machine handles the status of the appender }
-      case lStatus of
-        TAppenderStatus.BeforeTearDown:
-          begin
-            Break;
-          end;
+      { ...but if the thread should be terminated, and the appender is failing,
+        its messages will be lost }
+      if Terminated and (lStatus = TAppenderStatus.WaitAfterFail) then
+        Break;
 
-        TAppenderStatus.BeforeSetup:
-          begin
-            try
-              FLogAppender.Setup;
-              lStatus := TAppenderStatus.Running;
-            except
-              Sleep(500); // wait before next setup call
-            end;
-          end;
-
-        TAppenderStatus.ToRestart:
-          begin
-            try
-              lRestarted := False;
-              FLogAppender.TryToRestart(lRestarted);
-              lStatus := TAppenderStatus.Running;
-              FLogAppender.LastErrorTimeStamp := 0;
-            except
-              lRestarted := False;
-              FLogAppender.LastErrorTimeStamp := now;
-              lStatus := TAppenderStatus.WaitAfterFail;
-            end;
-            Failing := not lRestarted;
-          end;
-
-        TAppenderStatus.WaitAfterFail:
-          begin
-            Sleep(500);
-            if SecondsBetween(now, FLogAppender.LastErrorTimeStamp) >= 5 then
-              lStatus := TAppenderStatus.ToRestart;
-          end;
-
-        TAppenderStatus.Running:
-          begin
-            if FAppenderQueue.PopItem(lLogItem) = TWaitResult.wrSignaled then
+      try
+        { this state machine handles the status of the appender }
+        case lStatus of
+          TAppenderStatus.BeforeTearDown:
             begin
-              if lLogItem <> nil then
-              begin
-                try
-                  try
-                    FLogAppender.WriteLog(lLogItem);
-                  except
-                    Failing := true;
-                    FLogAppender.LastErrorTimeStamp := now;
-                    lStatus := TAppenderStatus.WaitAfterFail;
-                    Continue;
-                  end;
-                finally
-                  lLogItem.Free;
+              Break;
+            end;
+
+          TAppenderStatus.BeforeSetup:
+            begin
+              try
+                FLogAppender.Setup;
+                lStatus := TAppenderStatus.Running;
+              except
+                if lSetupFailCount = 10 then
+                begin
+                  lStatus := TAppenderStatus.WaitAfterFail;
+                end
+                else
+                begin
+                  Inc(lSetupFailCount);
+                  Sleep(1000); // wait before next setup call
                 end;
               end;
             end;
-          end;
+
+          TAppenderStatus.ToRestart:
+            begin
+              try
+                lRestarted := False;
+                FLogAppender.TryToRestart(lRestarted);
+                if lRestarted then
+                begin
+                  lStatus := TAppenderStatus.Running;
+                  FLogAppender.LastErrorTimeStamp := 0;
+                end
+                else
+                begin
+                  lRestarted := False;
+                  FLogAppender.LastErrorTimeStamp := now;
+                  lStatus := TAppenderStatus.WaitAfterFail;
+                end;
+              except
+                lRestarted := False;
+              end;
+              Failing := not lRestarted;
+            end;
+
+          TAppenderStatus.WaitAfterFail:
+            begin
+              Sleep(500);
+              if SecondsBetween(now, FLogAppender.LastErrorTimeStamp) >= 5 then
+                lStatus := TAppenderStatus.ToRestart;
+            end;
+
+          TAppenderStatus.Running:
+            begin
+              if FAppenderQueue.PopItem(lLogItem) = TWaitResult.wrSignaled then
+              begin
+                if lLogItem <> nil then
+                begin
+                  try
+                    try
+                      FLogAppender.WriteLog(lLogItem);
+                    except
+                      Failing := true;
+                      FLogAppender.LastErrorTimeStamp := now;
+                      lStatus := TAppenderStatus.WaitAfterFail;
+                      Continue;
+                    end;
+                  finally
+                    lLogItem.Free;
+                  end;
+                end;
+              end;
+            end;
+        end;
+      except
+        // something wrong... but we cannot stop the thread. Let's retry.
       end;
     end;
   finally

@@ -5,7 +5,7 @@ unit LoggerPro.ConsoleAppender;
 interface
 
 uses
-  LoggerPro, System.Classes, Vcl.StdCtrls;
+  LoggerPro, System.Classes;
 
 type
   {
@@ -53,6 +53,8 @@ end;
 
 procedure TLoggerProConsoleAppender.Setup;
 begin
+  if IsConsole then
+    raise ELoggerPro.CreateFmt('Cannot use %s in a console app', [ClassName]);
   TThread.Synchronize(nil,
     procedure
     begin
