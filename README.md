@@ -73,7 +73,7 @@ begin
     WriteLn('  "getting_started_console.00.main.log"');
     WriteLn('  "getting_started_console.00.errors.log"');
 
-    if DebugHook <> 0 then //tellinform the user where his/her logs are
+    if DebugHook <> 0 then //inform the user where his/her logs are
     begin
       WriteLn('also, you logs have been sent to the current debugger, check the Delphi''s EventLog window to see them.');
     end
