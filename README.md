@@ -92,7 +92,7 @@ begin
 end.
 ```
 
-##Built-in log appenders
+## Built-in log appenders
 The framework contains the following built-in log appenders
 - File (`TLoggerProFileAppender`)
 - Console (`TLoggerProConsoleAppender`)
@@ -108,6 +108,6 @@ The log writer and all the appenders are asycnhronous.
 
 **Check the samples to see how to use each appender or even combine different appenders.**
 
-##Documentation
+## Documentation
 
 Documenation is available in the `docs` folder as HTML.
