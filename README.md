@@ -12,6 +12,8 @@ LoggerPro is compatibile with
 - Delphi XE8
 - Delphi 10 Seattle
 - Delphi 10.1 Berlin
+- Delphi 10.2 Tokyo (Linux compatibility)
+
 
 ## Getting started
 ```delphi
