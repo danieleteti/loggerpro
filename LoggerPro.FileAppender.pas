@@ -54,7 +54,7 @@ type
     function GetLogFileName(const aTag: string;
       const aFileNumber: Integer): string;
     procedure InternalWriteLog(const aStreamWriter: TStreamWriter;
-      const aValue: string);
+      const aValue: string); inline;
   public const
     { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
       The positional parameters are the followings:
@@ -247,7 +247,7 @@ var
   lFileAccessMode: Word;
   lRetries: Integer;
 begin
-  lFileAccessMode := fmOpenWrite or fmShareDenyWrite;
+  lFileAccessMode := fmOpenWrite or fmShareDenyNone;
   if not TFile.Exists(aFileName) then
     lFileAccessMode := lFileAccessMode or fmCreate;
 
@@ -262,8 +262,8 @@ begin
       lFileStream := TFileStream.Create(aFileName, lFileAccessMode);
       try
         lFileStream.Seek(0, TSeekOrigin.soEnd);
-        Result := TStreamWriter.Create(lFileStream, TEncoding.ANSI, 1024);
-        Result.AutoFlush := False;
+        Result := TStreamWriter.Create(lFileStream, TEncoding.Default, 32);
+        Result.AutoFlush := True;
         Result.OwnStream;
         break;
       except
