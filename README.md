@@ -12,6 +12,8 @@ LoggerPro is compatibile with
 - Delphi XE8
 - Delphi 10 Seattle
 - Delphi 10.1 Berlin
+- Delphi 10.2 Tokyo (Linux compatibility)
+
 
 ## Getting started
 ```delphi
@@ -71,7 +73,7 @@ begin
     WriteLn('  "getting_started_console.00.main.log"');
     WriteLn('  "getting_started_console.00.errors.log"');
 
-    if DebugHook <> 0 then //tellinform the user where his/her logs are
+    if DebugHook <> 0 then //inform the user where his/her logs are
     begin
       WriteLn('also, you logs have been sent to the current debugger, check the Delphi''s EventLog window to see them.');
     end
@@ -90,7 +92,7 @@ begin
 end.
 ```
 
-##Built-in log appenders
+## Built-in log appenders
 The framework contains the following built-in log appenders
 - File (`TLoggerProFileAppender`)
 - Console (`TLoggerProConsoleAppender`)
@@ -106,6 +108,6 @@ The log writer and all the appenders are asycnhronous.
 
 **Check the samples to see how to use each appender or even combine different appenders.**
 
-##Documentation
+## Documentation
 
 Documenation is available in the `docs` folder as HTML.
