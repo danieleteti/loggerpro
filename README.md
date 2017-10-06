@@ -111,3 +111,6 @@ The log writer and all the appenders are asycnhronous.
 ## Documentation
 
 Documenation is available in the `docs` folder as HTML.
+
+## Other
+You can install [Delphinus package manager](https://github.com/Memnarch/Delphinus/wiki/Installing-Delphinus) and install LoggerPro as a package there. (Delphinus-Support)
