@@ -13,8 +13,10 @@ uses
   LoggerPro.FileAppender,
   LoggerPro.EMailAppender,
   LoggerPro.OutputDebugStringAppender,
-  idSMTP,
-  IdIOHandlerStack, IdSSL, IdSSLOpenSSL, IdExplicitTLSClientServerBase;
+  System.SysUtils,
+  idSMTP, System.IOUtils,
+  IdIOHandlerStack, IdSSL,
+  IdSSLOpenSSL, IdExplicitTLSClientServerBase;
 
 var
   _Log: ILogWriter;
@@ -37,10 +39,12 @@ begin
     end;
     Result.Host := 'smtp.gmail.com';
     Result.Port := 25;
-    Result.UseTLS := TIdUseTLS.utUseExplicitTLS;
+    Result.UseTLS := TIdUseTLS.utUseImplicitTLS;
     Result.AuthType := satDefault;
     Result.Username := 'daniele.teti@gmail.com';
-    Result.Password := '<yourpassword>';
+    if not TFile.Exists('config.txt') then
+      raise Exception.Create('Create a "config.txt" file containing the password');
+    Result.Password := TFile.ReadAllText('config.txt'); // '<yourpassword>';
   except
     Result.Free;
     raise;
@@ -49,11 +53,17 @@ end;
 
 procedure SetupLogger;
 const
-{$IFDEF DEBUG}
+
+  {$IFDEF DEBUG}
+
   LOG_LEVEL = TLogType.Debug;
-{$ELSE}
+
+  {$ELSE}
+
   LOG_LEVEL = TLogType.Warning;
-{$ENDIF}
+
+  {$ENDIF}
+
 var
   lEmailAppender: ILogAppender;
 begin

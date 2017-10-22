@@ -24,18 +24,18 @@ end;
 
 procedure SetupLogger;
 var
-  lFileAppender, lConsoleAppender, lOutputDebugStringAppender: ILogAppender;
+  lFileAppender, lErrorsFileAppender, lOutputDebugStringAppender: ILogAppender;
 begin
-  lFileAppender := TLoggerProFileAppender.Create;
+  lFileAppender := TLoggerProFileAppender.Create(5, 1000, 'logs');
   lFileAppender.SetLogLevel(TLogType.Info);
 
-  lConsoleAppender := TLoggerProConsoleAppender.Create;
-  lConsoleAppender.SetLogLevel(TLogType.Warning);
+  lErrorsFileAppender := TLoggerProFileAppender.Create(5, 1000, 'logs_errors');
+  lErrorsFileAppender.SetLogLevel(TLogType.Error);
 
   lOutputDebugStringAppender := TLoggerProOutputDebugStringAppender.Create;
   // default TLogType.Debug
 
-  _Log := BuildLogWriter([lFileAppender, lConsoleAppender, lOutputDebugStringAppender]);
+  _Log := BuildLogWriter([lFileAppender, lErrorsFileAppender, lOutputDebugStringAppender]);
 end;
 
 initialization

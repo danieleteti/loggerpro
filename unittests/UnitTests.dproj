@@ -4,7 +4,7 @@
         <ProjectVersion>18.2</ProjectVersion>
         <MainSource>UnitTests.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">PLAINDUNITX</Config>
+        <Config Condition="'$(Config)'==''">TESTINSIGHT</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Console</AppType>

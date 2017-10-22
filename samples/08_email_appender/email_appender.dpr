@@ -2,7 +2,8 @@ program email_appender;
 
 uses
   Vcl.Forms,
-  MemoAppendersFormU in 'MemoAppendersFormU.pas' {MainForm};
+  MainFormU in 'MainFormU.pas' {MainForm},
+  LoggerProConfig in 'LoggerProConfig.pas';
 
 {$R *.res}
 
