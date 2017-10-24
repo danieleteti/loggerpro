@@ -40,8 +40,6 @@ object MainForm: TMainForm
       item
         Width = 50
       end>
-    ExplicitTop = 342
-    ExplicitWidth = 664
   end
   object ToolBar1: TToolBar
     AlignWithMargins = True
@@ -56,9 +54,6 @@ object MainForm: TMainForm
     List = True
     ShowCaptions = True
     TabOrder = 1
-    ExplicitLeft = 0
-    ExplicitTop = 0
-    ExplicitWidth = 895
     object ToolButton1: TToolButton
       Left = 0
       Top = 0
@@ -107,25 +102,6 @@ object MainForm: TMainForm
     BevelOuter = bvNone
     Constraints.MinWidth = 138
     TabOrder = 2
-    object rgLogsTypes: TRadioGroup
-      AlignWithMargins = True
-      Left = 3
-      Top = 164
-      Width = 132
-      Height = 126
-      Align = alTop
-      Caption = 'Log Types'
-      ItemIndex = 0
-      Items.Strings = (
-        'Debug'
-        'Info'
-        'Warning'
-        'Error')
-      TabOrder = 0
-      OnClick = rgLogsTypesClick
-      ExplicitLeft = 0
-      ExplicitTop = 299
-    end
     object GroupBox1: TGroupBox
       AlignWithMargins = True
       Left = 3
@@ -134,7 +110,7 @@ object MainForm: TMainForm
       Height = 155
       Align = alTop
       Caption = 'Redis Server'
-      TabOrder = 1
+      TabOrder = 0
       object Label1: TLabel
         Left = 6
         Top = 21
@@ -185,16 +161,13 @@ object MainForm: TMainForm
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 3
-    ExplicitLeft = 360
-    ExplicitTop = 272
-    ExplicitWidth = 185
-    ExplicitHeight = 41
     object lstLogs: TListBox
       AlignWithMargins = True
       Left = 3
       Top = 3
       Width = 748
       Height = 470
+      Style = lbOwnerDrawFixed
       Align = alClient
       DoubleBuffered = True
       Font.Charset = ANSI_CHARSET
@@ -206,9 +179,7 @@ object MainForm: TMainForm
       ParentDoubleBuffered = False
       ParentFont = False
       TabOrder = 0
-      ExplicitTop = 65
-      ExplicitWidth = 398
-      ExplicitHeight = 453
+      OnDrawItem = lstLogsDrawItem
     end
   end
   object Timer1: TTimer
@@ -250,7 +221,7 @@ object MainForm: TMainForm
     Left = 512
     Top = 272
     Bitmap = {
-      494C010103000800200020002000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010103000800240020002000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000800000002000000001002000000000000040
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000

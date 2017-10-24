@@ -9,9 +9,6 @@
         <Projects Include="redis_logs_viewer\RedisLogsViewer.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="..\..\unittests\UnitTests.dproj">
-            <Dependencies/>
-        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -38,23 +35,14 @@
     <Target Name="RedisLogsViewer:Make">
         <MSBuild Projects="redis_logs_viewer\RedisLogsViewer.dproj" Targets="Make"/>
     </Target>
-    <Target Name="UnitTests">
-        <MSBuild Projects="..\..\unittests\UnitTests.dproj"/>
-    </Target>
-    <Target Name="UnitTests:Clean">
-        <MSBuild Projects="..\..\unittests\UnitTests.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="UnitTests:Make">
-        <MSBuild Projects="..\..\unittests\UnitTests.dproj" Targets="Make"/>
-    </Target>
     <Target Name="Build">
-        <CallTarget Targets="RemoteRedisAppenderSample;RedisLogsViewer;UnitTests"/>
+        <CallTarget Targets="RemoteRedisAppenderSample;RedisLogsViewer"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="RemoteRedisAppenderSample:Clean;RedisLogsViewer:Clean;UnitTests:Clean"/>
+        <CallTarget Targets="RemoteRedisAppenderSample:Clean;RedisLogsViewer:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="RemoteRedisAppenderSample:Make;RedisLogsViewer:Make;UnitTests:Make"/>
+        <CallTarget Targets="RemoteRedisAppenderSample:Make;RedisLogsViewer:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

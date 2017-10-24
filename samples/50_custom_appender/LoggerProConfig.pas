@@ -42,6 +42,7 @@ end;
 procedure TMyCustomAppender.WriteLog(const aLogItem: TLogItem);
 begin
   // uncomment this to see what happend if an appender raise an exception
+
   // raise Exception.Create('Kill LoggerPro');
 
   // uncomment this to see what happend if an appender is slow
@@ -51,7 +52,8 @@ end;
 
 initialization
 
-_Log := BuildLogWriter([TLoggerProConsoleAppender.Create,
+_Log := BuildLogWriter([
+  TLoggerProConsoleAppender.Create,
   TMyCustomAppender.Create])
 
 end.

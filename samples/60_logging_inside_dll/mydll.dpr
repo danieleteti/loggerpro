@@ -18,8 +18,13 @@ begin
   ReleaseGlobalLogger; // This is required inside dll and ISAPI!!
 end;
 
+procedure DoSomething;
+begin
+  Log.Debug('This is a log message from the DLL', 'DLL');
+end;
+
 exports
-  Init, DeInit;
+  Init, DeInit, DoSomething;
 
 begin
 

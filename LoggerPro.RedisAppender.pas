@@ -21,7 +21,7 @@ type
     FLogKeyPrefix: string;
     FMaxSize: Int64;
   public
-    constructor Create(aRedis: IRedisClient; aMaxSize: Int64 = 5000; aKeyPrefix: String = 'lplogs'); reintroduce;
+    constructor Create(aRedis: IRedisClient; aMaxSize: Int64 = 5000; aKeyPrefix: string = 'loggerpro'); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); override;
@@ -36,7 +36,7 @@ uses
 const
   DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-8s] %3:s [%4:s]';
 
-constructor TLoggerProRedisAppender.Create(aRedis: IRedisClient; aMaxSize: Int64; aKeyPrefix: String);
+constructor TLoggerProRedisAppender.Create(aRedis: IRedisClient; aMaxSize: Int64; aKeyPrefix: string);
 begin
   inherited Create;
   FRedis := aRedis;
@@ -77,7 +77,7 @@ begin
   lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp),
     aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
     aLogItem.LogTag]);
-  lKey := FLogKeyPrefix + '::' + aLogItem.LogTypeAsString.ToLower;
+  lKey := FLogKeyPrefix + '::logs'; // + aLogItem.LogTypeAsString.ToLower;
   // Push the log item to the right of the list (logs:info, logs:warning, log:error)
   FRedis.RPUSH(lKey, [lText]);
   // Trim the list to the FMaxSize last elements

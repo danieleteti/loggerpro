@@ -296,11 +296,6 @@ begin
   end;
   Result := TLogWriter.Create(lLogAppenders, aLogLevel);
   TLogWriter(Result).Initialize(aEventsHandlers);
-
-  // while not TLogWriter(Result).FLoggerThread.Started do
-  // begin
-  // sleep(1); // wait the thread start
-  // end;
 end;
 
 { TLogger.TLogWriter }

@@ -19,7 +19,9 @@ type
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
+    fContext: string;
     { Private declarations }
   public
 
@@ -37,27 +39,22 @@ uses LoggerProConfig;
 
 procedure TMainForm.Button1Click(Sender: TObject);
 begin
-  Log.Debug('This is a debug message with TAG1', 'TAG1');
-  Log.Debug('This is a debug message with TAG2', 'TAG2');
+  Log.DebugFmt('This is a debug message with TAG1 (%s)', [fContext], 'TAG1');
 end;
 
 procedure TMainForm.Button2Click(Sender: TObject);
 begin
-  Log.Info('This is a info message with TAG1', 'TAG1');
-  Log.Info('This is a info message with TAG2', 'TAG2');
+  Log.InfoFmt('This is a info message with TAG1 (%s)', [fContext], 'TAG1');
 end;
 
 procedure TMainForm.Button3Click(Sender: TObject);
 begin
-  Log.Warn('This is a warning message with TAG1', 'TAG1');
-  Log.Warn('This is a warning message with TAG2', 'TAG2');
-
+  Log.WarnFmt('This is a warning message with TAG1 (%s)', [fContext], 'TAG1');
 end;
 
 procedure TMainForm.Button4Click(Sender: TObject);
 begin
-  Log.Error('This is an error message with TAG1', 'TAG1');
-  Log.Error('This is an error message with TAG2', 'TAG2');
+  Log.ErrorFmt('This is a error message with TAG1 (%s)', [fContext], 'TAG1');
 end;
 
 procedure TMainForm.Button5Click(Sender: TObject);
@@ -67,7 +64,7 @@ begin
   lThreadProc := procedure
     var
       I: Integer;
-      lThreadID: String;
+      lThreadID: string;
     begin
       lThreadID := IntToStr(TThread.Current.ThreadID);
       for I := 1 to 100 do
@@ -86,6 +83,31 @@ begin
   TThread.CreateAnonymousThread(lThreadProc).Start;
   TThread.CreateAnonymousThread(lThreadProc).Start;
   TThread.CreateAnonymousThread(lThreadProc).Start;
+end;
+
+function GetUserFromWindows: string;
+var
+  iLen: Cardinal;
+begin
+  iLen := 256;
+  Result := StringOfChar(#0, iLen);
+  GetUserName(PChar(Result), iLen);
+  SetLength(Result, iLen-1);
+end;
+
+function GetComputerNameFromWindows: string;
+var
+  iLen: Cardinal;
+begin
+  iLen := MAX_COMPUTERNAME_LENGTH + 1;
+  Result := StringOfChar(#0, iLen);
+  GetComputerName(PChar(Result), iLen);
+  SetLength(Result, iLen);
+end;
+
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  fContext := GetUserFromWindows + '@' + GetComputerNameFromWindows;
 end;
 
 end.

@@ -2,8 +2,8 @@ object Form5: TForm5
   Left = 0
   Top = 0
   Caption = 'Form5'
-  ClientHeight = 138
-  ClientWidth = 172
+  ClientHeight = 299
+  ClientWidth = 413
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -24,11 +24,20 @@ object Form5: TForm5
   end
   object Button2: TButton
     Left = 8
-    Top = 71
+    Top = 167
     Width = 153
     Height = 57
     Caption = 'UnLoad Library'
     TabOrder = 1
     OnClick = Button2Click
+  end
+  object btnDoSomething: TButton
+    Left = 8
+    Top = 88
+    Width = 153
+    Height = 57
+    Caption = 'Do Something'
+    TabOrder = 2
+    OnClick = btnDoSomethingClick
   end
 end

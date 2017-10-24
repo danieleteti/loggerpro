@@ -11,8 +11,10 @@ type
   TForm5 = class(TForm)
     Button1: TButton;
     Button2: TButton;
+    btnDoSomething: TButton;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
+    procedure btnDoSomethingClick(Sender: TObject);
   private
     FHandle: NativeUInt;
     { Private declarations }
@@ -22,7 +24,7 @@ type
 
 var
   Form5: TForm5;
-  Init, DeInit: procedure;
+  Init, DeInit, DoSomething: procedure;
 
 implementation
 
@@ -32,12 +34,18 @@ uses
 {$R *.dfm}
 
 
+procedure TForm5.btnDoSomethingClick(Sender: TObject);
+begin
+  DoSomething;
+end;
+
 procedure TForm5.Button1Click(Sender: TObject);
 begin
   Log.Debug('Loading dll', 'main');
   FHandle := LoadLibrary('mydll.dll');
   Init := GetProcAddress(FHandle, 'Init');
   DeInit := GetProcAddress(FHandle, 'DeInit');
+  DoSomething := GetProcAddress(FHandle, 'DoSomething');
   Init();
 end;
 

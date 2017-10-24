@@ -19,6 +19,7 @@ type
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -86,6 +87,11 @@ begin
   TThread.CreateAnonymousThread(lThreadProc).Start;
   TThread.CreateAnonymousThread(lThreadProc).Start;
   TThread.CreateAnonymousThread(lThreadProc).Start;
+end;
+
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  AllocConsole;
 end;
 
 end.

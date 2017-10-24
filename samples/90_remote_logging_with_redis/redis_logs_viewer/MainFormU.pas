@@ -20,7 +20,6 @@ type
     ToolButton2: TToolButton;
     ToolButton3: TToolButton;
     lstLogs: TListBox;
-    rgLogsTypes: TRadioGroup;
     ActionList1: TActionList;
     actRefresh: TAction;
     actClearLogs: TAction;
@@ -51,6 +50,8 @@ type
     procedure N2Sec1Click(Sender: TObject);
     procedure btnApplyClick(Sender: TObject);
     procedure ActionList1Update(Action: TBasicAction; var Handled: Boolean);
+    procedure lstLogsDrawItem(Control: TWinControl; Index: Integer; Rect: TRect;
+      State: TOwnerDrawState);
   private
     FRedis: IRedisClient;
     function GetCurrentLogKey: string;
@@ -71,10 +72,8 @@ uses
 
 {$R *.dfm}
 
-
 const
-  LOG_KEYS: array [0 .. 3] of string =
-    ('lplogs::debug', 'lplogs::info', 'lplogs::warning', 'lplogs::error');
+  LOGGERPRO_KEY = 'loggerpro::logs';
 
 procedure TMainForm.actClearLogsExecute(Sender: TObject);
 begin
@@ -93,7 +92,6 @@ begin
   btnApply.Caption := ifthen(not Connected, 'Connect', 'Disconnect');
   EditRedisHostname.Enabled := not Connected;
   EditRedisPort.Enabled := not Connected;
-  rgLogsTypes.Enabled := Connected;
   ToolBar1.Enabled := Connected;
 end;
 
@@ -131,7 +129,45 @@ end;
 
 function TMainForm.GetCurrentLogKey: string;
 begin
-  Result := LOG_KEYS[rgLogsTypes.ItemIndex];
+  Result := LOGGERPRO_KEY;
+end;
+
+procedure TMainForm.lstLogsDrawItem(Control: TWinControl; Index: Integer;
+  Rect: TRect; State: TOwnerDrawState);
+var
+  lCanvas: TCanvas;
+  lText: string;
+  lRect: TRect;
+  lBGColor, lFGColor: TColor;
+begin
+  lCanvas := (Control as TListBox).Canvas;
+  lText := lstLogs.Items[index];
+  if lText.Contains('ERROR') then
+  begin
+    lBGColor := clRed;
+    lFGColor := clWhite;
+  end
+  else if lText.Contains('INFO') then
+  begin
+    lBGColor := clWhite;
+    lFGColor := clBlack;
+  end
+  else if lText.Contains('WARNING') then
+  begin
+    lBGColor := clYellow;
+    lFGColor := clRed;
+  end
+  else if lText.Contains('DEBUG') then
+  begin
+    lBGColor := clWhite;
+    lFGColor := clBlue;
+  end;
+  lCanvas.Brush.Color := lBGColor;
+  lCanvas.Font.Color := lFGColor;
+  lCanvas.FillRect(Rect);
+  lRect := Rect;
+  lrect.Left := lrect.Left + 5;
+  lCanvas.TextRect(lRect, lText, [TTextFormats.tfLeft, TTextFormats.tfEndEllipsis]);
 end;
 
 procedure TMainForm.rgLogsTypesClick(Sender: TObject);
@@ -151,32 +187,29 @@ begin
   end;
   StatusBar1.Panels[2].Text := 'Connected';
 
-  LockWindowUpdate(lstLogs.Handle);
+  lSavedItemIndex := lstLogs.ItemIndex;
+  lstLogs.Items.BeginUpdate;
   try
-    lSavedItemIndex := lstLogs.ItemIndex;
-    lstLogs.Items.BeginUpdate;
-    try
-      lstLogs.Items.Clear;
-      // from the first to the last element of the list
-      lArray := FRedis.LRANGE(GetCurrentLogKey, 0, -1);
-      if lArray.HasValue then
+    lstLogs.Items.Clear;
+    // from the first to the last element of the list
+    lArray := FRedis.LRANGE(GetCurrentLogKey, 0, -1);
+    if lArray.HasValue then
+    begin
+      lstLogs.Items.AddStrings(lArray.ToArray);
+      if actFollowTail.Checked then
       begin
-        lstLogs.Items.AddStrings(lArray.ToArray);
-        if actFollowTail.Checked then
-          lstLogs.ItemIndex := lstLogs.Items.Count - 1
-        else
+        lstLogs.ItemIndex := lstLogs.Items.Count - 1;
+      end
+      else
+      begin
+        if lstLogs.Count > lSavedItemIndex then
         begin
-          if lstLogs.Count > lSavedItemIndex then
-          begin
-            lstLogs.ItemIndex := lSavedItemIndex;
-          end;
+          lstLogs.ItemIndex := lSavedItemIndex;
         end;
       end;
-    finally
-      lstLogs.Items.EndUpdate;
     end;
   finally
-    LockWindowUpdate(0);
+    lstLogs.Items.EndUpdate;
   end;
   StatusBar1.Panels[0].Text := 'Last update: ' + DateTimeToStr(Now);
   StatusBar1.Panels[1].Text := 'Refresh Interval: ' + (Timer1.Interval div 1000).ToString + ' second/s';
@@ -193,14 +226,12 @@ end;
 procedure TMainForm.Timer1Timer(Sender: TObject);
 begin
   RefreshLogs;
-
 end;
 
 procedure TMainForm.N2Sec1Click(Sender: TObject);
 var
   i: Integer;
 begin
-
   for i := 0 to ppmRefreshInterval.Items.Count - 1 do
   begin
     ppmRefreshInterval.Items[i].Checked := False;
