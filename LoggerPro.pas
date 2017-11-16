@@ -364,7 +364,7 @@ begin
     SetLength(Result, FLogAppenders.Count);
     for I := 0 to FLogAppenders.Count - 1 do
     begin
-      Result[I] := TObject(FLogAppenders[0]).ClassName;
+      Result[I] := TObject(FLogAppenders[I]).ClassName;
     end;
   finally
     TMonitor.Exit(FLogAppenders);
