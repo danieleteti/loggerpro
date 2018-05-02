@@ -88,7 +88,7 @@ def task_build():
 						"echo %%date%% %%time:~0,8%% > LOGGERPRO-BUILD-TIMESTAMP.TXT",            
 						buildProjects,
 						build_unit_tests,
-						"unittests\\Win32\\Release\\UnitTests.exe -exit:Continue"],
+						"unittests\\Win32\\PLAINDUNITX\\UnitTests.exe -exit:Continue"],
 	'params':[{'name':'version',
 	           'short':'v',
 	           'long':'version',
@@ -103,7 +103,7 @@ def task_unittests():
     return {
         'actions': [
 					build_unit_tests,
-					"unittests\\Win32\\Release\\UnitTests.exe -exit:Continue"
+					"unittests\\Win32\\PLAINDUNITX\\UnitTests.exe -exit:Continue"
 					],
 				'params':[{'name':'version',
 					'short':'v',

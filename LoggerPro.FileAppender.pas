@@ -45,6 +45,7 @@ type
     FLogFormat: string;
     FFileAppenderOptions: TFileAppenderOptions;
     FLogsFolder: string;
+    FEncoding: TEncoding;
     function CreateWriter(const aFileName: string): TStreamWriter;
     procedure AddWriter(const aLogItem: TLogItem; var lWriter: TStreamWriter;
       var lLogFileName: string);
@@ -81,7 +82,7 @@ type
       : Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB;
       aLogsFolder: string = ''; aFileAppenderOptions: TFileAppenderOptions = [];
-      aLogFormat: string = DEFAULT_LOG_FORMAT); reintroduce;
+      aLogFormat: string = DEFAULT_LOG_FORMAT; aEncoding: TEncoding = nil); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); overload; override;
@@ -230,7 +231,8 @@ end;
 
 constructor TLoggerProFileAppender.Create(aMaxBackupFileCount: Integer;
   aMaxFileSizeInKiloByte: Integer; aLogsFolder: string;
-  aFileAppenderOptions: TFileAppenderOptions; aLogFormat: string);
+  aFileAppenderOptions: TFileAppenderOptions; aLogFormat: string;
+  aEncoding: TEncoding);
 begin
   inherited Create;
   FLogsFolder := aLogsFolder;
@@ -238,6 +240,10 @@ begin
   FMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
   FLogFormat := aLogFormat;
   FFileAppenderOptions := aFileAppenderOptions;
+  if Assigned(aEncoding) then
+    FEncoding := aEncoding
+  else
+    FEncoding := TEncoding.DEFAULT;
 end;
 
 function TLoggerProFileAppender.CreateWriter(const aFileName: string)
@@ -262,7 +268,7 @@ begin
       lFileStream := TFileStream.Create(aFileName, lFileAccessMode);
       try
         lFileStream.Seek(0, TSeekOrigin.soEnd);
-        Result := TStreamWriter.Create(lFileStream, TEncoding.Default, 32);
+        Result := TStreamWriter.Create(lFileStream, FEncoding, 32);
         Result.AutoFlush := True;
         Result.OwnStream;
         break;
