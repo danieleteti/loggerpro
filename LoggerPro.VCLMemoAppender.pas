@@ -13,8 +13,21 @@ type
   private
     FMemo: TMemo;
     FMaxLogLines: Word;
-  public
-    constructor Create(aMemo: TMemo; aMaxLogLines: Word = 500); reintroduce;
+	FLogFormat: string;
+  public const
+      { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
+      The positional parameters are the followings:
+      @orderedList(
+      @itemSetNumber 0
+      @item TimeStamp
+      @item ThreadID
+      @item LogType
+      @item LogMessage
+      @item LogTag
+      )
+    }
+    DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
+    constructor Create(aMemo: TMemo; aMaxLogLines: Word = 500; aLogFormat: string = DEFAULT_LOG_FORMAT); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); override;
@@ -25,14 +38,12 @@ implementation
 uses
   System.SysUtils, Winapi.Windows, Winapi.Messages;
 
-const
-  DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
-
   { TVCLMemoLogAppender }
 
-constructor TVCLMemoLogAppender.Create(aMemo: TMemo; aMaxLogLines: Word);
+constructor TVCLMemoLogAppender.Create(aMemo: TMemo; aMaxLogLines: Word; aLogFormat: string);
 begin
   inherited Create;
+  FLogFormat := aLogFormat;
   FMemo := aMemo;
   FMaxLogLines := aMaxLogLines;
 end;
@@ -55,7 +66,7 @@ procedure TVCLMemoLogAppender.WriteLog(const aLogItem: TLogItem);
 var
   lText: string;
 begin
-  lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp),
+  lText := Format(FLogFormat, [datetimetostr(aLogItem.TimeStamp),
     aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
     aLogItem.LogTag]);
   TThread.Queue(nil,

@@ -43,6 +43,7 @@ type
     FMaxBackupFileCount: Integer;
     FMaxFileSizeInKiloByte: Integer;
     FLogFormat: string;
+    FLogFileNameFormat: string;
     FFileAppenderOptions: TFileAppenderOptions;
     FLogsFolder: string;
     FEncoding: TEncoding;
@@ -68,20 +69,31 @@ type
       @item LogTag
       )
     }
-    DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-8s] %3:s [%4:s]';
+      DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-8s] %3:s [%4:s]';
+    { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
+      The positional parameters are the followings:
+      @orderedList(
+      @itemSetNumber 0
+      @item ModuleName
+      @item LogNum
+      @item LogTag
+      )
+    }
+      DEFAULT_FILENAME_FORMAT = '.%2.2d.%s.log';
     { @abstract(Defines number of log file set to mantain during logs rotation) }
-    DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
+      DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
     { @abstract(Defines the max size of each log file)
       The actual meaning is: "If the file size is > than @link(DEFAULT_MAX_FILE_SIZE_KB) then rotate logs. }
-    DEFAULT_MAX_FILE_SIZE_KB = 1000;
+      DEFAULT_MAX_FILE_SIZE_KB = 1000;
     { @abstract(Milliseconds to wait between the RETRY_COUNT times. }
-    RETRY_DELAY = 200;
+      RETRY_DELAY = 200;
     { @abstract(How much times we have to retry if the file is locked?. }
-    RETRY_COUNT = 5;
+      RETRY_COUNT = 5;
     constructor Create(aMaxBackupFileCount
       : Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB;
-      aLogsFolder: string = ''; aFileAppenderOptions: TFileAppenderOptions = [];
+      aLogsFolder: string = ''; aLogFileNameFormat: string = DEFAULT_FILENAME_FORMAT;
+      aFileAppenderOptions: TFileAppenderOptions = [];
       aLogFormat: string = DEFAULT_LOG_FORMAT; aEncoding: TEncoding = nil); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
@@ -98,19 +110,18 @@ uses
 function TLoggerProFileAppender.GetLogFileName(const aTag: string;
   const aFileNumber: Integer): string;
 var
-  lFormat, lExt: string;
+  lExt: string;
   lModuleName: string;
   lPath: string;
 begin
-  lFormat := '.%2.2d.%s.log';
   lModuleName := TPath.GetFileNameWithoutExtension(GetModuleName(HInstance));
 
   if TFileAppenderOption.IncludePID in FFileAppenderOptions then
-    lFormat := '.PID-' + IntToStr(CurrentProcessId).PadLeft(6, '0') + lFormat;
+    FLogFileNameFormat := '.PID-' + IntToStr(CurrentProcessId).PadLeft(6, '0') + FLogFileNameFormat;
 
   lPath := FLogsFolder;
-  lExt := Format(lFormat, [aFileNumber, aTag]);
-  Result := TPath.Combine(lPath, ChangeFileExt(lModuleName, lExt));
+  lExt := Format(FLogFileNameFormat, [lModuleName, aFileNumber, aTag]);
+  Result := TPath.Combine(lPath, lExt);
 end;
 
 procedure TLoggerProFileAppender.Setup;
@@ -231,14 +242,15 @@ end;
 
 constructor TLoggerProFileAppender.Create(aMaxBackupFileCount: Integer;
   aMaxFileSizeInKiloByte: Integer; aLogsFolder: string;
-  aFileAppenderOptions: TFileAppenderOptions; aLogFormat: string;
-  aEncoding: TEncoding);
+  aLogFileNameFormat: string; aFileAppenderOptions: TFileAppenderOptions;
+  aLogFormat: string; aEncoding: TEncoding);
 begin
   inherited Create;
   FLogsFolder := aLogsFolder;
   FMaxBackupFileCount := aMaxBackupFileCount;
   FMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
   FLogFormat := aLogFormat;
+  FLogFileNameFormat := aLogFileNameFormat;
   FFileAppenderOptions := aFileAppenderOptions;
   if Assigned(aEncoding) then
     FEncoding := aEncoding
@@ -291,3 +303,4 @@ begin
 end;
 
 end.
+
