@@ -15,7 +15,7 @@ projects = [
 			'samples\\02_file_appender\\file_appender.dproj',
 			'samples\\03_console_appender\\console_appender.dproj',
 			'samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj',
-			'samples\\05_vcl_appenders\\memo_appender.dproj',
+			'samples\\05_vcl_appenders\\vcl_appenders.dproj',
 			'samples\\10_multiple_appenders\\multiple_appenders.dproj',
 			'samples\\15_appenders_with_different_log_levels\\multi_appenders_different_loglevels.dproj',
 			'samples\\20_multiple_loggers\\multiple_loggers.dproj',

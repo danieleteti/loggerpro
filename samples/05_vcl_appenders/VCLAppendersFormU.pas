@@ -1,11 +1,22 @@
-unit MemoAppendersFormU;
+unit VCLAppendersFormU;
 
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-  System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, LoggerPro;
+  Winapi.Windows,
+  Winapi.Messages,
+  System.SysUtils,
+  System.Variants,
+  System.Classes,
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+  Vcl.StdCtrls,
+  LoggerPro,
+  Vcl.ComCtrls,
+  System.ImageList,
+  Vcl.ImgList;
 
 type
   TMainForm = class(TForm)
@@ -14,7 +25,11 @@ type
     Button3: TButton;
     Button4: TButton;
     Button5: TButton;
+    PageControl1: TPageControl;
+    tsListViewAppender: TTabSheet;
+    tsMemoAppender: TTabSheet;
     Memo1: TMemo;
+    ListView1: TListView;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
@@ -34,7 +49,8 @@ var
 implementation
 
 uses
-  LoggerPro.VCLMemoAppender;
+  LoggerPro.VCLMemoAppender,
+  LoggerPro.VCLListViewAppender;
 
 {$R *.dfm}
 
@@ -75,14 +91,10 @@ begin
       lThreadID := IntToStr(TThread.Current.ThreadID);
       for I := 1 to 50 do
       begin
-        Log.Debug('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID,
-          'MULTITHREADING');
-        Log.Info('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID,
-          'MULTITHREADING');
-        Log.Warn('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID,
-          'MULTITHREADING');
-        Log.Error('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID,
-          'MULTITHREADING');
+        Log.Debug('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID, 'MULTITHREADING');
+        Log.Info('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID, 'MULTITHREADING');
+        Log.Warn('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID, 'MULTITHREADING');
+        Log.Error('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID, 'MULTITHREADING');
       end;
     end;
   TThread.CreateAnonymousThread(lThreadProc).Start;
@@ -93,8 +105,8 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  //Let's create the local logger for this form
-  FLog := BuildLogWriter([TVCLMemoLogAppender.Create(Memo1)])
+  // Let's create the local loggers for this form
+  FLog := BuildLogWriter([TVCLListViewAppender.Create(ListView1), TVCLMemoLogAppender.Create(Memo1)])
 end;
 
 function TMainForm.Log: ILogWriter;

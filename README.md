@@ -104,7 +104,7 @@ The framework contains the following built-in log appenders
 Next appenders in the development pipeline
 - RESTful Appender (to send logs to a rest endpoint using a specific request format, so that you can implement log server in DelphiMVCFramework, PHP, Java, Python, Node etc)
 - Twitter Appender (to send logs to a Twitter Account)
-- Database appender (to send logs to a database table using FireDAC components)
+- Database appender (to send logs to a database table using FireDAC components -- Thank You Omar Bossoni)
 
 The log writers and all the appenders are asycnhronous.
 

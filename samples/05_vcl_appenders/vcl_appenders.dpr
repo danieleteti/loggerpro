@@ -1,8 +1,8 @@
-program memo_appender;
+program vcl_appenders;
 
 uses
   Vcl.Forms,
-  MemoAppendersFormU in 'MemoAppendersFormU.pas' {MainForm};
+  VCLAppendersFormU in 'VCLAppendersFormU.pas' {MainForm};
 
 {$R *.res}
 

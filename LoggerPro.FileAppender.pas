@@ -4,7 +4,11 @@ unit LoggerPro.FileAppender;
 
 interface
 
-uses LoggerPro, System.Classes, System.SysUtils, System.Generics.Collections;
+uses
+  LoggerPro,
+  System.Classes,
+  System.SysUtils,
+  System.Generics.Collections;
 
 type
   {
@@ -48,15 +52,12 @@ type
     FLogsFolder: string;
     FEncoding: TEncoding;
     function CreateWriter(const aFileName: string): TStreamWriter;
-    procedure AddWriter(const aLogItem: TLogItem; var lWriter: TStreamWriter;
-      var lLogFileName: string);
+    procedure AddWriter(const aLogItem: TLogItem; var lWriter: TStreamWriter; var lLogFileName: string);
     procedure RotateLog(const aLogItem: TLogItem; lWriter: TStreamWriter);
     procedure RetryMove(const aFileSrc, aFileDest: string);
   protected
-    function GetLogFileName(const aTag: string;
-      const aFileNumber: Integer): string;
-    procedure InternalWriteLog(const aStreamWriter: TStreamWriter;
-      const aValue: string); inline;
+    function GetLogFileName(const aTag: string; const aFileNumber: Integer): string;
+    procedure InternalWriteLog(const aStreamWriter: TStreamWriter; const aValue: string); inline;
   public const
     { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
       The positional parameters are the followings:
@@ -69,31 +70,29 @@ type
       @item LogTag
       )
     }
-      DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-8s] %3:s [%4:s]';
+    DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-8s] %3:s [%4:s]';
     { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
       The positional parameters are the followings:
       @orderedList(
-      @itemSetNumber 0
+      @item SetNumber 0
       @item ModuleName
       @item LogNum
       @item LogTag
       )
     }
-      DEFAULT_FILENAME_FORMAT = '.%2.2d.%s.log';
+    DEFAULT_FILENAME_FORMAT = '%s.%2.2d.%s.log';
     { @abstract(Defines number of log file set to mantain during logs rotation) }
-      DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
+    DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
     { @abstract(Defines the max size of each log file)
       The actual meaning is: "If the file size is > than @link(DEFAULT_MAX_FILE_SIZE_KB) then rotate logs. }
-      DEFAULT_MAX_FILE_SIZE_KB = 1000;
+    DEFAULT_MAX_FILE_SIZE_KB = 1000;
     { @abstract(Milliseconds to wait between the RETRY_COUNT times. }
-      RETRY_DELAY = 200;
+    RETRY_DELAY = 200;
     { @abstract(How much times we have to retry if the file is locked?. }
-      RETRY_COUNT = 5;
-    constructor Create(aMaxBackupFileCount
-      : Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
-      aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB;
-      aLogsFolder: string = ''; aLogFileNameFormat: string = DEFAULT_FILENAME_FORMAT;
-      aFileAppenderOptions: TFileAppenderOptions = [];
+    RETRY_COUNT = 5;
+    constructor Create(aMaxBackupFileCount: Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
+      aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB; aLogsFolder: string = '';
+      aFileAppenderOptions: TFileAppenderOptions = []; aLogFileNameFormat: string = DEFAULT_FILENAME_FORMAT;
       aLogFormat: string = DEFAULT_LOG_FORMAT; aEncoding: TEncoding = nil); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
@@ -103,24 +102,26 @@ type
 implementation
 
 uses
-  System.IOUtils, idGlobal;
+  System.IOUtils,
+  idGlobal;
 
 { TLoggerProFileAppender }
 
-function TLoggerProFileAppender.GetLogFileName(const aTag: string;
-  const aFileNumber: Integer): string;
+function TLoggerProFileAppender.GetLogFileName(const aTag: string; const aFileNumber: Integer): string;
 var
   lExt: string;
   lModuleName: string;
   lPath: string;
+  lFormat: String;
 begin
   lModuleName := TPath.GetFileNameWithoutExtension(GetModuleName(HInstance));
+  lFormat := FLogFileNameFormat;
 
   if TFileAppenderOption.IncludePID in FFileAppenderOptions then
-    FLogFileNameFormat := '.PID-' + IntToStr(CurrentProcessId).PadLeft(6, '0') + FLogFileNameFormat;
+    lModuleName := lModuleName + '_pid_' + IntToStr(CurrentProcessId).PadLeft(6, '0');
 
   lPath := FLogsFolder;
-  lExt := Format(FLogFileNameFormat, [lModuleName, aFileNumber, aTag]);
+  lExt := Format(lFormat, [lModuleName, aFileNumber, aTag]);
   Result := TPath.Combine(lPath, lExt);
 end;
 
@@ -134,8 +135,7 @@ begin
   FFormatSettings.TimeSeparator := ':';
   FFormatSettings.ShortDateFormat := 'YYY-MM-DD HH:NN:SS:ZZZ';
   FFormatSettings.ShortTimeFormat := 'HH:NN:SS';
-  FWritersDictionary := TObjectDictionary<string, TStreamWriter>.Create
-    ([doOwnsValues]);
+  FWritersDictionary := TObjectDictionary<string, TStreamWriter>.Create([doOwnsValues]);
 end;
 
 procedure TLoggerProFileAppender.TearDown;
@@ -143,8 +143,7 @@ begin
   FWritersDictionary.Free;
 end;
 
-procedure TLoggerProFileAppender.InternalWriteLog(const aStreamWriter
-  : TStreamWriter; const aValue: string);
+procedure TLoggerProFileAppender.InternalWriteLog(const aStreamWriter: TStreamWriter; const aValue: string);
 begin
   aStreamWriter.WriteLine(aValue);
   aStreamWriter.Flush;
@@ -159,8 +158,7 @@ begin
   begin
     AddWriter(aLogItem, lWriter, lLogFileName);
   end;
-  InternalWriteLog(lWriter, Format(FLogFormat,
-    [datetimetostr(aLogItem.TimeStamp, FFormatSettings), aLogItem.ThreadID,
+  InternalWriteLog(lWriter, Format(FLogFormat, [datetimetostr(aLogItem.TimeStamp, FFormatSettings), aLogItem.ThreadID,
     aLogItem.LogTypeAsString, aLogItem.LogMessage, aLogItem.LogTag]));
 
   if lWriter.BaseStream.Size > FMaxFileSizeInKiloByte * 1024 then
@@ -199,16 +197,14 @@ begin
     raise ELoggerPro.CreateFmt('Cannot rename %s to %s', [aFileSrc, aFileDest]);
 end;
 
-procedure TLoggerProFileAppender.RotateLog(const aLogItem: TLogItem;
-  lWriter: TStreamWriter);
+procedure TLoggerProFileAppender.RotateLog(const aLogItem: TLogItem; lWriter: TStreamWriter);
 var
   lLogFileName: string;
   lRenamedFile: string;
   I: Integer;
   lCurrentFileName: string;
 begin
-  InternalWriteLog(lWriter, '#[ROTATE LOG ' + datetimetostr(Now,
-    FFormatSettings) + ']');
+  InternalWriteLog(lWriter, '#[ROTATE LOG ' + datetimetostr(Now, FFormatSettings) + ']');
   FWritersDictionary.Remove(aLogItem.LogTag);
   lLogFileName := GetLogFileName(aLogItem.LogTag, 0);
   // remove the last file of backup set
@@ -228,22 +224,20 @@ begin
   RetryMove(lLogFileName, lRenamedFile);
   // read the writer
   AddWriter(aLogItem, lWriter, lLogFileName);
-  InternalWriteLog(lWriter, '#[START LOG ' + datetimetostr(Now,
-    FFormatSettings) + ']');
+  InternalWriteLog(lWriter, '#[START LOG ' + datetimetostr(Now, FFormatSettings) + ']');
 end;
 
-procedure TLoggerProFileAppender.AddWriter(const aLogItem: TLogItem;
-  var lWriter: TStreamWriter; var lLogFileName: string);
+procedure TLoggerProFileAppender.AddWriter(const aLogItem: TLogItem; var lWriter: TStreamWriter;
+  var lLogFileName: string);
 begin
   lLogFileName := GetLogFileName(aLogItem.LogTag, 0);
   lWriter := CreateWriter(lLogFileName);
   FWritersDictionary.Add(aLogItem.LogTag, lWriter);
 end;
 
-constructor TLoggerProFileAppender.Create(aMaxBackupFileCount: Integer;
-  aMaxFileSizeInKiloByte: Integer; aLogsFolder: string;
-  aLogFileNameFormat: string; aFileAppenderOptions: TFileAppenderOptions;
-  aLogFormat: string; aEncoding: TEncoding);
+constructor TLoggerProFileAppender.Create(aMaxBackupFileCount: Integer; aMaxFileSizeInKiloByte: Integer;
+  aLogsFolder: string; aFileAppenderOptions: TFileAppenderOptions; aLogFileNameFormat: string; aLogFormat: string;
+  aEncoding: TEncoding);
 begin
   inherited Create;
   FLogsFolder := aLogsFolder;
@@ -258,8 +252,7 @@ begin
     FEncoding := TEncoding.DEFAULT;
 end;
 
-function TLoggerProFileAppender.CreateWriter(const aFileName: string)
-  : TStreamWriter;
+function TLoggerProFileAppender.CreateWriter(const aFileName: string): TStreamWriter;
 var
   lFileStream: TFileStream;
   lFileAccessMode: Word;
@@ -281,9 +274,9 @@ begin
       try
         lFileStream.Seek(0, TSeekOrigin.soEnd);
         Result := TStreamWriter.Create(lFileStream, FEncoding, 32);
-        Result.AutoFlush := True;
+        Result.AutoFlush := true;
         Result.OwnStream;
-        break;
+        Break;
       except
         lFileStream.Free;
         raise;
@@ -303,4 +296,3 @@ begin
 end;
 
 end.
-

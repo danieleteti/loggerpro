@@ -5,7 +5,9 @@ unit LoggerPro.VCLListViewAppender;
 interface
 
 uses
-  LoggerPro, System.Classes, Vcl.ComCtrls;
+  LoggerPro,
+  System.Classes,
+  Vcl.ComCtrls;
 
 type
   { @abstract(Appends formatted @link(TLogItem) to a TMemo in a VCL application) }
@@ -15,7 +17,7 @@ type
     FMaxLogLines: Word;
     FLogFormat: string;
   public const
-      { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
+    { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
       The positional parameters are the followings:
       @orderedList(
       @itemSetNumber 0
@@ -26,7 +28,7 @@ type
       @item LogTag
       )
     }
-      DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
+    DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
     constructor Create(aLV: TListView; aMaxLogLines: Word = 500; aLogFormat: string = DEFAULT_LOG_FORMAT); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
@@ -36,9 +38,11 @@ type
 implementation
 
 uses
-  System.SysUtils, Winapi.Windows, Winapi.Messages;
+  System.SysUtils,
+  Winapi.Windows,
+  Winapi.Messages;
 
-  { TVCLMemoLogAppender }
+{ TVCLMemoLogAppender }
 
 constructor TVCLListViewAppender.Create(aLV: TListView; aMaxLogLines: Word; aLogFormat: string);
 begin
@@ -66,13 +70,12 @@ procedure TVCLListViewAppender.WriteLog(const aLogItem: TLogItem);
 var
   lText: string;
 begin
-  lText := Format(FLogFormat, [datetimetostr(aLogItem.TimeStamp),
-    aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
-      aLogItem.LogTag]);
+  lText := Format(FLogFormat, [datetimetostr(aLogItem.TimeStamp), aLogItem.ThreadID, aLogItem.LogTypeAsString,
+    aLogItem.LogMessage, aLogItem.LogTag]);
   TThread.Queue(nil,
     procedure
-  var
-    Lines: integer;
+    var
+      Lines: integer;
     begin
       FLV.Items.BeginUpdate;
       try
@@ -92,4 +95,3 @@ begin
 end;
 
 end.
-
