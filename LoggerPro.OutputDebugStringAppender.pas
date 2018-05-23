@@ -50,7 +50,7 @@ procedure TLoggerProOutputDebugStringAppender.WriteLog(const aLogItem
 var
   lLog: string;
 begin
-  lLog := Format('(' + FModuleName + ') => ' + DEFAULT_LOG_FORMAT,
+  lLog := '(' + FModuleName + ') ' + Format(DEFAULT_LOG_FORMAT,
     [datetimetostr(aLogItem.TimeStamp), aLogItem.ThreadID,
     aLogItem.LogTypeAsString, aLogItem.LogMessage, aLogItem.LogTag]);
   OutputDebugString(PChar(lLog));

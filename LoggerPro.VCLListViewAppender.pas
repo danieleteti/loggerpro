@@ -83,7 +83,6 @@ begin
         if Lines > FMaxLogLines then
         begin
           FLV.Items.Delete(0);
-          Lines := Lines - 1;
         end;
         FLV.AddItem(lText, nil)
       finally

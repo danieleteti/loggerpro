@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{3FEE058F-0B85-446A-8517-E7B9BCAAC8CA}</ProjectGuid>
-        <ProjectVersion>18.2</ProjectVersion>
+        <ProjectVersion>18.4</ProjectVersion>
         <MainSource>UnitTests.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">TESTINSIGHT</Config>

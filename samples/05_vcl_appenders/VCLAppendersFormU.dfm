@@ -73,8 +73,6 @@ object MainForm: TMainForm
     TabOrder = 5
     object tsListViewAppender: TTabSheet
       Caption = 'ListView Appender DEMO'
-      ExplicitWidth = 281
-      ExplicitHeight = 165
       object ListView1: TListView
         Left = 0
         Top = 0
@@ -100,15 +98,13 @@ object MainForm: TMainForm
         ParentFont = False
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitLeft = 280
-        ExplicitTop = 104
-        ExplicitWidth = 250
-        ExplicitHeight = 150
       end
     end
     object tsMemoAppender: TTabSheet
       Caption = 'Memo Appender DEMO'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
       ExplicitWidth = 281
       ExplicitHeight = 165
       object Memo1: TMemo
