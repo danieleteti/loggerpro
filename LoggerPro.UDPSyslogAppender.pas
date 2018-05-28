@@ -1,8 +1,18 @@
 unit LoggerPro.UDPSyslogAppender;
+{ <@abstract(Contains the Syslog Logger (RFC 5424))
+  @author(https://github.com/nurettin)
+  @author(Daniele Teti)
+}
 
 interface
+
 uses
-  LoggerPro, IdBaseComponent, IdComponent, IdUDPBase, IdUDPClient, IdGlobal;
+  LoggerPro,
+  IdBaseComponent,
+  IdComponent,
+  IdUDPBase,
+  IdUDPClient,
+  IdGlobal;
 
 type
   TLoggerProUDPSyslogAppender = class(TLoggerProAppenderBase)
@@ -16,8 +26,9 @@ type
     FProcID: string;
     FUnixLineBreaks: Boolean;
 
-    public
-    constructor Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+  public
+    constructor Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string;
+      pVersion: string; pProcID: string; pUnixLineBreaks: Boolean); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); override;
@@ -33,10 +44,11 @@ type
   end;
 
   TLoggerProUDPSyslogPacket = class
+  strict private
     FPriority: string;
     FVersion: string;
     FTimestamp: string;
-    FHostname: string;
+    FHostName: string;
     FUserName: string;
     FApplication: string;
     FProcID: string;
@@ -44,19 +56,22 @@ type
     FMessageID: string;
     FMessageData: string;
     FUnixLineBreaks: Boolean;
-
     function GetSyslogData: string;
-
-    public
-    constructor Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+  public
+    constructor Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string;
+      pProcID: string; pUnixLineBreaks: Boolean);
     property SyslogData: string read GetSyslogData;
   end;
 
 implementation
-uses DateUtils, SysUtils, Windows;
+
+uses
+  System.DateUtils,
+  System.SysUtils;
 { TLoggerProUDPSyslogAppender }
 
-constructor TLoggerProUDPSyslogAppender.Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+constructor TLoggerProUDPSyslogAppender.Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string;
+  pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
 begin
   FIP := pIP;
   FPort := pPort;
@@ -71,25 +86,26 @@ end;
 procedure TLoggerProUDPSyslogAppender.Setup;
 begin
   inherited;
-  FLoggerProSyslogAppenderClient := TIdUdpClient.Create(nil);
+  FLoggerProSyslogAppenderClient := TIdUDPClient.Create(nil);
 end;
 
 procedure TLoggerProUDPSyslogAppender.TearDown;
 begin
-  inherited;
   FLoggerProSyslogAppenderClient.Free;
+  inherited;
 end;
 
 procedure TLoggerProUDPSyslogAppender.WriteLog(const aLogItem: TLogItem);
 var
-  xPacket: TLoggerProUDPSyslogPacket;
+  lPacket: TLoggerProUDPSyslogPacket;
 begin
   inherited;
-  xPacket := TLoggerProUDPSyslogPacket.Create(aLogItem, FHostName, FUserName, FApplication, FVersion, FProcID, FUnixLineBreaks);
+  lPacket := TLoggerProUDPSyslogPacket.Create(aLogItem, FHostName, FUserName, FApplication, FVersion, FProcID,
+    FUnixLineBreaks);
   try
-    FLoggerProSyslogAppenderClient.Broadcast(xPacket.SysLogData, FPort, FIP, IndyTextEncoding_UTF8);
+    FLoggerProSyslogAppenderClient.Broadcast(lPacket.SyslogData, FPort, FIP, IndyTextEncoding_UTF8);
   finally
-    xPacket.Free;
+    lPacket.Free;
   end;
 end;
 
@@ -100,19 +116,24 @@ begin
   Result := '<' + IntToStr(pFacility * 8 + pSeverity) + '>';
 end;
 
-constructor TLoggerProUDPSyslogPacket.Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+constructor TLoggerProUDPSyslogPacket.Create(pLogItem: TLogItem; pHostName: string; pUserName: string;
+  pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
 begin
   case pLogItem.LogType of
-    TLogType.Debug: FPriority := RFC5474Priority(1, 7);
-    TLogType.Info: FPriority := RFC5474Priority(1, 6);
-    TLogType.Warning: FPriority := RFC5474Priority(1, 5);
-    TLogType.Error: FPriority := RFC5474Priority(1, 4);
+    TLogType.Debug:
+      FPriority := RFC5474Priority(1, 7);
+    TLogType.Info:
+      FPriority := RFC5474Priority(1, 6);
+    TLogType.Warning:
+      FPriority := RFC5474Priority(1, 5);
+    TLogType.Error:
+      FPriority := RFC5474Priority(1, 4);
   end;
   if pLogItem.LogMessage.Contains('Access Violation') then
     FPriority := RFC5474Priority(1, 3);
   FApplication := pApplication;
   FVersion := pVersion;
-  FTimeStamp := DateToISO8601(pLogItem.Timestamp);
+  FTimestamp := DateToISO8601(pLogItem.Timestamp);
   FHostName := pHostName;
   FUserName := pUserName;
   FApplication := pApplication;
@@ -130,12 +151,13 @@ const
   IANAVersion = '1';
 begin
   Result :=
-    // NOT; RFC 5424 6.2 HEADER
-    FPriority + IANAVersion + ' ' + FTimeStamp + ' ' + FHostName+ ' ' + FApplication + ' ' + FProcID + ' ' + FMessageID
-    // NOT; RFC 5424, 6.5 ex 1 no structured data
-    + ' - '{NOT; Uncomment UTF-8 BOM for full RFC 5424 compatiblitiy #$EF#$BB#$BF} + FUserName + ' ' + FVersion + ' ' + FThreadID + ' ' + FMessageData;
-    // NOT; RFC 5424 structured data, uncomment and use if needed
-    // + ' [MySDID@1 ' + 'UserName="' + FUserName + '" Version="' + FVersion + '" ThreadId="' + FThreadID + '" MessageData="' + FMessageData + '"]' + ...;
+  // NOT; RFC 5424 6.2 HEADER
+    FPriority + IANAVersion + ' ' + FTimestamp + ' ' + FHostName + ' ' + FApplication + ' ' + FProcID + ' ' + FMessageID
+  // NOT; RFC 5424, 6.5 ex 1 no structured data
+    + ' - ' { NOT; Uncomment UTF-8 BOM for full RFC 5424 compatiblitiy #$EF#$BB#$BF } + FUserName + ' ' + FVersion + ' '
+    + FThreadID + ' ' + FMessageData;
+  // NOT; RFC 5424 structured data, uncomment and use if needed
+  // + ' [MySDID@1 ' + 'UserName="' + FUserName + '" Version="' + FVersion + '" ThreadId="' + FThreadID + '" MessageData="' + FMessageData + '"]' + ...;
 end;
 
 end.
