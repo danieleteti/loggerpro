@@ -15,9 +15,6 @@
         <Projects Include="04_outputdebugstring_appender\outputdebugstring_appender.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="05_vcl_appenders\memo_appender.dproj">
-            <Dependencies/>
-        </Projects>
         <Projects Include="10_multiple_appenders\multiple_appenders.dproj">
             <Dependencies/>
         </Projects>
@@ -25,6 +22,9 @@
             <Dependencies/>
         </Projects>
         <Projects Include="50_custom_appender\custom_appender.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="100_udp_syslog\udp_syslog.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -71,15 +71,6 @@
     <Target Name="outputdebugstring_appender:Make">
         <MSBuild Projects="04_outputdebugstring_appender\outputdebugstring_appender.dproj" Targets="Make"/>
     </Target>
-    <Target Name="memo_appender">
-        <MSBuild Projects="05_vcl_appenders\memo_appender.dproj"/>
-    </Target>
-    <Target Name="memo_appender:Clean">
-        <MSBuild Projects="05_vcl_appenders\memo_appender.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="memo_appender:Make">
-        <MSBuild Projects="05_vcl_appenders\memo_appender.dproj" Targets="Make"/>
-    </Target>
     <Target Name="multiple_appenders">
         <MSBuild Projects="10_multiple_appenders\multiple_appenders.dproj"/>
     </Target>
@@ -107,14 +98,23 @@
     <Target Name="custom_appender:Make">
         <MSBuild Projects="50_custom_appender\custom_appender.dproj" Targets="Make"/>
     </Target>
+    <Target Name="udp_syslog">
+        <MSBuild Projects="100_udp_syslog\udp_syslog.dproj"/>
+    </Target>
+    <Target Name="udp_syslog:Clean">
+        <MSBuild Projects="100_udp_syslog\udp_syslog.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="udp_syslog:Make">
+        <MSBuild Projects="100_udp_syslog\udp_syslog.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="global_logger;file_appender;console_appender;outputdebugstring_appender;memo_appender;multiple_appenders;multiple_loggers;custom_appender"/>
+        <CallTarget Targets="global_logger;file_appender;console_appender;outputdebugstring_appender;multiple_appenders;multiple_loggers;custom_appender;udp_syslog"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="global_logger:Clean;file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;memo_appender:Clean;multiple_appenders:Clean;multiple_loggers:Clean;custom_appender:Clean"/>
+        <CallTarget Targets="global_logger:Clean;file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;multiple_appenders:Clean;multiple_loggers:Clean;custom_appender:Clean;udp_syslog:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="global_logger:Make;file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;memo_appender:Make;multiple_appenders:Make;multiple_loggers:Make;custom_appender:Make"/>
+        <CallTarget Targets="global_logger:Make;file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;multiple_appenders:Make;multiple_loggers:Make;custom_appender:Make;udp_syslog:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
