@@ -1,0 +1,141 @@
+unit LoggerPro.UDPSyslogAppender;
+
+interface
+uses
+  LoggerPro, IdBaseComponent, IdComponent, IdUDPBase, IdUDPClient, IdGlobal;
+
+type
+  TLoggerProUDPSyslogAppender = class(TLoggerProAppenderBase)
+    FLoggerProSyslogAppenderClient: TIdUDPClient;
+    FIP: string;
+    FPort: Integer;
+    FHostName: string;
+    FUserName: string;
+    FApplication: string;
+    FVersion: string;
+    FProcID: string;
+    FUnixLineBreaks: Boolean;
+
+    public
+    constructor Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+    procedure Setup; override;
+    procedure TearDown; override;
+    procedure WriteLog(const aLogItem: TLogItem); override;
+
+    property IP: string read FIP write FIP;
+    property Port: Integer read FPort write FPort;
+    property HostName: string read FHostName write FHostName;
+    property UserName: string read FUserName write FUserName;
+    property Application: string read FApplication write FApplication;
+    property Version: string read FVersion write FVersion;
+    property ProcID: string read FProcID write FProcID;
+    property UnixLineBreaks: Boolean read FUnixLineBreaks write FUnixLineBreaks;
+  end;
+
+  TLoggerProUDPSyslogPacket = class
+    FPriority: string;
+    FVersion: string;
+    FTimestamp: string;
+    FHostname: string;
+    FUserName: string;
+    FApplication: string;
+    FProcID: string;
+    FThreadID: string;
+    FMessageID: string;
+    FMessageData: string;
+    FUnixLineBreaks: Boolean;
+
+    function GetSyslogData: string;
+
+    public
+    constructor Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+    property SyslogData: string read GetSyslogData;
+  end;
+
+implementation
+uses DateUtils, SysUtils, Windows;
+{ TLoggerProUDPSyslogAppender }
+
+constructor TLoggerProUDPSyslogAppender.Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+begin
+  FIP := pIP;
+  FPort := pPort;
+  FHostName := pHostName;
+  FUserName := pUserName;
+  FApplication := pApplication;
+  FVersion := pVersion;
+  FProcID := pProcID;
+  FUnixLineBreaks := pUnixLineBreaks;
+end;
+
+procedure TLoggerProUDPSyslogAppender.Setup;
+begin
+  inherited;
+  FLoggerProSyslogAppenderClient := TIdUdpClient.Create(nil);
+end;
+
+procedure TLoggerProUDPSyslogAppender.TearDown;
+begin
+  inherited;
+  FLoggerProSyslogAppenderClient.Free;
+end;
+
+procedure TLoggerProUDPSyslogAppender.WriteLog(const aLogItem: TLogItem);
+var
+  xPacket: TLoggerProUDPSyslogPacket;
+begin
+  inherited;
+  xPacket := TLoggerProUDPSyslogPacket.Create(aLogItem, FHostName, FUserName, FApplication, FVersion, FProcID, FUnixLineBreaks);
+  try
+    FLoggerProSyslogAppenderClient.Broadcast(xPacket.SysLogData, FPort, FIP, IndyTextEncoding_UTF8);
+  finally
+    xPacket.Free;
+  end;
+end;
+
+{ TLoggerProUDPSyslogPacket }
+
+function RFC5474Priority(pFacility, pSeverity: Integer): string;
+begin
+  Result := '<' + IntToStr(pFacility * 8 + pSeverity) + '>';
+end;
+
+constructor TLoggerProUDPSyslogPacket.Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+begin
+  case pLogItem.LogType of
+    TLogType.Debug: FPriority := RFC5474Priority(1, 7);
+    TLogType.Info: FPriority := RFC5474Priority(1, 6);
+    TLogType.Warning: FPriority := RFC5474Priority(1, 5);
+    TLogType.Error: FPriority := RFC5474Priority(1, 4);
+  end;
+  if pLogItem.LogMessage.Contains('Access Violation') then
+    FPriority := RFC5474Priority(1, 3);
+  FApplication := pApplication;
+  FVersion := pVersion;
+  FTimeStamp := DateToISO8601(pLogItem.Timestamp);
+  FHostName := pHostName;
+  FUserName := pUserName;
+  FApplication := pApplication;
+  FVersion := pVersion;
+  FProcID := pProcID;
+  FThreadID := IntToStr(pLogItem.ThreadID);
+  FMessageID := pLogItem.LogTag;
+  FUnixLineBreaks := pUnixLineBreaks;
+  if FUnixLineBreaks then
+    FMessageData := pLogItem.LogMessage.Replace(sLineBreak, '#10', [rfReplaceAll]);
+end;
+
+function TLoggerProUDPSyslogPacket.GetSyslogData: string;
+const
+  IANAVersion = '1';
+begin
+  Result :=
+    // NOT; RFC 5424 6.2 HEADER
+    FPriority + IANAVersion + ' ' + FTimeStamp + ' ' + FHostName+ ' ' + FApplication + ' ' + FProcID + ' ' + FMessageID
+    // NOT; RFC 5424, 6.5 ex 1 no structured data
+    + ' - '{NOT; Uncomment UTF-8 BOM for full RFC 5424 compatiblitiy #$EF#$BB#$BF} + FUserName + ' ' + FVersion + ' ' + FThreadID + ' ' + FMessageData;
+    // NOT; RFC 5424 structured data, uncomment and use if needed
+    // + ' [MySDID@1 ' + 'UserName="' + FUserName + '" Version="' + FVersion + '" ThreadId="' + FThreadID + '" MessageData="' + FMessageData + '"]' + ...;
+end;
+
+end.
