@@ -106,7 +106,7 @@ var
 begin
   inherited;
   lPacket := TLoggerProUDPSyslogPacket.Create(aLogItem, FHostName, FUserName, FApplication, FVersion, FProcID,
-    FUnixLineBreaks);
+    FUnixLineBreaks, FUTF8BOM);
   try
     FLoggerProSyslogAppenderClient.Broadcast(lPacket.SyslogData, FPort, FIP, IndyTextEncoding_UTF8);
   finally
@@ -122,7 +122,7 @@ begin
 end;
 
 constructor TLoggerProUDPSyslogPacket.Create(pLogItem: TLogItem; pHostName: string; pUserName: string;
-  pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+  pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean);
 begin
   case pLogItem.LogType of
     TLogType.Debug:

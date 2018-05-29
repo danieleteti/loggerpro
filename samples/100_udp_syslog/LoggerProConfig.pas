@@ -22,7 +22,7 @@ Appender := TLoggerProUDPSyslogAppender.Create(
     , '0.0.1'
     , ''
     , True
-    , True
+    , False
   );
 
 Log := BuildLogWriter([Appender]);
