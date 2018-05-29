@@ -25,10 +25,12 @@ type
     FVersion: string;
     FProcID: string;
     FUnixLineBreaks: Boolean;
+    FUTF8BOM: Boolean;
+
 
   public
     constructor Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string;
-      pVersion: string; pProcID: string; pUnixLineBreaks: Boolean); reintroduce;
+      pVersion: string; pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean = False); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); override;
@@ -56,10 +58,11 @@ type
     FMessageID: string;
     FMessageData: string;
     FUnixLineBreaks: Boolean;
+    FUTF8BOM: Boolean;
     function GetSyslogData: string;
   public
     constructor Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string;
-      pProcID: string; pUnixLineBreaks: Boolean);
+      pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean = False);
     property SyslogData: string read GetSyslogData;
   end;
 
@@ -71,8 +74,9 @@ uses
 { TLoggerProUDPSyslogAppender }
 
 constructor TLoggerProUDPSyslogAppender.Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string;
-  pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+  pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean);
 begin
+  inherited Create;
   FIP := pIP;
   FPort := pPort;
   FHostName := pHostName;
@@ -81,6 +85,7 @@ begin
   FVersion := pVersion;
   FProcID := pProcID;
   FUnixLineBreaks := pUnixLineBreaks;
+  FUTF8BOM := pUTF8BOM;
 end;
 
 procedure TLoggerProUDPSyslogAppender.Setup;
@@ -101,7 +106,7 @@ var
 begin
   inherited;
   lPacket := TLoggerProUDPSyslogPacket.Create(aLogItem, FHostName, FUserName, FApplication, FVersion, FProcID,
-    FUnixLineBreaks);
+    FUnixLineBreaks, FUTF8BOM);
   try
     FLoggerProSyslogAppenderClient.Broadcast(lPacket.SyslogData, FPort, FIP, IndyTextEncoding_UTF8);
   finally
@@ -111,26 +116,26 @@ end;
 
 { TLoggerProUDPSyslogPacket }
 
-function RFC5474Priority(pFacility, pSeverity: Integer): string;
+function RFC5424Priority(pFacility, pSeverity: Integer): string;
 begin
   Result := '<' + IntToStr(pFacility * 8 + pSeverity) + '>';
 end;
 
 constructor TLoggerProUDPSyslogPacket.Create(pLogItem: TLogItem; pHostName: string; pUserName: string;
-  pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+  pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean);
 begin
   case pLogItem.LogType of
     TLogType.Debug:
-      FPriority := RFC5474Priority(1, 7);
+      FPriority := RFC5424Priority(1, 7);
     TLogType.Info:
-      FPriority := RFC5474Priority(1, 6);
+      FPriority := RFC5424Priority(1, 6);
     TLogType.Warning:
-      FPriority := RFC5474Priority(1, 5);
+      FPriority := RFC5424Priority(1, 5);
     TLogType.Error:
-      FPriority := RFC5474Priority(1, 4);
+      FPriority := RFC5424Priority(1, 4);
   end;
   if pLogItem.LogMessage.Contains('Access Violation') then
-    FPriority := RFC5474Priority(1, 3);
+    FPriority := RFC5424Priority(1, 3);
   FApplication := pApplication;
   FVersion := pVersion;
   FTimestamp := DateToISO8601(pLogItem.Timestamp);
@@ -144,6 +149,7 @@ begin
   FUnixLineBreaks := pUnixLineBreaks;
   if FUnixLineBreaks then
     FMessageData := pLogItem.LogMessage.Replace(sLineBreak, '#10', [rfReplaceAll]);
+  FUTF8BOM := pUTF8BOM;
 end;
 
 function TLoggerProUDPSyslogPacket.GetSyslogData: string;
@@ -154,7 +160,7 @@ begin
   // NOT; RFC 5424 6.2 HEADER
     FPriority + IANAVersion + ' ' + FTimestamp + ' ' + FHostName + ' ' + FApplication + ' ' + FProcID + ' ' + FMessageID
   // NOT; RFC 5424, 6.5 ex 1 no structured data
-    + ' - ' { NOT; Uncomment UTF-8 BOM for full RFC 5424 compatiblitiy #$EF#$BB#$BF } + FUserName + ' ' + FVersion + ' '
+    + ' - ' + iif(FUTF8BOM, #$EF#$BB#$BF) + FUserName + ' ' + FVersion + ' '
     + FThreadID + ' ' + FMessageData;
   // NOT; RFC 5424 structured data, uncomment and use if needed
   // + ' [MySDID@1 ' + 'UserName="' + FUserName + '" Version="' + FVersion + '" ThreadId="' + FThreadID + '" MessageData="' + FMessageData + '"]' + ...;

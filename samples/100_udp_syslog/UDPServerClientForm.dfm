@@ -2,8 +2,8 @@ object FUDPServerClientForm: TFUDPServerClientForm
   Left = 0
   Top = 0
   Caption = 'UDP Server & Client'
-  ClientHeight = 350
-  ClientWidth = 504
+  ClientHeight = 624
+  ClientWidth = 1138
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -16,8 +16,8 @@ object FUDPServerClientForm: TFUDPServerClientForm
   object Label1: TLabel
     Left = 0
     Top = 0
-    Width = 504
-    Height = 21
+    Width = 1138
+    Height = 19
     Align = alTop
     Caption = 'Switch on the UDP server to listen to broadcasts on 127.0.0.1.'
     Font.Charset = DEFAULT_CHARSET
@@ -26,13 +26,13 @@ object FUDPServerClientForm: TFUDPServerClientForm
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    ExplicitWidth = 640
+    ExplicitWidth = 442
   end
   object Label2: TLabel
     Left = 0
-    Top = 21
-    Width = 504
-    Height = 21
+    Top = 19
+    Width = 1138
+    Height = 19
     Align = alTop
     Caption = 
       'Also switch on the UDP client to start broadcasting logs to 127.' +
@@ -43,30 +43,28 @@ object FUDPServerClientForm: TFUDPServerClientForm
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    ExplicitTop = 19
-    ExplicitWidth = 640
+    ExplicitWidth = 490
   end
   object Label3: TLabel
     Left = 0
-    Top = 42
-    Width = 504
-    Height = 21
+    Top = 38
+    Width = 1138
+    Height = 19
     Align = alTop
-    Caption = 'Watch server log to see received  syslog messages.'
+    Caption = 'Watch server log below to see received syslog messages.'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -16
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    ExplicitTop = 38
-    ExplicitWidth = 640
+    ExplicitWidth = 402
   end
   object UDPServerReceived: TMemo
     Left = 0
-    Top = 176
-    Width = 504
-    Height = 174
+    Top = 170
+    Width = 1138
+    Height = 454
     Align = alClient
     Color = clBackground
     Font.Charset = DEFAULT_CHARSET
@@ -78,18 +76,18 @@ object FUDPServerClientForm: TFUDPServerClientForm
     ReadOnly = True
     ScrollBars = ssVertical
     TabOrder = 0
+    ExplicitWidth = 504
+    ExplicitHeight = 180
   end
   object Panel1: TPanel
     Left = 0
-    Top = 63
-    Width = 504
+    Top = 57
+    Width = 1138
     Height = 113
     Align = alTop
     BevelInner = bvLowered
     TabOrder = 1
-    ExplicitLeft = 96
-    ExplicitTop = 128
-    ExplicitWidth = 441
+    ExplicitWidth = 504
     object Label4: TLabel
       Left = 8
       Top = 6
@@ -159,13 +157,13 @@ object FUDPServerClientForm: TFUDPServerClientForm
       end>
     DefaultPort = 0
     OnUDPRead = IdUDPServerUDPRead
-    Left = 448
-    Top = 200
+    Left = 536
+    Top = 8
   end
   object UDPClientTimer: TTimer
     Enabled = False
     OnTimer = UDPClientTimerTimer
-    Left = 448
-    Top = 256
+    Left = 616
+    Top = 8
   end
 end

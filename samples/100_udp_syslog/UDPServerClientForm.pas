@@ -79,11 +79,12 @@ end;
 
 procedure TFUDPServerClientForm.UDPClientTimerTimer(Sender: TObject);
 begin
-  case RandomRange(0, 4) of
+  case RandomRange(0, 5) of
     0: Log.Debug('debug message', 'DEBUG');
     1: Log.Info('info message', 'INFO');
     2: Log.Warn('warn message', 'WARN');
     3: Log.Error('error message', 'ERROR');
+    4: Log.Info('Some Access Violation', 'INFO');
   end;
 end;
 
@@ -91,7 +92,6 @@ procedure TFUDPServerClientForm.UDPServerControlClick(Sender: TObject);
 begin
   IdUDPServer.Bindings[0].Port := UDPServerPort.Value;
   IdUDPServer.Active := UDPServerControl.ItemIndex = STATUS_ON;
-  if not IdUDPServer.Active then Exit;
 end;
 
 end.
