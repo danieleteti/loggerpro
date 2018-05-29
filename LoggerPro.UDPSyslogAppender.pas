@@ -15,9 +15,10 @@ type
     FVersion: string;
     FProcID: string;
     FUnixLineBreaks: Boolean;
+    FUTF8BOM: Boolean;
 
     public
-    constructor Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+    constructor Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean = False);
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); override;
@@ -44,11 +45,12 @@ type
     FMessageID: string;
     FMessageData: string;
     FUnixLineBreaks: Boolean;
+    FUTF8BOM: Boolean;
 
     function GetSyslogData: string;
 
     public
-    constructor Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+    constructor Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean = False);
     property SyslogData: string read GetSyslogData;
   end;
 
@@ -56,8 +58,9 @@ implementation
 uses DateUtils, SysUtils, Windows;
 { TLoggerProUDPSyslogAppender }
 
-constructor TLoggerProUDPSyslogAppender.Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+constructor TLoggerProUDPSyslogAppender.Create(pIP: string; pPort: Integer; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean);
 begin
+  inherited Create;
   FIP := pIP;
   FPort := pPort;
   FHostName := pHostName;
@@ -66,6 +69,7 @@ begin
   FVersion := pVersion;
   FProcID := pProcID;
   FUnixLineBreaks := pUnixLineBreaks;
+  FUTF8BOM := pUTF8BOM;
 end;
 
 procedure TLoggerProUDPSyslogAppender.Setup;
@@ -85,7 +89,7 @@ var
   xPacket: TLoggerProUDPSyslogPacket;
 begin
   inherited;
-  xPacket := TLoggerProUDPSyslogPacket.Create(aLogItem, FHostName, FUserName, FApplication, FVersion, FProcID, FUnixLineBreaks);
+  xPacket := TLoggerProUDPSyslogPacket.Create(aLogItem, FHostName, FUserName, FApplication, FVersion, FProcID, FUnixLineBreaks, FUTF8BOM);
   try
     FLoggerProSyslogAppenderClient.Broadcast(xPacket.SysLogData, FPort, FIP, IndyTextEncoding_UTF8);
   finally
@@ -100,7 +104,7 @@ begin
   Result := '<' + IntToStr(pFacility * 8 + pSeverity) + '>';
 end;
 
-constructor TLoggerProUDPSyslogPacket.Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean);
+constructor TLoggerProUDPSyslogPacket.Create(pLogItem: TLogItem; pHostName: string; pUserName: string; pApplication: string; pVersion: string; pProcID: string; pUnixLineBreaks: Boolean; pUTF8BOM: Boolean);
 begin
   case pLogItem.LogType of
     TLogType.Debug: FPriority := RFC5474Priority(1, 7);
@@ -123,6 +127,7 @@ begin
   FUnixLineBreaks := pUnixLineBreaks;
   if FUnixLineBreaks then
     FMessageData := pLogItem.LogMessage.Replace(sLineBreak, '#10', [rfReplaceAll]);
+  FUTF8BOM := pUTF8BOM;
 end;
 
 function TLoggerProUDPSyslogPacket.GetSyslogData: string;
@@ -133,8 +138,8 @@ begin
     // NOT; RFC 5424 6.2 HEADER
     FPriority + IANAVersion + ' ' + FTimeStamp + ' ' + FHostName+ ' ' + FApplication + ' ' + FProcID + ' ' + FMessageID
     // NOT; RFC 5424, 6.5 ex 1 no structured data
-    + ' - '{NOT; Uncomment UTF-8 BOM for full RFC 5424 compatiblitiy #$EF#$BB#$BF} + FUserName + ' ' + FVersion + ' ' + FThreadID + ' ' + FMessageData;
-    // NOT; RFC 5424 structured data, uncomment and use if needed
+    + ' - ' + iif(FUTF8BOM, #$EF#$BB#$BF) + FUserName + ' ' + FVersion + ' ' + FThreadID + ' ' + FMessageData;
+    // NOT; RFC 5424 structured data, uncomment and place instead of ' - ' if needed
     // + ' [MySDID@1 ' + 'UserName="' + FUserName + '" Version="' + FVersion + '" ThreadId="' + FThreadID + '" MessageData="' + FMessageData + '"]' + ...;
 end;
 
