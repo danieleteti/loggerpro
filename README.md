@@ -94,12 +94,14 @@ end.
 
 ## Built-in log appenders
 The framework contains the following built-in log appenders
-- File (`TLoggerProFileAppender`)
-- Console (`TLoggerProConsoleAppender`)
-- OutputDebugString (`TLoggerProOutputDebugStringAppender`)
-- VCL Memo (`TVCLMemoLogAppender`)
-- Redis Appender with LogsViewer(to aggregate logs from different instances on a single Redis instance)
-- Email Logger (to send email as log, very useful for fatal errors)
+- File (`TLoggerProFileAppender`) (v1.0.x+)
+- Console (`TLoggerProConsoleAppender`) (v1.0.x+)
+- OutputDebugString (`TLoggerProOutputDebugStringAppender`) (v1.0.x+)
+- VCL Memo (`TVCLMemoLogAppender`) (v1.0.x+)
+- VCL ListView (`TVCLMemoLogAppender`) -- thanks to [https://github.com/he3p94uu](https://github.com/he3p94uu) (v1.3.x+)
+- Redis Appender with LogsViewer(to aggregate logs from different instances on a single Redis instance) (v1.2.x+)
+- Email Logger (to send email as log, very useful for fatal errors) (v1.2.x+)
+- SysLog Logger ([RFC 5424](https://tools.ietf.org/html/rfc5424) compliant) -- thanks to [https://github.com/nurettin](https://github.com/nurettin) (v1.3.x+)
 
 Next appenders in the development pipeline
 - RESTful Appender (to send logs to a rest endpoint using a specific request format, so that you can implement log server in DelphiMVCFramework, PHP, Java, Python, Node etc)

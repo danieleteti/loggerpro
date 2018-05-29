@@ -23,7 +23,8 @@ projects = [
 			'samples\\60_logging_inside_dll\\MainProgram.dproj',
 			'samples\\60_logging_inside_dll\\mydll.dproj',
 			'samples\\90_remote_logging_with_redis\\RemoteRedisAppenderSample.dproj',
-			'samples\\90_remote_logging_with_redis\\redis_logs_viewer\\RedisLogsViewer.dproj'
+			'samples\\90_remote_logging_with_redis\\redis_logs_viewer\\RedisLogsViewer.dproj',
+            'samples\\100_udp_syslog\\udp_syslog.dproj'
 ]
 
 release_path = "BUILD"
