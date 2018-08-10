@@ -1,32 +1,59 @@
-unit LoggerPro.ConsoleAppender;
 { <@abstract(The unit to include if you want to use @link(TLoggerProConsoleAppender))
-  @author(Daniele Teti) }
+  @author(Daniele Teti)
+  @author(Fulgan - https://github.com/Fulgan) }
+
+unit LoggerPro.ConsoleAppender;
 
 interface
 
 uses
-  LoggerPro, System.Classes;
+  Classes,
+  SysUtils,
+  LoggerPro,
+  SyncObjs;
 
 type
-  {
-    @abstract(Logs to the console using 4 different colors for the different logs level)
-    To learn how to use this appender, check the sample @code(console_appender.dproj)
-    @author(Daniele Teti - d.teti@bittime.it)
-  }
+  /// <summary>TLoggerProConsoleAppender
+  /// This class creates a new console (if needed) when setup.
+  /// Warning: If the application is of type GUI and it is started from a console,
+  /// this will NOT log to the calling console but create a new one.
+  /// This is because the way cmd.exe works: if the application is of type GUI,
+  /// then is immediately detaches from cmd.exe which doesn't wait. This means that
+  /// there is never a console to attach to except if a new console is created
+  /// elsewhere in the app.
+  /// In case this class is used from a console, then there is no guarantee that
+  /// the messages will be
+  /// displayed in chronological order.
+  /// </summary>
   TLoggerProConsoleAppender = class(TLoggerProAppenderBase)
+  strict private
+    class var FLock: TCriticalSection; // used to prevent syncroneous operations to run at the same time
+    class var FConsoleAllocated: Int64; // used to ensure one and only one console is created
+    class constructor Create; // allocate global vars
+    class destructor Destroy; // dealocate global vars
   protected
     procedure SetColor(const Color: Integer);
   public
-    constructor Create; override;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); override;
   end;
 
+  // for some reason, AttachConsole has been left out of Winapi.windows.pas
+function AttachConsole(PID: Cardinal): LongBool; stdcall;
+
 implementation
 
+{ TLoggerProConsoleAppender }
+
 uses
-  System.SysUtils, Winapi.Windows, Winapi.Messages;
+  Winapi.Windows,
+  Winapi.Messages;
+
+// for some reason, AttachConsole has been left out of Winapi.windows.pas
+const
+  ATTACH_PARENT_PROCESS = Cardinal(-1);
+function AttachConsole; external kernel32 name 'AllocConsole';
 
 const
   DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
@@ -41,11 +68,6 @@ const
   BACKGROUND_RED = $40; { background color red. }
   BACKGROUND_INTENSITY = $80; { background color is intensified }
 
-constructor TLoggerProConsoleAppender.Create;
-begin
-  inherited Create;
-end;
-
 procedure TLoggerProConsoleAppender.SetColor(const Color: Integer);
 begin
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), Color);
@@ -53,21 +75,29 @@ end;
 
 procedure TLoggerProConsoleAppender.Setup;
 begin
-  if IsConsole then
-    raise ELoggerPro.CreateFmt('Cannot use %s in a console app', [ClassName]);
-  TThread.Synchronize(nil,
-    procedure
-    begin
-      if GetStdHandle(STD_OUTPUT_HANDLE) = 0 then
-        raise ELoggerPro.Create
-          ('Console not present' + slineBreak +
-          '[HINT: You can call "AllocConsole" to create a Console in a GUI application]');
-    end);
+  if TInterlocked.read(TLoggerProConsoleAppender.FConsoleAllocated) < 2 then
+  begin
+    TLoggerProConsoleAppender.FLock.Enter;
+    try
+      if TInterlocked.Increment(TLoggerProConsoleAppender.FConsoleAllocated) = 1 then
+      begin
+        // Attempt to attach to the parent (if there is already a console allocated)
+        if not IsConsole then
+        begin
+          if not AttachConsole(ATTACH_PARENT_PROCESS) then
+            AllocConsole; // No console allocated, create a new one
+        end;
+        TInterlocked.Increment(TLoggerProConsoleAppender.FConsoleAllocated);
+      end;
+    finally
+      TLoggerProConsoleAppender.FLock.Leave;
+    end;
+  end;
 end;
 
 procedure TLoggerProConsoleAppender.TearDown;
 begin
-  // do nothing
+
 end;
 
 procedure TLoggerProConsoleAppender.WriteLog(const aLogItem: TLogItem);
@@ -75,6 +105,7 @@ var
   lText: string;
   lColor: Integer;
 begin
+  lColor := FOREGROUND_GREEN; // Avoid W1030
   case aLogItem.LogType of
     TLogType.Debug:
       lColor := FOREGROUND_GREEN;
@@ -85,15 +116,32 @@ begin
     TLogType.Error:
       lColor := FOREGROUND_RED or FOREGROUND_INTENSITY;
   end;
-  lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp),
-    aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
+  lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp), aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
     aLogItem.LogTag]);
-  TThread.Queue(nil,
-    procedure
-    begin
-      SetColor(lColor);
-      Writeln(lText);
-    end);
+  TLoggerProConsoleAppender.FLock.Enter;
+  try
+    SetColor(lColor);
+    Writeln(lText);
+  finally
+    TLoggerProConsoleAppender.FLock.Leave;
+  end;
+end;
+
+class constructor TLoggerProConsoleAppender.Create;
+begin
+  TLoggerProConsoleAppender.FLock := TCriticalSection.Create;
+  TLoggerProConsoleAppender.FConsoleAllocated := 0;
+end;
+
+class destructor TLoggerProConsoleAppender.Destroy;
+begin
+  // make sure all code
+  try
+    TLoggerProConsoleAppender.FLock.Enter;
+    FreeAndNil(TLoggerProConsoleAppender.FLock);
+  except
+    // No exception checking here or the app might blow up with a RTE 217
+  end;
 end;
 
 end.

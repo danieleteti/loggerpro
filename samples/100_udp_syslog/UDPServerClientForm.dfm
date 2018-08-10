@@ -76,8 +76,6 @@ object FUDPServerClientForm: TFUDPServerClientForm
     ReadOnly = True
     ScrollBars = ssVertical
     TabOrder = 0
-    ExplicitWidth = 504
-    ExplicitHeight = 180
   end
   object Panel1: TPanel
     Left = 0
@@ -87,7 +85,6 @@ object FUDPServerClientForm: TFUDPServerClientForm
     Align = alTop
     BevelInner = bvLowered
     TabOrder = 1
-    ExplicitWidth = 504
     object Label4: TLabel
       Left = 8
       Top = 6

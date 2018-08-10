@@ -14,6 +14,12 @@ LoggerPro is compatibile with
 - Delphi 10.1 Berlin
 - Delphi 10.2 Tokyo (Linux compatibility)
 
+## What's new in 1.3.0
+- Replace `TThreadedList<T>` with a custom implementation because of [this](https://forums.embarcadero.com/thread.jspa?messageID=941762) and [this](https://quality.embarcadero.com/browse/RSP-19993)
+- `TVCLMemoLogAppender.Create` gots new parameter: `aClearOnStartup` which optionally clear the memo at the startup.
+- Improvement to the `TLoggerProConsoleAppender` (Thanks to [Fulgan](https://github.com/Fulgan))
+- Added overload Log methods. The *Fmt versions are deprecated and will be removed in a future version [ISSUE #17](https://github.com/danieleteti/loggerpro/issues/17)
+
 
 ## Getting started
 ```delphi
