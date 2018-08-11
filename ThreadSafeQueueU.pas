@@ -70,7 +70,7 @@ begin
   fQueue := TObjectQueue<T>.Create(False);
   fCriticalSection := TCriticalSection.Create;
   // fSpinLock := TMonitor.Create(False);
-  fEvent := TEvent.Create(nil, False, False, '');
+  fEvent := TEvent.Create(nil, True, False, '');
   fPopTimeout := PopTimeout;
 end;
 
@@ -87,8 +87,11 @@ begin
 end;
 
 function TThreadSafeQueue<T>.Dequeue(out QueueSize: UInt64; out Item: T): TWaitResult;
+var
+  lWaitResult: TWaitResult;
 begin
-  if fEvent.WaitFor(fPopTimeout) = TWaitResult.wrSignaled then
+  lWaitResult := fEvent.WaitFor(fPopTimeout);
+  if lWaitResult = TWaitResult.wrSignaled then
   begin
     if fShutDown then
       Exit(TWaitResult.wrAbandoned);
@@ -115,7 +118,7 @@ begin
   else
   begin
     Item := default (T);
-    Result := TWaitResult.wrTimeout;
+    Result := lWaitResult;
   end;
 end;
 

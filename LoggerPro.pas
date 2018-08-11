@@ -498,43 +498,58 @@ var
   I: Integer;
   lAppendersDecorators: TObjectList<TAppenderAdapter>;
   lAction: TLogErrorAction;
+  lWaitResult: TWaitResult;
 begin
   lAppendersDecorators := BuildAppendersDecorator;
   try
-    while (not Terminated) or (FQueue.QueueSize > 0) do
+    while true do
     begin
-      if FQueue.Dequeue(lQSize, lLogItem) = TWaitResult.wrSignaled then
-      begin
-        if lLogItem <> nil then
-        begin
-          try
-            for I := 0 to lAppendersDecorators.Count - 1 do
+      lWaitResult := FQueue.Dequeue(lQSize, lLogItem);
+      case lWaitResult of
+        wrSignaled:
+          begin
+            if lLogItem <> nil then
             begin
-              if lLogItem.LogType >= lAppendersDecorators[I].GetLogLevel then
-              begin
-                if not lAppendersDecorators[I].EnqueueLog(lLogItem) then
+              try
+                for I := 0 to lAppendersDecorators.Count - 1 do
                 begin
-                  lAction := TLogErrorAction.SkipNewest; // default
-                  DoOnAppenderError(TObject(lAppendersDecorators[I].FLogAppender).ClassName, lLogItem, TLogErrorReason.QueueFull, lAction);
-                  case lAction of
-                    TLogErrorAction.SkipNewest:
-                      begin
-                        // just skip the new message
+                  if lLogItem.LogType >= lAppendersDecorators[I].GetLogLevel then
+                  begin
+                    if not lAppendersDecorators[I].EnqueueLog(lLogItem) then
+                    begin
+                      lAction := TLogErrorAction.SkipNewest; // default
+                      DoOnAppenderError(TObject(lAppendersDecorators[I].FLogAppender).ClassName, lLogItem,
+                        TLogErrorReason.QueueFull, lAction);
+                      case lAction of
+                        TLogErrorAction.SkipNewest:
+                          begin
+                            // just skip the new message
+                          end;
+                        TLogErrorAction.DiscardOlder:
+                          begin
+                            // just remove the oldest log message
+                            lAppendersDecorators[I].Queue.Dequeue.Free;
+                          end;
                       end;
-                    TLogErrorAction.DiscardOlder:
-                      begin
-                        // just remove the oldest log message
-                        lAppendersDecorators[I].Queue.Dequeue.Free;
-                      end;
+                    end;
                   end;
                 end;
+              finally
+                lLogItem.Free;
               end;
             end;
-          finally
-            lLogItem.Free;
           end;
-        end;
+        wrTimeout, wrAbandoned, wrError:
+          begin
+            if Terminated then
+              Break;
+          end;
+        wrIOCompletion:
+          begin
+            raise ELoggerPro.Create('Unhandled WaitResult: wrIOCompletition');
+          end;
       end;
+
     end;
   finally
     lAppendersDecorators.Free;
