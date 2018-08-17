@@ -90,6 +90,8 @@ function TThreadSafeQueue<T>.Dequeue(out QueueSize: UInt64; out Item: T): TWaitR
 var
   lWaitResult: TWaitResult;
 begin
+  if fShutDown then
+    Exit(TWaitResult.wrAbandoned);
   lWaitResult := fEvent.WaitFor(fPopTimeout);
   if lWaitResult = TWaitResult.wrSignaled then
   begin
@@ -108,12 +110,6 @@ begin
     finally
       fCriticalSection.Leave;
     end;
-    // end
-    // else
-    // begin
-    // Result := TWaitResult.wrTimeout;
-    // Item := default (T);
-    // end;
   end
   else
   begin
@@ -146,19 +142,39 @@ begin
 end;
 
 function TThreadSafeQueue<T>.Enqueue(const Item: T): Boolean;
+const
+  cRetryCount: Byte = 5;
+var
+  lCount: Integer;
 begin
   if fShutDown then
     Exit(False);
   Result := False;
-  fCriticalSection.Enter;
-  try
-    if fQueue.Count >= fMaxSize then
-      Exit(False);
-    fQueue.Enqueue(Item);
-    Result := True;
-    fEvent.SetEvent;
-  finally
-    fCriticalSection.Leave;
+
+  lCount := 0;
+  while lCount < cRetryCount do
+  begin
+    Sleep(lCount * 10);
+    fCriticalSection.Enter;
+    try
+      if fQueue.Count >= fMaxSize then
+      begin
+        Inc(lCount);
+        // Sleep(lCount * 10);
+        Continue;
+      end;
+      fQueue.Enqueue(Item);
+      Result := True;
+      fEvent.SetEvent;
+      Break;
+    finally
+      fCriticalSection.Leave;
+    end;
+  end;
+
+  if lCount = cRetryCount then
+  begin
+    raise Exception.Create('Queue is full');
   end;
 end;
 

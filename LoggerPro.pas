@@ -13,8 +13,8 @@ uses
   ThreadSafeQueueU;
 
 var
-  DefaultLoggerProMainQueueSize: Cardinal = 1000;
-  DefaultLoggerProAppenderQueueSize: Cardinal = 1000;
+  DefaultLoggerProMainQueueSize: Cardinal = 50000;
+  DefaultLoggerProAppenderQueueSize: Cardinal = 50000;
 
 type
   TLogType = (Debug = 0, Info, Warning, Error);
@@ -295,7 +295,8 @@ uses
   System.Types,
   LoggerPro.FileAppender,
   System.SyncObjs,
-  System.DateUtils;
+  System.DateUtils,
+  System.IOUtils;
 
 function BuildLogWriter(aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler; aLogLevel: TLogType): ILogWriter;
 var
@@ -413,11 +414,15 @@ begin
   if aType >= FLogLevel then
   begin
     lLogItem := TLogItem.Create(aType, aMessage, aTag);
-    if not FLoggerThread.LogWriterQueue.Enqueue(lLogItem) then
-    begin
+    try
+      if not FLoggerThread.LogWriterQueue.Enqueue(lLogItem) then
+      begin
+        raise ELoggerPro.Create
+          ('Main logs queue is full. Hints: Are there appenders? Are these appenders fast enough considering the log item production?');
+      end;
+    except
       FreeAndNil(lLogItem);
-      raise ELoggerPro.Create
-        ('Main logs queue is full. Hints: Are there appenders? Are these appenders fast enough considering the log item production?');
+      raise;
     end;
   end;
 end;
