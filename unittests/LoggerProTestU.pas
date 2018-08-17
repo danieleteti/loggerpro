@@ -3,7 +3,7 @@ unit LoggerProTestU;
 interface
 
 uses
-  DUnitX.TestFramework, LoggerPro;
+  DUnitX.TestFramework, LoggerPro, LoggerPro.Proxy;
 
 type
 
@@ -27,7 +27,9 @@ type
     procedure TestOnAppenderError;
 
     [Test]
-    procedure TestLogLevel;
+    [TestCase('No proxy', 'false')]
+    [TestCase('With proxy', 'true')]
+    procedure TestLogLevel(UseProxy: boolean);
   end;
 
 implementation
@@ -53,7 +55,7 @@ procedure TLoggerProTest.TearDown;
 begin
 end;
 
-procedure TLoggerProTest.TestLogLevel;
+procedure TLoggerProTest.TestLogLevel(UseProxy: boolean);
 var
   lSetup, lTearDown: TProc;
   lTearDownCalled, lSetupCalled: Boolean;
@@ -63,6 +65,10 @@ var
   lEvent: TEvent;
   lLock: TObject;
   lHistory: TArray<String>;
+  Appender: ILogAppender;
+  InvalidItemLogged: int64;
+const
+  STR_FORBIDDEN = 'ignoredmessage';
 begin
   lHistory := [];
   lLock := TObject.Create;
@@ -80,6 +86,9 @@ begin
     lWriteLog := procedure(aLogItem: TLogItem)
       begin
         lHistory := lHistory + ['writelog' + aLogItem.LogTypeAsString];
+        // If the logged message is suppsed to be filtered, increase the "InvalidItemLogged" count
+        if aLogItem.LogMessage.Equals(STR_FORBIDDEN) then
+          TInterlocked.Increment(InvalidItemLogged);
         TMonitor.Enter(lLock);
         try
           FreeAndNil(lLogItem);
@@ -89,46 +98,71 @@ begin
           TMonitor.Exit(lLock);
         end;
       end;
-
-    lLogWriter := BuildLogWriter([TMyAppender.Create(lSetup, lTearDown,
-      lWriteLog)]);
+    Appender := TMyAppender.Create(lSetup, lTearDown, lWriteLog);
+    if UseProxy then
+    begin
+      Appender := TLoggerProFilter.Build(Appender,
+        function (LogItem: TLogItem): Boolean
+        begin
+          result := not LogItem.LogMessage.Equals(STR_FORBIDDEN);
+        end
+      );
+    end;
+    InvalidItemLogged := 0;
+    lLogWriter := BuildLogWriter([Appender]);
     lEvent := TEvent.Create(nil, True, false, '');
     try
       // debug message
       lEvent.ResetEvent;
+      InvalidItemLogged := 0;
       lLogWriter.Debug('debug message', 'debug');
+      if UseProxy then
+        lLogWriter.Debug('ignoredmessage', 'debug');
       Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000),
         'Event not released after 5 seconds');
       Assert.AreEqual('debug message', lLogItem.LogMessage);
       Assert.AreEqual('debug', lLogItem.LogTag);
       Assert.AreEqual('DEBUG', lLogItem.LogTypeAsString);
+      Assert.AreEqual(Int64(0), Int64(TInterlocked.Read(InvalidItemLogged)));
 
       // info message
       lEvent.ResetEvent;
+      InvalidItemLogged := 0;
       lLogWriter.Info('info message', 'info');
+      if UseProxy then
+        lLogWriter.Info('ignoredmessage', 'info');
       Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000),
         'Event not released after 5 seconds');
       Assert.AreEqual('info message', lLogItem.LogMessage);
       Assert.AreEqual('info', lLogItem.LogTag);
       Assert.AreEqual('INFO', lLogItem.LogTypeAsString);
+      Assert.AreEqual(Int64(0), Int64(TInterlocked.Read(InvalidItemLogged)));
 
       // warning message
       lEvent.ResetEvent;
+      InvalidItemLogged := 0;
       lLogWriter.Warn('warning message', 'warning');
+      if UseProxy then
+        lLogWriter.Warn('ignoredmessage', 'warning');
       Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000),
         'Event not released after 5 seconds');
       Assert.AreEqual('warning message', lLogItem.LogMessage);
       Assert.AreEqual('warning', lLogItem.LogTag);
       Assert.AreEqual('WARNING', lLogItem.LogTypeAsString);
+      Assert.AreEqual(Int64(0), Int64(TInterlocked.Read(InvalidItemLogged)));
 
       // error message
       lEvent.ResetEvent;
+      InvalidItemLogged := 0;
       lLogWriter.Error('error message', 'error');
+      if UseProxy then
+        lLogWriter.Error('ignoredmessage', 'error');
       Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000),
         'Event not released after 5 seconds');
       Assert.AreEqual('error message', lLogItem.LogMessage);
       Assert.AreEqual('error', lLogItem.LogTag);
       Assert.AreEqual('ERROR', lLogItem.LogTypeAsString);
+      Assert.AreEqual(Int64(0), Int64(TInterlocked.Read(InvalidItemLogged)));
 
       lLogWriter := nil;
       Assert.AreEqual(6, Length(lHistory));
