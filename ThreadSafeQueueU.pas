@@ -171,11 +171,6 @@ begin
       fCriticalSection.Leave;
     end;
   end;
-
-  if lCount = cRetryCount then
-  begin
-    raise Exception.Create('Queue is full');
-  end;
 end;
 
 function TThreadSafeQueue<T>.QueueSize: UInt64;
