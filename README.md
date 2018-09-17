@@ -14,6 +14,15 @@ LoggerPro is compatibile with
 - Delphi 10.1 Berlin
 - Delphi 10.2 Tokyo (Linux compatibility)
 
+## What's new in 1.3.0
+- Replace `TThreadedList<T>` with a custom implementation because of [this](https://forums.embarcadero.com/thread.jspa?messageID=941762) and [this](https://quality.embarcadero.com/browse/RSP-19993)
+- `TVCLMemoLogAppender.Create` gots new parameter: `aClearOnStartup` which optionally clear the memo at the startup.
+- Improvement to the `TLoggerProConsoleAppender` (Thanks to [Fulgan](https://github.com/Fulgan))
+- Added overload Log methods. The *Fmt versions are deprecated and will be removed in a future version [ISSUE #17](https://github.com/danieleteti/loggerpro/issues/17)
+- Added [NSQ](https://nsq.io) appender (Thanks to [Fulgan](https://github.com/Fulgan))
+- Added logger filter decorator (Thanks to [Fulgan](https://github.com/Fulgan))
+
+
 
 ## Getting started
 ```delphi
@@ -101,7 +110,7 @@ The framework contains the following built-in log appenders
 - VCL ListView (`TVCLMemoLogAppender`) -- thanks to [https://github.com/he3p94uu](https://github.com/he3p94uu) (v1.3.x+)
 - Redis Appender with LogsViewer(to aggregate logs from different instances on a single Redis instance) (v1.2.x+)
 - Email Logger (to send email as log, very useful for fatal errors) (v1.2.x+)
-- SysLog Logger ([RFC 5424](https://tools.ietf.org/html/rfc5424) compliant) -- thanks to [https://github.com/nurettin](https://github.com/nurettin) (v1.3.x+)
+- SysLog Logger [RFC 5424](https://tools.ietf.org/html/rfc5424) compliant -- thanks to [https://github.com/nurettin](https://github.com/nurettin) (v1.3.x+)
 
 Next appenders in the development pipeline
 - RESTful Appender (to send logs to a rest endpoint using a specific request format, so that you can implement log server in DelphiMVCFramework, PHP, Java, Python, Node etc)
@@ -114,7 +123,7 @@ The log writers and all the appenders are asycnhronous.
 
 ## Documentation
 
-Documenation is available in the `docs` folder as HTML.
+Documentation is available in the `docs` folder as HTML.
 
 ## Other
 You can install [Delphinus package manager](https://github.com/Memnarch/Delphinus/wiki/Installing-Delphinus) and install LoggerPro as a package there. (Delphinus-Support)

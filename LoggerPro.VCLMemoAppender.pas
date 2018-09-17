@@ -5,7 +5,9 @@ unit LoggerPro.VCLMemoAppender;
 interface
 
 uses
-  LoggerPro, System.Classes, Vcl.StdCtrls;
+  LoggerPro,
+  System.Classes,
+  Vcl.StdCtrls;
 
 type
   { @abstract(Appends formatted @link(TLogItem) to a TMemo in a VCL application) }
@@ -13,21 +15,9 @@ type
   private
     FMemo: TMemo;
     FMaxLogLines: Word;
-	FLogFormat: string;
-  public const
-      { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
-      The positional parameters are the followings:
-      @orderedList(
-      @itemSetNumber 0
-      @item TimeStamp
-      @item ThreadID
-      @item LogType
-      @item LogMessage
-      @item LogTag
-      )
-    }
-    DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
-    constructor Create(aMemo: TMemo; aMaxLogLines: Word = 500; aLogFormat: string = DEFAULT_LOG_FORMAT); reintroduce;
+    FClearOnStartup: Boolean;
+  public
+    constructor Create(aMemo: TMemo; aMaxLogLines: Word = 100; aClearOnStartup: Boolean = False); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); override;
@@ -36,25 +26,33 @@ type
 implementation
 
 uses
-  System.SysUtils, Winapi.Windows, Winapi.Messages;
+  System.SysUtils,
+  Winapi.Windows,
+  Winapi.Messages;
+
+const
+  DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
 
   { TVCLMemoLogAppender }
 
-constructor TVCLMemoLogAppender.Create(aMemo: TMemo; aMaxLogLines: Word; aLogFormat: string);
+constructor TVCLMemoLogAppender.Create(aMemo: TMemo; aMaxLogLines: Word; aClearOnStartup: Boolean);
 begin
   inherited Create;
-  FLogFormat := aLogFormat;
   FMemo := aMemo;
   FMaxLogLines := aMaxLogLines;
+  FClearOnStartup := aClearOnStartup;
 end;
 
 procedure TVCLMemoLogAppender.Setup;
 begin
-  TThread.Synchronize(nil,
-    procedure
-    begin
-      FMemo.Clear;
-    end);
+  if FClearOnStartup then
+  begin
+    TThread.Synchronize(nil,
+      procedure
+      begin
+        FMemo.Clear;
+      end);
+  end;
 end;
 
 procedure TVCLMemoLogAppender.TearDown;
@@ -66,8 +64,7 @@ procedure TVCLMemoLogAppender.WriteLog(const aLogItem: TLogItem);
 var
   lText: string;
 begin
-  lText := Format(FLogFormat, [datetimetostr(aLogItem.TimeStamp),
-    aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
+  lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp), aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
     aLogItem.LogTag]);
   TThread.Queue(nil,
     procedure
