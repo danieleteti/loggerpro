@@ -182,7 +182,7 @@ end;
 
 procedure TLoggerProNSQAppenderBase.Setup;
 begin
-  FFormatSettings := TFormatSettings.Create();
+  FFormatSettings := LoggerPro.GetDefaultFormatSettings;
   inherited;
 end;
 

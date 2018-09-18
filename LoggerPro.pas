@@ -20,6 +20,8 @@ type
   TLogType = (Debug = 0, Info, Warning, Error);
   TLogErrorReason = (QueueFull);
   TLogErrorAction = (SkipNewest, DiscardOlder);
+  TLogExtendedInfo = (EIUserName, EIComputerName, EIProcessName, EIProcessID, EIDeviceID { mobile } );
+  TLoggerProExtendedInfo = set of TLogExtendedInfo;
 
   { @abstract(Represent the single log item)
     Each call to some kind of log method is wrapped in a @link(TLogItem)
@@ -30,12 +32,12 @@ type
     FMessage: string;
     FTag: string;
     FTimeStamp: TDateTime;
-    FThreadID: Cardinal;
+    FThreadID: TThreadID;
     function GetLogTypeAsString: string;
   public
     constructor Create(const aType: TLogType; const aMessage: string; const aTag: string); overload;
     constructor Create(const aType: TLogType; const aMessage: string; const aTag: string; const aTimeStamp: TDateTime;
-      const aThreadID: Cardinal); overload;
+      const aThreadID: TThreadID); overload;
 
     function Clone: TLogItem;
     { @abstract(The type of the log)
@@ -54,7 +56,7 @@ type
     { @abstract(The timestamp when the @link(TLogItem) is generated) }
     property TimeStamp: TDateTime read FTimeStamp;
     { @abstract(The IDof the thread which generated the log item) }
-    property ThreadID: Cardinal read FThreadID;
+    property ThreadID: TThreadID read FThreadID;
     { @abstract(The type of the log converted in string) }
     property LogTypeAsString: string read GetLogTypeAsString;
   end;
@@ -286,6 +288,9 @@ type
     @item(Log.Error('This is an error message', 'tag1'))
     )
   }
+
+function GetDefaultFormatSettings: TFormatSettings;
+function StringToLogType(const aLogType: string): TLogType;
 function BuildLogWriter(aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler = nil;
   aLogLevel: TLogType = TLogType.Debug): ILogWriter;
 
@@ -297,6 +302,30 @@ uses
   System.SyncObjs,
   System.DateUtils,
   System.IOUtils;
+
+function GetDefaultFormatSettings: TFormatSettings;
+begin
+  Result.DateSeparator := '-';
+  Result.TimeSeparator := ':';
+  Result.ShortDateFormat := 'YYY-MM-DD HH:NN:SS:ZZZ';
+  Result.ShortTimeFormat := 'HH:NN:SS';
+end;
+
+function StringToLogType(const aLogType: string): TLogType;
+var
+  lLogType: string;
+begin
+  lLogType := LowerCase(Trim(aLogType));
+  if lLogType = 'debug' then
+    Exit(TLogType.Debug);
+  if lLogType = 'info' then
+    Exit(TLogType.Info);
+  if lLogType = 'warning' then
+    Exit(TLogType.Warning);
+  if lLogType = 'error' then
+    Exit(TLogType.Error);
+  raise ELoggerPro.CreateFmt('Invalid LogType: ', [aLogType]);
+end;
 
 function BuildLogWriter(aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler; aLogLevel: TLogType): ILogWriter;
 var
@@ -468,7 +497,7 @@ end;
 
 constructor TLogItem.Create(const aType: TLogType; const aMessage, aTag: string);
 begin
-  Create(aType, aMessage, aTag, now, TThread.CurrentThread.ThreadID);
+  Create(aType, aMessage, aTag, now, TThread.Current.ThreadID);
 end;
 
 { TLogger.TLoggerThread }
@@ -582,7 +611,7 @@ begin
   end;
 end;
 
-constructor TLogItem.Create(const aType: TLogType; const aMessage, aTag: string; const aTimeStamp: TDateTime; const aThreadID: Cardinal);
+constructor TLogItem.Create(const aType: TLogType; const aMessage, aTag: string; const aTimeStamp: TDateTime; const aThreadID: TThreadID);
 begin
   inherited Create;
   FType := aType;

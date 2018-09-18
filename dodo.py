@@ -11,20 +11,23 @@ DOIT_CONFIG = {'verbosity': 2, 'default_tasks': ['build']}
 ############## CONFIGURATION ##################################################################
 ###############################################################################################
 projects = [
-			'samples\\01_global_logger\\global_logger.dproj',
-			'samples\\02_file_appender\\file_appender.dproj',
-			'samples\\03_console_appender\\console_appender.dproj',
-			'samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj',
-			'samples\\05_vcl_appenders\\vcl_appenders.dproj',
-			'samples\\10_multiple_appenders\\multiple_appenders.dproj',
-			'samples\\15_appenders_with_different_log_levels\\multi_appenders_different_loglevels.dproj',
-			'samples\\20_multiple_loggers\\multiple_loggers.dproj',
-			'samples\\50_custom_appender\\custom_appender.dproj',
-			'samples\\60_logging_inside_dll\\MainProgram.dproj',
-			'samples\\60_logging_inside_dll\\mydll.dproj',
-			'samples\\90_remote_logging_with_redis\\RemoteRedisAppenderSample.dproj',
-			'samples\\90_remote_logging_with_redis\\redis_logs_viewer\\RedisLogsViewer.dproj',
-            'samples\\100_udp_syslog\\udp_syslog.dproj'
+			('samples\\01_global_logger\\global_logger.dproj','Win32'),
+			('samples\\02_file_appender\\file_appender.dproj','Win32'),
+			('samples\\03_console_appender\\console_appender.dproj','Win32'),
+			('samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj','Win32'),
+			('samples\\05_vcl_appenders\\vcl_appenders.dproj','Win32'),
+			('samples\\10_multiple_appenders\\multiple_appenders.dproj','Win32'),
+			('samples\\15_appenders_with_different_log_levels\\multi_appenders_different_loglevels.dproj','Win32'),
+			('samples\\20_multiple_loggers\\multiple_loggers.dproj','Win32'),
+			('samples\\50_custom_appender\\custom_appender.dproj','Win32'),
+			('samples\\60_logging_inside_dll\\MainProgram.dproj','Win32'),
+			('samples\\60_logging_inside_dll\\mydll.dproj','Win32'),
+			('samples\\90_remote_logging_with_redis\\RemoteRedisAppenderSample.dproj','Win32'),
+			('samples\\90_remote_logging_with_redis\\redis_logs_viewer\\RedisLogsViewer.dproj','Win32'),
+            ('samples\\100_udp_syslog\\udp_syslog.dproj','Win32'),
+            ('samples\\110_rest_appender\RESTAppenderSample.dproj','Win32'),
+            ('samples\\110_rest_appender_mobile\MobileRESTAppenderSample.dproj','Android'),
+            ('samples\\rest_logs_collector\RESTLogsCollector.dproj','Win32')
 ]
 
 release_path = "BUILD"
@@ -49,13 +52,14 @@ def header(headers):
     
 
 def buildProject(project, config = 'DEBUG'):
-    header(["Building", project,"(config " + config + ")"])
-    p = project.replace('.dproj', '.cfg')
+    project_file, platform = project
+    header(["Building", project_file,"(config " + config + ")"])
+    p = project_file.replace('.dproj', '.cfg')
     if os.path.isfile(p):
       if os.path.isfile(p + '.unused'):
         os.remove(p + '.unused')
       os.rename(p, p + '.unused')
-    return subprocess.call("rsvars.bat & msbuild /t:Build /p:Config=" + config + " /p:Platform=Win32 \"" + project + "\"", shell=True) == 0
+    return subprocess.call(f"rsvars.bat & msbuild /t:Build /p:Config={config} /p:Platform={platform} \"{project_file}\"", shell=True) == 0
 
 def buildProjects():
     for project in projects:
@@ -66,7 +70,7 @@ def buildProjects():
 
 
 def build_unit_tests():
-    res = buildProject('unittests\\UnitTests.dproj', 'PLAINDUNITX')
+    res = buildProject(('unittests\\UnitTests.dproj','Win32'), 'PLAINDUNITX')
     return res
 
 
