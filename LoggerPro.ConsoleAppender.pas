@@ -30,7 +30,9 @@ type
     class var FLock: TCriticalSection; // used to prevent syncroneous operations to run at the same time
     class var FConsoleAllocated: Int64; // used to ensure one and only one console is created
     class constructor Create; // allocate global vars
-    class destructor Destroy; // dealocate global vars
+    class destructor Destroy;
+  private
+    fFormatSettings: TFormatSettings; // dealocate global vars
   protected
     procedure SetColor(const Color: Integer);
   public
@@ -75,6 +77,7 @@ end;
 
 procedure TLoggerProConsoleAppender.Setup;
 begin
+  fFormatSettings := LoggerPro.GetDefaultFormatSettings;
   if TInterlocked.read(TLoggerProConsoleAppender.FConsoleAllocated) < 2 then
   begin
     TLoggerProConsoleAppender.FLock.Enter;
@@ -116,7 +119,7 @@ begin
     TLogType.Error:
       lColor := FOREGROUND_RED or FOREGROUND_INTENSITY;
   end;
-  lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp), aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
+  lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp, fFormatSettings), aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
     aLogItem.LogTag]);
   TLoggerProConsoleAppender.FLock.Enter;
   try
