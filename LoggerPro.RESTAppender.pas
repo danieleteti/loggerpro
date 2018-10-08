@@ -22,29 +22,30 @@ type
     var RetryCount: Integer);
 
   TLoggerProRESTAppender = class(TLoggerProAppenderBase, ILogAppender)
-  private
+  strict private
     FOnCreateData: TOnCreateData;
     FOnNetSendError: TOnNetSendError;
     fExtendedInfo: TLoggerProExtendedInfo;
     fContentType: string;
-    procedure SetOnCreateData(const Value: TOnCreateData);
-    procedure SetOnNetSendError(const Value: TOnNetSendError);
-  protected
     fRESTUrl: string;
-    fLastSignature: string;
     fLogFormat: string;
     fFormatSettings: TFormatSettings;
     fExtendedInfoData: array [low(TLogExtendedInfo) .. high(TLogExtendedInfo)] of string;
+    procedure SetOnCreateData(const Value: TOnCreateData);
+    procedure SetOnNetSendError(const Value: TOnNetSendError);
+  strict protected
     procedure LoadExtendedInfo;
     function GetExtendedInfo: string;
-  public const
+  protected const
     DEFAULT_LOG_FORMAT = '%0:s [TID %1:10u][%2:-8s] %3:s {EI%4:s}[%5:s]';
     DEFAULT_EXTENDED_INFO = [TLogExtendedInfo.EIUserName, TLogExtendedInfo.EIComputerName, TLogExtendedInfo.EIProcessName,
       TLogExtendedInfo.EIProcessID, TLogExtendedInfo.EIDeviceID];
     DEFAULT_REST_URL = 'http://127.0.0.1:8080/api/logs';
-
+    procedure InternalWriteLog(const aURI: string; const aLogItem: TLogItem; const aStream: TStream);
+  public
     function GetRESTUrl: string;
     procedure SetRESTUrl(const Value: string);
+    procedure WriteLog(const aLogItem: TLogItem); override;
     constructor Create(aRESTUrl: string = DEFAULT_REST_URL; aContentType: string = 'text/plain';
       aLogExtendedInfo: TLoggerProExtendedInfo = DEFAULT_EXTENDED_INFO; aLogFormat: string = DEFAULT_LOG_FORMAT); reintroduce;
     property RESTUrl: string read GetRESTUrl write SetRESTUrl;
@@ -52,7 +53,6 @@ type
     property OnNetSendError: TOnNetSendError read FOnNetSendError write SetOnNetSendError;
     procedure TearDown; override;
     procedure Setup; override;
-    procedure WriteLog(const aLogItem: TLogItem); override;
     function CreateData(const SrcLogItem: TLogItem): TStream; virtual;
     function FormatLog(const aLogItem: TLogItem): string; virtual;
   end;
@@ -79,6 +79,7 @@ uses
 
 {$IFDEF MSWINDOWS }
 
+
 function GetUserFromWindows: string;
 var
   iLen: Cardinal;
@@ -101,6 +102,7 @@ end;
 
 {$ENDIF}
 
+
 constructor TLoggerProRESTAppender.Create(aRESTUrl: string = DEFAULT_REST_URL; aContentType: string = 'text/plain';
   aLogExtendedInfo: TLoggerProExtendedInfo = DEFAULT_EXTENDED_INFO; aLogFormat: string = DEFAULT_LOG_FORMAT);
 begin
@@ -114,7 +116,7 @@ end;
 
 function TLoggerProRESTAppender.CreateData(const SrcLogItem: TLogItem): TStream;
 var
-  lLog: String;
+  lLog: string;
 begin
   Result := nil;
   try
@@ -236,38 +238,38 @@ begin
   inherited;
 end;
 
-procedure TLoggerProRESTAppender.WriteLog(const aLogItem: TLogItem);
+procedure TLoggerProRESTAppender.InternalWriteLog(const aURI: string; const aLogItem: TLogItem; const aStream: TStream);
 var
   lHTTPCli: THTTPClient;
-  lURI: string;
-  lData: TStream;
   lRetryCount: Integer;
+  lResp: IHTTPResponse;
 begin
   lRetryCount := 0;
   lHTTPCli := THTTPClient.Create;
   try
-    lURI := RESTUrl + '/' + TNetEncoding.URL.Encode(aLogItem.LogTag.Trim) + '/' + TNetEncoding.URL.Encode(aLogItem.LogTypeAsString);
-    lData := CreateData(aLogItem);
-    if Assigned(lData) then
+    if Assigned(aStream) then
     begin
       repeat
         try
           // Set very short timeouts: this is a local call and we don't want to block the queue for too long.
           lHTTPCli.ConnectionTimeout := 100;
           lHTTPCli.ResponseTimeout := 200;
-          lData.Seek(0, soFromBeginning);
-          lHTTPCli.Post(lURI, lData, nil, [TNetHeader.Create('content-type', fContentType)]);
-          break;
+          aStream.Seek(0, soFromBeginning);
+          lResp := lHTTPCli.Post(aURI, aStream, nil, [TNetHeader.Create('content-type', fContentType)]);
+          if not(lResp.StatusCode in [200, 201]) then
+          begin
+            raise ELoggerPro.Create(lResp.ContentAsString);
+          end;
         except
-//          on E: ENetHTTPClientException do
-//          begin
-//            // if there is an event handler for net exception, call it
-//            if Assigned(FOnNetSendError) then
-//              OnNetSendError(Self, aLogItem, E, lRetryCount);
-//            // if the handler has set FRetryCount to a positive value then retry the call
-//            if lRetryCount <= 0 then
-//              break;
-//          end;
+          // on E: ENetHTTPClientException do
+          // begin
+          // // if there is an event handler for net exception, call it
+          // if Assigned(FOnNetSendError) then
+          // OnNetSendError(Self, aLogItem, E, lRetryCount);
+          // // if the handler has set FRetryCount to a positive value then retry the call
+          // if lRetryCount <= 0 then
+          // break;
+          // end;
           on E: Exception do
           begin
             // if there is an event handler for net exception, call it
@@ -283,6 +285,21 @@ begin
     end;
   finally
     FreeAndNil(lHTTPCli);
+  end;
+end;
+
+procedure TLoggerProRESTAppender.WriteLog(const aLogItem: TLogItem);
+var
+  lURI: string;
+  lData: TStream;
+begin
+  lURI := RESTUrl + '/' + TNetEncoding.URL.Encode(aLogItem.LogTag.Trim) + '/' + TNetEncoding.URL.Encode(aLogItem.LogTypeAsString);
+  lData := CreateData(aLogItem);
+  try
+    if Assigned(lData) then
+      InternalWriteLog(lURI, aLogItem, lData);
+  finally
+    lData.Free;
   end;
 end;
 

@@ -26,6 +26,7 @@ LoggerPro is compatibile with
 - New REST appender with support for extended information (samples for Windows and Android)
   - Extended information are supported in Windows (fully) and Android (partially)  
   - In the sample folder is provided also the `RESTLogCollector`
+- New [Elastic Search](https://www.elastic.co/products/elasticsearch) Log appender (Thanks to Salvatore Sparacino)
 
 
 ## Getting started

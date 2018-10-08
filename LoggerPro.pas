@@ -307,7 +307,7 @@ function GetDefaultFormatSettings: TFormatSettings;
 begin
   Result.DateSeparator := '-';
   Result.TimeSeparator := ':';
-  Result.ShortDateFormat := 'YYY-MM-DD HH:NN:SS:ZZZ';
+  Result.ShortDateFormat := 'YYYY-MM-DD HH:NN:SS:ZZZ';
   Result.ShortTimeFormat := 'HH:NN:SS';
 end;
 
