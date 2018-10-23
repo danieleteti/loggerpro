@@ -16,17 +16,20 @@ projects = [
 			('samples\\03_console_appender\\console_appender.dproj','Win32'),
 			('samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj','Win32'),
 			('samples\\05_vcl_appenders\\vcl_appenders.dproj','Win32'),
+			('samples\\08_email_appender\\email_appender.dproj','Win32'),
 			('samples\\10_multiple_appenders\\multiple_appenders.dproj','Win32'),
 			('samples\\15_appenders_with_different_log_levels\\multi_appenders_different_loglevels.dproj','Win32'),
 			('samples\\20_multiple_loggers\\multiple_loggers.dproj','Win32'),
 			('samples\\50_custom_appender\\custom_appender.dproj','Win32'),
 			('samples\\60_logging_inside_dll\\MainProgram.dproj','Win32'),
 			('samples\\60_logging_inside_dll\\mydll.dproj','Win32'),
+		    ('samples\\70_isapi_sample\\loggerproisapisample.dproj','Win32'),
 			('samples\\90_remote_logging_with_redis\\RemoteRedisAppenderSample.dproj','Win32'),
 			('samples\\90_remote_logging_with_redis\\redis_logs_viewer\\RedisLogsViewer.dproj','Win32'),
             ('samples\\100_udp_syslog\\udp_syslog.dproj','Win32'),
             ('samples\\110_rest_appender\RESTAppenderSample.dproj','Win32'),
             ('samples\\110_rest_appender_mobile\MobileRESTAppenderSample.dproj','Android'),
+            ('samples\\120_elastic_search_appender\\ElasticSearchAppenderSample.dproj','Win32'),
             ('samples\\rest_logs_collector\RESTLogsCollector.dproj','Win32')
 ]
 
@@ -62,11 +65,12 @@ def buildProject(project, config = 'DEBUG'):
     return subprocess.call(f"rsvars.bat & msbuild /t:Build /p:Config={config} /p:Platform={platform} \"{project_file}\"", shell=True) == 0
 
 def buildProjects():
+    res = True
     for project in projects:
-      res = buildProject(project)
+      res &= buildProject(project)
       if not res:
-        return False
-    return True
+        print("Failed " + project[0])
+    return res
 
 
 def build_unit_tests():
