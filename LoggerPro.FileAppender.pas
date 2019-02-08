@@ -125,7 +125,7 @@ begin
 {$IF Defined(Android)}
   lModuleName := TAndroidHelper.ApplicationTitle.Replace(' ', '_', [rfReplaceAll]);
 {$ENDIF}
-{$IF Defined(MSWindows)}
+{$IF Defined(MSWindows) or Defined(POSIX)}
   lModuleName := TPath.GetFileNameWithoutExtension(GetModuleName(HInstance));
 {$ENDIF}
 {$IF Defined(IOS) or Defined(MacOS)}
@@ -145,7 +145,7 @@ procedure TLoggerProFileAppender.Setup;
 begin
   if fLogsFolder = '' then
   begin
-{$IF Defined(MSWINDOWS)}
+{$IF Defined(MSWINDOWS) or Defined(POSIX)}
     fLogsFolder := TPath.GetDirectoryName(GetModuleName(HInstance));
 {$ENDIF}
 {$IF Defined(Android) or Defined(IOS)}
