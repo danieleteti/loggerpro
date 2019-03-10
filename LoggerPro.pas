@@ -497,7 +497,7 @@ end;
 
 constructor TLogItem.Create(const aType: TLogType; const aMessage, aTag: string);
 begin
-  Create(aType, aMessage, aTag, now, TThread.Current.ThreadID);
+  Create(aType, aMessage, aTag, now, TThread.CurrentThread.ThreadID);
 end;
 
 { TLogger.TLoggerThread }
