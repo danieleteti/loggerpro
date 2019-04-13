@@ -652,7 +652,6 @@ destructor TLoggerThread.TAppenderAdapter.Destroy;
 begin
   FAppenderQueue.DoShutDown;
   FAppenderThread.Terminate;
-  FAppenderThread.WaitFor;
   FAppenderThread.Free;
   FAppenderQueue.Free;
   inherited;

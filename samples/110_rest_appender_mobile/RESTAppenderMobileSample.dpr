@@ -1,4 +1,4 @@
-program MobileRESTAppenderSample;
+program RESTAppenderMobileSample;
 
 uses
   System.StartUpCopy,
