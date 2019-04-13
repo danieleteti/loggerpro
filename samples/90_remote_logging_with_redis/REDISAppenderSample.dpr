@@ -1,4 +1,4 @@
-program RemoteRedisAppenderSample;
+program REDISAppenderSample;
 
 uses
   Vcl.Forms,
