@@ -7,10 +7,10 @@ uses
 
 const
 {$IF Defined(MSWINDOWS)}
-REST_LOGS_COLLECTOR_URL = 'http://localhost:8080';
+  REST_LOGS_COLLECTOR_URL = 'http://pippo:8080';
 {$ENDIF}
 {$IF Defined(Android)}
-REST_LOGS_COLLECTOR_URL = 'http://192.168.1.7:8080';
+  REST_LOGS_COLLECTOR_URL = 'http://192.168.1.7:8080';
 {$ENDIF}
 
 function Log: ILogWriter;
@@ -40,10 +40,10 @@ _Events.OnAppenderError :=
     procedure(const AppenderClassName: string; const aFailedLogItem: TLogItem;
     const Reason: TLogErrorReason; var Action: TLogErrorAction)
   begin
-    Action := TLogErrorAction.SkipNewest;
+    Action := TLogErrorAction.DiscardOlder;
   end;
 
-DefaultLoggerProAppenderQueueSize := 100;
+DefaultLoggerProAppenderQueueSize := 10;
 _RESTAppender := TLoggerProRESTAppender.Create(REST_LOGS_COLLECTOR_URL + '/api/logs');
 TLoggerProRESTAppender(_RESTAppender).OnNetSendError :=
     procedure(const Sender: TObject; const LogItem: TLogItem; const NetError: Exception;
