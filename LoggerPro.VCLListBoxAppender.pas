@@ -1,6 +1,6 @@
 unit LoggerPro.VCLListBoxAppender;
-{ <@abstract(The unit to include if you want to use the @link(TVCLMemoLogAppender))
-  @author(Daniele Teti) }
+{ <@abstract(The unit to include if you want to use the @link(TVCLListBoxAppender))
+  @author(David Cornelius) }
 
 interface
 
@@ -10,7 +10,7 @@ uses
   Vcl.StdCtrls;
 
 type
-  { @abstract(Appends formatted @link(TLogItem) to a TMemo in a VCL application) }
+  { @abstract(Appends formatted @link(TLogItem) to a TListBox in a VCL application) }
   TVCLListBoxAppender = class(TLoggerProAppenderBase)
   private
     FLB: TListBox;
@@ -38,11 +38,9 @@ type
 implementation
 
 uses
-  System.SysUtils,
-  Winapi.Windows,
-  Winapi.Messages;
+  System.SysUtils;
 
-{ TVCLMemoLogAppender }
+{ TVCLListBoxAppender }
 
 constructor TVCLListBoxAppender.Create(aLB: TListBox; aMaxLogLines: Word; aLogFormat: string);
 begin
@@ -82,11 +80,11 @@ begin
         Lines := FLB.Items.Count;
         if Lines > FMaxLogLines then
           FLB.Items.Delete(0);
-        FLB.AddItem(lText, nil)
+        FLB.AddItem(lText, nil);
+        FLB.ItemIndex := FLB.Items.Count - 1;
       finally
         FLB.Items.EndUpdate;
       end;
-      FLB.ItemIndex := FLB.Items.Count - 1;
     end);
 end;
 
