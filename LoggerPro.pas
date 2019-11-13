@@ -458,6 +458,11 @@ begin
   end;
 end;
 
+function TLogWriter.GetLogLevel: TLogType;
+begin
+  Result := FLogLevel;
+end;
+
 procedure TLogWriter.Info(const aMessage, aTag: string);
 begin
   Log(TLogType.Info, aMessage, aTag);
@@ -501,6 +506,11 @@ end;
 procedure TLogWriter.LogFmt(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);
 begin
   Log(aType, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriter.SetLogLevel(const Value: TLogType);
+begin
+  FLogLevel := Value;
 end;
 
 procedure TLogWriter.Initialize(aEventsHandler: TLoggerProEventsHandler);
