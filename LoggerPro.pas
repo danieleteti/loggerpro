@@ -135,6 +135,10 @@ type
     procedure AddAppender(const aAppenders: ILogAppender);
     procedure DelAppender(const aAppenders: ILogAppender);
     function AppendersCount(): Integer;
+    
+    function GetLogLevel: TLogType;
+    procedure SetLogLevel(const Value: TLogType);
+    property LogLevel: TLogType read GetLogLevel write SetLogLevel;
   end;
 
   TLogAppenderList = TList<ILogAppender>;
@@ -204,6 +208,8 @@ type
     FLogLevel: TLogType;
     procedure Initialize(aEventsHandler: TLoggerProEventsHandler);
     function GetAppendersClassNames: TArray<string>;
+    function GetLogLevel: TLogType;
+    procedure SetLogLevel(const Value: TLogType);
   public
     function GetAppenders(const Index: Integer): ILogAppender;
     procedure AddAppender(const aAppender: ILogAppender);
@@ -231,6 +237,8 @@ type
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
     procedure LogFmt(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);
+
+    property LogLevel: TLogType read GetLogLevel write SetLogLevel;
   end;
 
   TLoggerProAppenderBase = class abstract(TInterfacedObject, ILogAppender)
