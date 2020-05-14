@@ -7,7 +7,8 @@ uses
   LoggerProConfig in '..\110_rest_appender\LoggerProConfig.pas',
   LoggerPro.FileAppender in '..\..\LoggerPro.FileAppender.pas',
   LoggerPro in '..\..\LoggerPro.pas',
-  LoggerPro.RESTAppender in '..\..\LoggerPro.RESTAppender.pas';
+  LoggerPro.RESTAppender in '..\..\LoggerPro.RESTAppender.pas',
+  ThreadSafeQueueU in '..\..\ThreadSafeQueueU.pas';
 
 {$R *.res}
 

@@ -35,8 +35,6 @@ begin
   FMVC := TMVCEngine.Create(Self,
     procedure(Config: TMVCConfig)
     begin
-      // enable static files
-      Config[TMVCConfigKey.DocumentRoot] := TPath.Combine(ExtractFilePath(GetModuleName(HInstance)), 'www');
       // session timeout (0 means session cookie)
       Config[TMVCConfigKey.SessionTimeout] := '0';
       // default content-type
@@ -51,8 +49,6 @@ begin
       Config[TMVCConfigKey.ViewPath] := 'templates';
       // Enable Server Signature in response
       Config[TMVCConfigKey.ExposeServerSignature] := 'false';
-      // Define a default URL for requests that don't map to a route or a file (useful for client side web app)
-      Config[TMVCConfigKey.FallbackResource] := 'index.html';
     end);
   FMVC.AddController(TLogsCollectorController);
 end;
