@@ -2,6 +2,10 @@ unit LoggerPro.SimpleConsoleAppender;
 { <@abstract(The unit to include if you want to use @link(TLoggerProSimpleConsoleAppender))
   @author(David Cornelius) }
 
+{$IFNDEF CONSOLE}
+{$MESSAGE FATAL 'This unit should only be used in console applications'}
+{$ENDIF}
+
 interface
 
 uses
@@ -10,7 +14,7 @@ uses
 
 type
   { @abstract(This appender assumes the application is running from the console and simply uses Writeln
-    without any colorization to send logs to the current console; this allows console logging from Linux)
+    without any dependency on Windows to send logs to the current console; this allows console logging from Linux)
     To learn how to use this appender, check the sample @code(SimpleConsole_appender.dproj)
   }
   TLoggerProSimpleConsoleAppender = class(TLoggerProAppenderBase)
