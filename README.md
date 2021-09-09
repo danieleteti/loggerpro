@@ -5,6 +5,7 @@ An modern and pluggable logging framework for Delphi
 ## Compatibility
 
 LoggerPro is compatibile with
+- Delphi 11 Alexandria
 - Delphi 10.4 Sydney
 - Delphi 10.3 Rio
 - Delphi 10.2 Tokyo (Added Linux compatibility)

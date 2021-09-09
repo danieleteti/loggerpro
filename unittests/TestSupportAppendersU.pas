@@ -76,7 +76,7 @@ end;
 
 procedure TMyVerySlowAppender.WriteLog(const aLogItem: TLogItem);
 begin
-//  Sleep(FDelay);
+  Sleep(FDelay);
 end;
 
 end.
