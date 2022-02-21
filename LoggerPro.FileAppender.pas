@@ -66,9 +66,9 @@ type
     procedure InternalWriteLog(const aStreamWriter: TStreamWriter; const aValue: string); inline;
   public const
     { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
-      The positional parameters are the followings:
+      The positional parameters are the following:
       @orderedList(
-      @itemSetNumber 0
+      @item SetNumber 0
       @item TimeStamp
       @item ThreadID
       @item LogType
@@ -78,7 +78,7 @@ type
     }
     DEFAULT_LOG_FORMAT = '%0:s [TID %1:10u][%2:-8s] %3:s [%4:s]';
     { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
-      The positional parameters are the followings:
+      The positional parameters are the following:
       @orderedList(
       @item SetNumber 0
       @item ModuleName
@@ -86,15 +86,15 @@ type
       @item LogTag
       )
     }
-    DEFAULT_FILENAME_FORMAT = '%s.%2.2d.%s.log';
-    { @abstract(Defines number of log file set to mantain during logs rotation) }
+    DEFAULT_FILENAME_FORMAT = '%0:s.%1:2.2d.%2:s.log';
+    { @abstract(Defines number of log file set to maintain during logs rotation) }
     DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
     { @abstract(Defines the max size of each log file)
       The actual meaning is: "If the file size is > than @link(DEFAULT_MAX_FILE_SIZE_KB) then rotate logs. }
     DEFAULT_MAX_FILE_SIZE_KB = 1000;
     { @abstract(Milliseconds to wait between the RETRY_COUNT times. }
     RETRY_DELAY = 200;
-    { @abstract(How much times we have to retry if the file is locked?. }
+    { @abstract(How many times do we have to retry if the file is locked?. }
     RETRY_COUNT = 5;
     constructor Create(aMaxBackupFileCount: Integer = DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = DEFAULT_MAX_FILE_SIZE_KB; aLogsFolder: string = ''; aFileAppenderOptions: TFileAppenderOptions = [];
