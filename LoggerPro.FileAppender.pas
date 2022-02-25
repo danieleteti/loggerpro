@@ -40,7 +40,6 @@ type
 
   TFileAppenderOption = (IncludePID);
   TFileAppenderOptions = set of TFileAppenderOption;
-  TFileAppenderLogRow = reference to procedure(const LogItem: TLogItem; out LogRow: string);
 
   { @abstract(The base class for different file appenders)
     Do not use this class directly, but one of TLoggerProFileAppender or TLoggerProFilteringFileAppender.
@@ -48,15 +47,12 @@ type
   }
   TLoggerProFileAppenderBase = class(TLoggerProAppenderBase)
   private
-    fFormatSettings: TFormatSettings;
     fMaxBackupFileCount: Integer;
     fMaxFileSizeInKiloByte: Integer;
-    fLogFormat: string;
     fLogFileNameFormat: string;
     fFileAppenderOptions: TFileAppenderOptions;
     fLogsFolder: string;
     fEncoding: TEncoding;
-    fOnLogRow: TFileAppenderLogRow;
     function CreateWriter(const aFileName: string): TStreamWriter;
     procedure RetryMove(const aFileSrc, aFileDest: string);
   protected
@@ -65,18 +61,6 @@ type
     procedure RotateFile(const aLogTag: string; out aNewFileName: string); virtual;
     procedure InternalWriteLog(const aStreamWriter: TStreamWriter; const aLogItem: TLogItem);
   public const
-    { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
-      The positional parameters are the following:
-      @orderedList(
-      @item SetNumber 0
-      @item TimeStamp
-      @item ThreadID
-      @item LogType
-      @item LogMessage
-      @item LogTag
-      )
-    }
-    DEFAULT_LOG_FORMAT = '%0:s [TID %1:10u][%2:-8s] %3:s [%4:s]';
     { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
       The positional parameters are the following:
       @orderedList(
@@ -101,7 +85,6 @@ type
       aLogFileNameFormat: string = DEFAULT_FILENAME_FORMAT; aLogFormat: string = DEFAULT_LOG_FORMAT; aEncoding: TEncoding = nil);
       reintroduce;
     procedure Setup; override;
-    property OnLogRow: TFileAppenderLogRow read fOnLogRow write fOnLogRow;
   end;
 
   { @abstract(The default file appender)
@@ -141,7 +124,7 @@ type
       aLogsFolder: string = '';
       aFileAppenderOptions: TFileAppenderOptions = [];
       aLogFileNameFormat: string = TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT;
-      aLogFormat: string = TLoggerProFileAppenderBase.DEFAULT_LOG_FORMAT;
+      aLogFormat: string = DEFAULT_LOG_FORMAT;
       aEncoding: TEncoding = nil);
       reintroduce;
     procedure Setup; override;
@@ -192,6 +175,8 @@ end;
 
 procedure TLoggerProFileAppenderBase.Setup;
 begin
+  inherited;
+
   if fLogsFolder = '' then
   begin
 {$IF (Defined(MSWINDOWS) or Defined(POSIX)) and (not Defined(MOBILE))}
@@ -203,8 +188,6 @@ begin
   end;
   if not TDirectory.Exists(fLogsFolder) then
     TDirectory.CreateDirectory(fLogsFolder);
-
-  fFormatSettings := LoggerPro.GetDefaultFormatSettings;
 end;
 
 procedure TLoggerProFileAppenderBase.WriteToStream(const aStreamWriter: TStreamWriter; const aValue: string);
@@ -214,19 +197,8 @@ begin
 end;
 
 procedure TLoggerProFileAppenderBase.InternalWriteLog(const aStreamWriter: TStreamWriter; const aLogItem: TLogItem);
-var
-  lLogRow: string;
 begin
-  if not Assigned(fOnLogRow) then
-  begin
-    WriteToStream(aStreamWriter, Format(fLogFormat, [datetimetostr(aLogItem.TimeStamp, fFormatSettings), aLogItem.ThreadID,
-      aLogItem.LogTypeAsString, aLogItem.LogMessage, aLogItem.LogTag]));
-  end
-  else
-  begin
-    fOnLogRow(aLogItem, lLogRow);
-    WriteToStream(aStreamWriter, lLogRow);
-  end;
+  WriteToStream(aStreamWriter, FormatLog(aLogItem));
 end;
 
 procedure TLoggerProFileAppenderBase.RetryMove(const aFileSrc, aFileDest: string);
@@ -286,11 +258,10 @@ end;
 constructor TLoggerProFileAppenderBase.Create(aMaxBackupFileCount: Integer; aMaxFileSizeInKiloByte: Integer; aLogsFolder: string;
   aFileAppenderOptions: TFileAppenderOptions; aLogFileNameFormat: string; aLogFormat: string; aEncoding: TEncoding);
 begin
-  inherited Create;
+  inherited Create(ALogFormat);
   fLogsFolder := aLogsFolder;
   fMaxBackupFileCount := aMaxBackupFileCount;
   fMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
-  fLogFormat := aLogFormat;
   fLogFileNameFormat := aLogFileNameFormat;
   fFileAppenderOptions := aFileAppenderOptions;
   if Assigned(aEncoding) then
@@ -355,13 +326,13 @@ procedure TLoggerProFileAppender.RotateLog(const aLogTag: string; aWriter: TStre
 var
   lLogFileName: string;
 begin
-  WriteToStream(aWriter, '#[ROTATE LOG ' + datetimetostr(Now, fFormatSettings) + ']');
+  WriteToStream(aWriter, '#[ROTATE LOG ' + datetimetostr(Now, FormatSettings) + ']');
   // remove the writer during rename
   fWritersDictionary.Remove(aLogTag);
   RotateFile(aLogTag, lLogFileName);
   // re-create the writer
   AddWriter(aLogTag, aWriter, lLogFileName);
-  WriteToStream(aWriter, '#[START LOG ' + datetimetostr(Now, fFormatSettings) + ']');
+  WriteToStream(aWriter, '#[START LOG ' + datetimetostr(Now, FormatSettings) + ']');
 end;
 
 procedure TLoggerProFileAppender.Setup;
@@ -417,13 +388,13 @@ procedure TLoggerProFilteringFileAppender.RotateLog;
 var
   lLogFileName: string;
 begin
-  WriteToStream(fFilterWriter, '#[ROTATE LOG ' + datetimetostr(Now, fFormatSettings) + ']');
+  WriteToStream(fFilterWriter, '#[ROTATE LOG ' + datetimetostr(Now, FormatSettings) + ']');
   // remove the writer during rename
   fFilterWriter.Free;
   RotateFile(cDefaultLogTag, lLogFileName);
   // re-create the writer
   fFilterWriter := CreateWriter(GetLogFileName(fFileNameTag, 0));
-  WriteToStream(fFilterWriter, '#[START LOG ' + datetimetostr(Now, fFormatSettings) + ']');
+  WriteToStream(fFilterWriter, '#[START LOG ' + datetimetostr(Now, FormatSettings) + ']');
 end;
 
 procedure TLoggerProFilteringFileAppender.Setup;

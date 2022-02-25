@@ -48,9 +48,9 @@ initialization
 // The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file
 _Log := BuildLogWriter([
   TLoggerProFileAppender.Create(10, 5, '..\..', [],
-  TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT, TLoggerProFileAppender.DEFAULT_LOG_FORMAT),
+  TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT, DEFAULT_LOG_FORMAT),
   TLoggerProFilteringFileAppender.Create(['TAG1', 'TAG2'], '----', 10, 5, '..\..', [],
-  TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT, TLoggerProFileAppender.DEFAULT_LOG_FORMAT)
+  TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT, DEFAULT_LOG_FORMAT)
   ]);
 // Create logs in the exe' same folder
 // _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);

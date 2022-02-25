@@ -12,6 +12,20 @@ uses
   System.Classes,
   ThreadSafeQueueU;
 
+const
+  { @abstract(Defines the default format string used by the @link(TLoggerProAppenderBase).)
+    The positional parameters are the followings:
+    @orderedList(
+    @itemSetNumber 0
+    @item TimeStamp
+    @item ThreadID
+    @item LogType
+    @item LogMessage
+    @item LogTag
+    )
+  }
+  DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
+
 var
   DefaultLoggerProMainQueueSize: Cardinal = 50000;
   DefaultLoggerProAppenderQueueSize: Cardinal = 50000;
@@ -240,14 +254,23 @@ type
     procedure LogFmt(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);
   end;
 
+  TOnAppenderLogRow = reference to procedure(const LogItem: TLogItem; out LogRow: string);
+
   TLoggerProAppenderBase = class abstract(TInterfacedObject, ILogAppender)
   private
     FLogLevel: TLogType;
     FEnabled: Boolean;
     FLastErrorTimeStamp: TDateTime;
+    FOnLogRow: TOnAppenderLogRow;
+    FLogFormat: string;
+    FFormatSettings: TFormatSettings;
+  protected
+    property LogFormat: string read FLogFormat;
+    property FormatSettings: TFormatSettings read FFormatSettings;
   public
-    constructor Create; virtual;
-    procedure Setup; virtual; abstract;
+    constructor Create(ALogFormat: string = DEFAULT_LOG_FORMAT); virtual;
+    procedure Setup; virtual;
+    function FormatLog(const ALogItem: TLogItem): string; virtual;
     procedure WriteLog(const aLogItem: TLogItem); virtual; abstract;
     procedure TearDown; virtual; abstract;
     procedure TryToRestart(var Restarted: Boolean); virtual;
@@ -256,6 +279,7 @@ type
     procedure SetLastErrorTimeStamp(const Value: TDateTime);
     function GetLastErrorTimeStamp: TDateTime;
     property LogLevel: TLogType read GetLogLevel write SetLogLevel;
+    property OnLogRow: TOnAppenderLogRow read FOnLogRow write FOnLogRow;
   end;
 
   { @abstract(Builds a new ILogWriter instance. Call this global function to start logging like a pro.)
@@ -720,11 +744,22 @@ end;
 
 { TLoggerProAppenderBase }
 
-constructor TLoggerProAppenderBase.Create;
+constructor TLoggerProAppenderBase.Create(ALogFormat: string);
 begin
-  inherited;
+  inherited Create;
   Self.FEnabled := true;
   Self.FLogLevel := TLogType.Debug;
+  Self.FLogFormat := ALogFormat;
+  Self.FOnLogRow := Nil;
+end;
+
+function TLoggerProAppenderBase.FormatLog(const ALogItem: TLogItem): string;
+begin
+  if Assigned(FOnLogRow) then
+    FOnLogRow(ALogItem, Result)
+  else
+    Result := Format(FLogFormat, [datetimetostr(ALogItem.TimeStamp, FFormatSettings),
+      ALogItem.ThreadID, ALogItem.LogTypeAsString, ALogItem.LogMessage, ALogItem.LogTag]);
 end;
 
 function TLoggerProAppenderBase.GetLastErrorTimeStamp: TDateTime;
@@ -745,6 +780,11 @@ end;
 procedure TLoggerProAppenderBase.SetLogLevel(const Value: TLogType);
 begin
   FLogLevel := Value;
+end;
+
+procedure TLoggerProAppenderBase.Setup;
+begin
+  FFormatSettings := LoggerPro.GetDefaultFormatSettings;
 end;
 
 procedure TLoggerProAppenderBase.TryToRestart(var Restarted: Boolean);
