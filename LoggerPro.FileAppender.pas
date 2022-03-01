@@ -42,7 +42,7 @@ type
   TFileAppenderOptions = set of TFileAppenderOption;
 
   { @abstract(The base class for different file appenders)
-    Do not use this class directly, but one of TLoggerProFileAppender or TLoggerProFilteringFileAppender.
+    Do not use this class directly, but one of TLoggerProFileAppender or TLoggerProSimpleFileAppender.
     Check the sample @code(file_appender.dproj)
   }
   TLoggerProFileAppenderBase = class(TLoggerProAppenderBase)
@@ -103,30 +103,19 @@ type
   end;
 
   { @abstract(A filtering file appender)
-    This file appender filters the TLogItems with the given tags and writes them into a single log file.
-    If the filter array is empty, all TLogItems will be written into this file.
+    This file appender writes all TLogItems into a single log file.
+    Combined with a @code(TLoggerProAppenderFilterImpl) you can filter out any log tags you like.
+    If you want to run several TLoggerProSimpleFileAppender in parallel you have to provide a different
+    LogFileFormat for each of them in the constructor in order to prevent name collisions.
     To learn how to use this appender, check the sample @code(file_appender.dproj)
   }
-  TLoggerProFilteringFileAppender = class(TLoggerProFileAppenderBase)
+  TLoggerProSimpleFileAppender = class(TLoggerProFileAppenderBase)
   private const
-    cDefaultLogTag = '----';
+    cDefaultLogTag = '---';
   private
-    fFilterWriter: TStreamWriter;
-    fFileNameTag: string;
-    fLogTags: array of string;
+    fFileWriter: TStreamWriter;
     procedure RotateLog;
   public
-    constructor Create(
-      aLogTags: array of string;
-      const aFileNameTag: string = cDefaultLogTag;
-      aMaxBackupFileCount: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_BACKUP_FILE_COUNT;
-      aMaxFileSizeInKiloByte: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_FILE_SIZE_KB;
-      aLogsFolder: string = '';
-      aFileAppenderOptions: TFileAppenderOptions = [];
-      aLogFileNameFormat: string = TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT;
-      aLogFormat: string = DEFAULT_LOG_FORMAT;
-      aEncoding: TEncoding = nil);
-      reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); overload; override;
@@ -365,61 +354,41 @@ begin
   end;
 end;
 
-{ TLoggerProFilteringFileAppender }
+{ TLoggerProSimpleFileAppender }
 
-constructor TLoggerProFilteringFileAppender.Create(
-  aLogTags: array of string;
-  const aFileNameTag: string;
-  aMaxBackupFileCount, aMaxFileSizeInKiloByte: Integer; aLogsFolder: string;
-  aFileAppenderOptions: TFileAppenderOptions;
-  aLogFileNameFormat, aLogFormat: string;
-  aEncoding: TEncoding);
-var
-  i : integer;
-begin
-  inherited Create(aMaxBackupFileCount, aMaxFileSizeInKiloByte, aLogsFolder, aFileAppenderOptions, aLogFileNameFormat, aLogFormat, aEncoding);
-  SetLength(fLogTags, Length(aLogTags));
-  for i := Low(aLogTags) to High(aLogTags) do
-    fLogTags[i] := aLogTags[i];
-  fFileNameTag := aFileNameTag;
-end;
-
-procedure TLoggerProFilteringFileAppender.RotateLog;
+procedure TLoggerProSimpleFileAppender.RotateLog;
 var
   lLogFileName: string;
 begin
-  WriteToStream(fFilterWriter, '#[ROTATE LOG ' + datetimetostr(Now, FormatSettings) + ']');
+  WriteToStream(fFileWriter, '#[ROTATE LOG ' + datetimetostr(Now, FormatSettings) + ']');
   // remove the writer during rename
-  fFilterWriter.Free;
+  fFileWriter.Free;
   RotateFile(cDefaultLogTag, lLogFileName);
   // re-create the writer
-  fFilterWriter := CreateWriter(GetLogFileName(fFileNameTag, 0));
-  WriteToStream(fFilterWriter, '#[START LOG ' + datetimetostr(Now, FormatSettings) + ']');
+  fFileWriter := CreateWriter(GetLogFileName(cDefaultLogTag, 0));
+  WriteToStream(fFileWriter, '#[START LOG ' + datetimetostr(Now, FormatSettings) + ']');
 end;
 
-procedure TLoggerProFilteringFileAppender.Setup;
+procedure TLoggerProSimpleFileAppender.Setup;
 begin
   inherited;
-  fFilterWriter := CreateWriter(GetLogFileName(fFileNameTag, 0));
+  fFileWriter := CreateWriter(GetLogFileName(cDefaultLogTag, 0));
 end;
 
-procedure TLoggerProFilteringFileAppender.TearDown;
+procedure TLoggerProSimpleFileAppender.TearDown;
 begin
-  fFilterWriter.Free;
+  fFileWriter.Free;
   inherited;
 end;
 
-procedure TLoggerProFilteringFileAppender.WriteLog(const aLogItem: TLogItem);
+procedure TLoggerProSimpleFileAppender.WriteLog(const aLogItem: TLogItem);
 begin
-  if (Length(fLogTags) = 0) or MatchText(aLogItem.LogTag, fLogTags) then
-    begin
-      InternalWriteLog(fFilterWriter, aLogItem);
+  InternalWriteLog(fFileWriter, aLogItem);
 
-      if fFilterWriter.BaseStream.Size > fMaxFileSizeInKiloByte * 1024 then
-      begin
-        RotateLog;
-      end;
-    end;
+  if fFileWriter.BaseStream.Size > fMaxFileSizeInKiloByte * 1024 then
+  begin
+    RotateLog;
+  end;
 end;
 
 end.
