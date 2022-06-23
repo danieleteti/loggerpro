@@ -72,15 +72,15 @@ procedure TForm2.FormCreate(Sender: TObject);
 begin
 {$IFDEF ANDROID}
   PermissionsService.RequestPermissions
-    ([JStringToString(TJManifest_permission.JavaClass.WRITE_EXTERNAL_STORAGE)],
-    procedure(const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>)
+    ([JStringtostring(TJManifest_permission.JavaClass.WRITE_EXTERNAL_STORAGE)],
+    procedure(const APermissions: TClassicStringDynArray; const AGrantResults: TClassicPermissionStatusDynArray)
     begin
       if not((Length(AGrantResults) = 1) and (AGrantResults[0] = TPermissionStatus.Granted)) then
       begin
         TDialogService.ShowMessage('LoggerPro will not work');
       end;
     end,
-    procedure(const APermissions: TArray<string>; const APostRationaleProc: TProc)
+    procedure(const APermissions: TClassicStringDynArray; const APostRationaleProc: TProc)
     begin
       TDialogService.ShowMessage('The app needs to access to the storage, please allows the next request',
        procedure(const AResult: TModalResult)

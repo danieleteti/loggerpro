@@ -64,6 +64,11 @@ procedure TVCLMemoLogAppender.WriteLog(const aLogItem: TLogItem);
 var
   lText: string;
 begin
+  if Assigned(FMemo) then
+  begin
+    if FMemo.owner = nil then exit;
+  end;
+
   lText := Format(DEFAULT_LOG_FORMAT, [datetimetostr(aLogItem.TimeStamp), aLogItem.ThreadID, aLogItem.LogTypeAsString, aLogItem.LogMessage,
     aLogItem.LogTag]);
   TThread.Queue(nil,

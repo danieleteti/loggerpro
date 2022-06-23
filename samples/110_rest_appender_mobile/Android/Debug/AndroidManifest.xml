@@ -7,8 +7,8 @@
         android:installLocation="auto">
 
     <!-- This is the platform API where NativeActivity was introduced. -->
-    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="28" />
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -24,7 +24,7 @@
 		android:usesCleartextTraffic="true"	
         android:restoreAnyVersion="False" 
         android:label="RESTAppenderMobileSample" 
-        android:debuggable="True" 
+        android:debuggable="true" 
         android:largeHeap="False"
         android:icon="@drawable/ic_launcher"
         android:theme="@style/AppTheme"
@@ -47,7 +47,7 @@
             </intent-filter> 
         </activity>
         
-        <receiver android:name="com.embarcadero.rtl.notifications.NotificationAlarm" />
+                <receiver android:name="com.embarcadero.rtl.notifications.NotificationAlarm" />
 
     </application>
 </manifest>

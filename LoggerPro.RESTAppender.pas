@@ -30,9 +30,9 @@ type
     fRESTUrl: string;
     fLogFormat: string;
     fFormatSettings: TFormatSettings;
-    {$IFDEF MSWINDOWS}
+    {.$IFDEF MSWINDOWS}
     fExtendedInfoData: array [low(TLogExtendedInfo) .. high(TLogExtendedInfo)] of string;
-    {$ENDIF}
+    {.$ENDIF}
     procedure SetOnCreateData(const Value: TOnCreateData);
     procedure SetOnNetSendError(const Value: TOnNetSendError);
   strict protected
