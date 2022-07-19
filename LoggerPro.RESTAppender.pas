@@ -13,7 +13,7 @@ type
   {
     Log appender for a REST endpoint
     Author: Daniele Teti (https://github.com/danieleteti/)
-    Some ideas from NSQ appender from Stéphane "Fulgan" GROBETY (https://github.com/Fulgan/)
+    Some ideas from NSQ appender from StÃ©phane "Fulgan" GROBETY (https://github.com/Fulgan/)
   }
 
   TOnCreateData = reference to procedure(const Sender: TObject; const LogItem: TLogItem; const ExtendedInfo: TLoggerProExtendedInfo;
@@ -28,9 +28,11 @@ type
     fExtendedInfo: TLoggerProExtendedInfo;
     fContentType: string;
     fRESTUrl: string;
-    {$IFDEF MSWINDOWS}
+    fLogFormat: string;
+    fFormatSettings: TFormatSettings;
+    {.$IFDEF MSWINDOWS}
     fExtendedInfoData: array [low(TLogExtendedInfo) .. high(TLogExtendedInfo)] of string;
-    {$ENDIF}
+    {.$ENDIF}
     procedure SetOnCreateData(const Value: TOnCreateData);
     procedure SetOnNetSendError(const Value: TOnNetSendError);
   strict protected
