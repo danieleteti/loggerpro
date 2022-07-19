@@ -17,7 +17,7 @@ type
     FMaxLogLines: Word;
     FClearOnStartup: Boolean;
   public
-    constructor Create(aMemo: TMemo; aMaxLogLines: Word = 100; aClearOnStartup: Boolean = False); reintroduce;
+    constructor Create(aMemo: TMemo; aMaxLogLines: Word = 100; aClearOnStartup: Boolean = False; aLogFormat: string = DEFAULT_LOG_FORMAT); reintroduce;
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); override;
@@ -30,14 +30,11 @@ uses
   Winapi.Windows,
   Winapi.Messages;
 
-const
-  DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
+{ TVCLMemoLogAppender }
 
-  { TVCLMemoLogAppender }
-
-constructor TVCLMemoLogAppender.Create(aMemo: TMemo; aMaxLogLines: Word; aClearOnStartup: Boolean);
+constructor TVCLMemoLogAppender.Create(aMemo: TMemo; aMaxLogLines: Word; aClearOnStartup: Boolean; aLogFormat: string);
 begin
-  inherited Create;
+  inherited Create(aLogFormat);
   FMemo := aMemo;
   FMaxLogLines := aMaxLogLines;
   FClearOnStartup := aClearOnStartup;
@@ -45,6 +42,7 @@ end;
 
 procedure TVCLMemoLogAppender.Setup;
 begin
+  inherited;
   if FClearOnStartup then
   begin
     TThread.Synchronize(nil,

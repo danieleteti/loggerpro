@@ -46,9 +46,7 @@ type
     fOnNetSendError: TOnNetSendError;
     fExtendedInfo: TLoggerProExtendedInfo;
     fEventStreamsProxy: TEventStreamsRPCProxy;
-    fLogFormat: string;
     fDMSContainerAPIKey: String;
-    fFormatSettings: TFormatSettings;
     fExtendedInfoData: array [low(TLogExtendedInfo) .. high(TLogExtendedInfo)] of string;
     procedure SetOnCreateJSONData(const Value: TOnCreateJSONData);
     procedure SetOnNetSendError(const Value: TOnNetSendError);
@@ -59,7 +57,6 @@ type
     procedure LoadExtendedInfo;
     function GetExtendedInfo: TJSONObject;
   protected const
-    DEFAULT_LOG_FORMAT = '%0:s [TID %1:10u][%2:-8s] %3:s {EI%4:s}[%5:s]';
     DEFAULT_EXTENDED_INFO = [TLogExtendedInfo.EIUserName, TLogExtendedInfo.EIComputerName,
       TLogExtendedInfo.EIProcessName,
       TLogExtendedInfo.EIProcessID, TLogExtendedInfo.EIDeviceID];
@@ -70,8 +67,7 @@ type
       aDMSContainerAPIKey: String;
       aEventStreamsQueueNameBase: String = 'queues.logs.';
       aLogItemAggregationType: TDMSQueueAggregationType = dmsatByTag;
-      aLogExtendedInfo: TLoggerProExtendedInfo = DEFAULT_EXTENDED_INFO;
-      aLogFormat: string = DEFAULT_LOG_FORMAT); reintroduce;
+      aLogExtendedInfo: TLoggerProExtendedInfo = DEFAULT_EXTENDED_INFO); reintroduce;
     destructor Destroy; override;
     property OnCreateJSONData: TOnCreateJSONData read fOnCreateJSONData write SetOnCreateJSONData;
     property OnNetSendError: TOnNetSendError read fOnNetSendError write SetOnNetSendError;
@@ -130,16 +126,14 @@ constructor TLoggerProDMSContainerAppender.Create(
   aDMSContainerAPIKey: String;
   aEventStreamsQueueNameBase: String;
   aLogItemAggregationType: TDMSQueueAggregationType;
-  aLogExtendedInfo: TLoggerProExtendedInfo;
-  aLogFormat: string);
+  aLogExtendedInfo: TLoggerProExtendedInfo);
 begin
-  inherited Create;
+  inherited;
   fEventStreamsProxy := aEventStreamsProxy;
   fQueueNameBase := aEventStreamsQueueNameBase;
   fLogItemAggregationType := aLogItemAggregationType;
   if not fQueueNameBase.EndsWith('.') then
     fQueueNameBase := fQueueNameBase + '.';
-  fLogFormat := aLogFormat;
   fExtendedInfo := aLogExtendedInfo;
   fDMSContainerAPIKey := aDMSContainerAPIKey;
   LoadExtendedInfo;
@@ -178,7 +172,7 @@ function TLoggerProDMSContainerAppender.GetDefaultLog(const aLogItem: TLogItem):
 begin
   Result := TJSONObject.Create;
   try
-    Result.S['timestamp'] := datetimetostr(aLogItem.TimeStamp, fFormatSettings);
+    Result.S['timestamp'] := datetimetostr(aLogItem.TimeStamp, FormatSettings);
     Result.L['tid'] := aLogItem.ThreadID;
     Result.S['type'] := aLogItem.LogTypeAsString;
     Result.S['text'] := aLogItem.LogMessage;
@@ -282,7 +276,6 @@ end;
 
 procedure TLoggerProDMSContainerAppender.Setup;
 begin
-  fFormatSettings := LoggerPro.GetDefaultFormatSettings;
   inherited;
 end;
 
