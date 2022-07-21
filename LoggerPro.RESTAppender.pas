@@ -1,4 +1,4 @@
-unit LoggerPro.RESTAppender;
+﻿unit LoggerPro.RESTAppender;
 
 interface
 
@@ -28,8 +28,6 @@ type
     fExtendedInfo: TLoggerProExtendedInfo;
     fContentType: string;
     fRESTUrl: string;
-    fLogFormat: string;
-    fFormatSettings: TFormatSettings;
     {.$IFDEF MSWINDOWS}
     fExtendedInfoData: array [low(TLogExtendedInfo) .. high(TLogExtendedInfo)] of string;
     {.$ENDIF}
