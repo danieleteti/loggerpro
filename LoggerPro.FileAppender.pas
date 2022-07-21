@@ -102,7 +102,7 @@ type
     procedure WriteLog(const aLogItem: TLogItem); overload; override;
   end;
 
-  { @abstract(A filtering file appender)
+  { @abstract(A simple file appender)
     This file appender writes all TLogItems into a single log file.
     Combined with a @code(TLoggerProAppenderFilterImpl) you can filter out any log tags you like.
     If you want to run several TLoggerProSimpleFileAppender in parallel you have to provide a different
