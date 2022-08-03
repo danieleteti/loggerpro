@@ -126,6 +126,7 @@ implementation
 uses
   System.IOUtils,
   System.StrUtils,
+  System.Math,
   idGlobal
 {$IF Defined(Android)}
     ,Androidapi.Helpers
@@ -248,8 +249,8 @@ constructor TLoggerProFileAppenderBase.Create(aMaxBackupFileCount: Integer; aMax
   aFileAppenderOptions: TFileAppenderOptions; aLogFileNameFormat: string; aLogFormat: string; aEncoding: TEncoding);
 begin
   inherited Create(ALogFormat);
-  fLogsFolder := aLogsFolder;
-  fMaxBackupFileCount := aMaxBackupFileCount;
+  fLogsFolder := aLogsFolder;  
+  fMaxBackupFileCount:= Min(1, aMaxBackupFileCount);
   fMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
   fLogFileNameFormat := aLogFileNameFormat;
   fFileAppenderOptions := aFileAppenderOptions;
