@@ -128,7 +128,7 @@ constructor TLoggerProDMSContainerAppender.Create(
   aLogItemAggregationType: TDMSQueueAggregationType;
   aLogExtendedInfo: TLoggerProExtendedInfo);
 begin
-  inherited;
+  inherited Create;
   fEventStreamsProxy := aEventStreamsProxy;
   fQueueNameBase := aEventStreamsQueueNameBase;
   fLogItemAggregationType := aLogItemAggregationType;
@@ -140,8 +140,6 @@ begin
 end;
 
 function TLoggerProDMSContainerAppender.CreateData(const SrcLogItem: TLogItem): TJSONObject;
-var
-  lLog: TJSONObject;
 begin
   Result := nil;
   try
@@ -188,7 +186,7 @@ function TLoggerProDMSContainerAppender.GetExtendedInfo: TJSONObject;
 begin
   Result := TJSONObject.Create;
   try
-{$IFDEF MSWINDOWS}
+{$IF Defined(MSWINDOWS)}
     if TLogExtendedInfo.EIUserName in fExtendedInfo then
     begin
       Result.S['username'] := fExtendedInfoData[TLogExtendedInfo.EIUserName];
@@ -220,7 +218,7 @@ end;
 
 class function TLoggerProDMSContainerAppender.GetModuleBaseName: String;
 begin
-{$IF DEFINED(MSWINDOWS)}
+{$IF Defined(MSWINDOWS)}
   Result := TPath.ChangeExtension(TPath.GetFileName(GetModuleName(HInstance)), '');
 {$ENDIF}
 {$IF Defined(Android)}
@@ -234,7 +232,7 @@ end;
 
 procedure TLoggerProDMSContainerAppender.LoadExtendedInfo;
 begin
-{$IF DEFINED(MSWINDOWS)}
+{$IF Defined(MSWINDOWS)}
   if TLogExtendedInfo.EIProcessID in fExtendedInfo then
   begin
     fExtendedInfoData[TLogExtendedInfo.EIProcessID] := IntToStr(GetCurrentProcessId);
@@ -288,7 +286,6 @@ procedure TLoggerProDMSContainerAppender.InternalWriteLog(const aLogItem: TLogIt
   const aJSONObject: TJSONObject);
 var
   lRetryCount: Integer;
-  lResp: IHTTPResponse;
   lJSONResp: TJSONObject;
 const
   MAX_RETRY_COUNT = 5;
@@ -324,9 +321,7 @@ end;
 
 procedure TLoggerProDMSContainerAppender.WriteLog(const aLogItem: TLogItem);
 var
-  lData: TJSONObject;
   lRetryCount: Integer;
-  lResp: IHTTPResponse;
   lJSONResp: TJSONObject;
   lQueueName: string;
 const

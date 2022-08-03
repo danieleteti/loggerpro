@@ -10,7 +10,7 @@ const
   REST_LOGS_COLLECTOR_URL = 'http://localhost:8080';
 {$ENDIF}
 {$IF Defined(Android)}
-  REST_LOGS_COLLECTOR_URL = 'http://192.168.1.7:8080';
+  REST_LOGS_COLLECTOR_URL = 'http://192.168.1.153:8080';
 {$ENDIF}
 
 function Log: ILogWriter;
