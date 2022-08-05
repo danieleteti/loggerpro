@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "module": "invoke",
-            "args": ["build"],
+            "args": ["release"],
             "justMyCode": true
         }
     ]

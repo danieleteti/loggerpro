@@ -107,71 +107,6 @@ def build_delphi_project(
         raise Exit("Build failed for " + delphi_versions[delphi_version]["desc"])
 
 
-def zip_samples(version):
-    global g_output_folder
-    cmdline = (
-        "7z a "
-        + g_output_folder
-        + f"\\..\\{version}_samples.zip -r -i@7ziplistfile.txt"
-    )
-    return subprocess.call(cmdline, shell=True) == 0
-
-
-def create_zip(ctx, version):
-    global g_output_folder
-    print("CREATING ZIP")
-    archive_name = version + ".zip"
-    switches = ""
-    files_name = "*"
-    cmdline = f"..\\7z.exe a {switches} {archive_name} *"
-    print("cmdline:" + cmdline)
-    print("g_output_folder: " + g_output_folder)
-    with ctx.cd(g_output_folder):
-        ctx.run(cmdline, shell=True)
-
-
-def copy_sources():
-    global g_output_folder
-    os.makedirs(g_output_folder + "\\sources", exist_ok=True)
-    os.makedirs(g_output_folder + "\\packages", exist_ok=True)
-    os.makedirs(g_output_folder + "\\tools", exist_ok=True)
-    # copying main sources
-    print("Copying LoggerPro Sources...")
-    src = glob.glob("*.pas") + glob.glob("*.inc") + glob.glob("*.md")
-    for file in src:
-        print("Copying " + file + " to " + g_output_folder + "\\sources")
-        copy2(file, g_output_folder + "\\sources\\")
-
-
-def copy_libs(ctx):
-    global g_output_folder
-
-    # swagdoc
-    print("Copying libraries: SwagDoc...")
-    curr_folder = g_output_folder + "\\lib\\swagdoc"
-    os.makedirs(curr_folder, exist_ok=True)
-    if not ctx.run(rf"xcopy lib\swagdoc\*.* {curr_folder}\*.* /E /Y /R /V /F"):
-        raise Exception("Cannot copy SwagDoc")
-
-    # loggerpro
-    print("Copying libraries: LoggerPro...")
-    curr_folder = g_output_folder + "\\lib\\loggerpro"
-    os.makedirs(curr_folder, exist_ok=True)
-    if not ctx.run(rf"xcopy lib\loggerpro\*.* {curr_folder}\*.* /E /Y /R /V /F"):
-        raise Exception("Cannot copy loggerpro")
-
-    # dmustache
-    print("Copying libraries: dmustache...")
-    curr_folder = g_output_folder + "\\lib\\dmustache"
-    os.makedirs(curr_folder, exist_ok=True)
-    if not ctx.run(rf"xcopy lib\dmustache\*.* {curr_folder}\*.* /E /Y /R /V /F"):
-        raise Exception("Cannot copy dmustache")
-
-
-def printkv(key, value):
-    print(Fore.RESET + key + ": " + Fore.GREEN + value.rjust(60) + Fore.RESET)
-
-
 def init_build(version):
     """Required by all tasks"""
     global g_version
@@ -304,14 +239,49 @@ def build(ctx, version="DEBUG", delphi_version=DEFAULT_DELPHI_VERSION):
         raise Exit("Build failed")
 
 
+def get_home() -> str:
+    return str(Path(__file__).parent)
+
+
+def inc_version():
+    global g_version
+    home = get_home()
+    from datetime import datetime
+
+    with open(Path(home).joinpath("VERSION.TXT"), "r") as f:
+        v = f.readline().strip()
+
+    pieces = v.split(".")
+    if len(pieces) != 3:
+        raise Exception("Invalid version format in VERSION.TXT")
+
+    g_version = ".".join(pieces[:-1]) + "." + str(int(pieces[2]) + 1)
+
+    print(f"INC VERSION [{v}] => [{g_version}]")
+
+    with open(Path(home).joinpath("VERSION.TXT"), "w") as f:
+        f.write(g_version)
+        f.write("\nBUILD DATETIME : " + datetime.now().isoformat() + "\n")
+
+
 @task(pre=[tests, build])
 def release(
-    ctx, version="DEBUG", delphi_version=DEFAULT_DELPHI_VERSION, skip_build=False
+    ctx, delphi_version=DEFAULT_DELPHI_VERSION, skip_build=False
 ):
     """Builds all the projects, executes unit/integration tests and create release"""
+    global g_version
+    inc_version()
     print(Fore.RESET)
-    copy_sources()
-    # copy_libs(ctx)
-    clean(ctx)
-    # zip_samples(version)
-    create_zip(ctx, version)
+    tag_name = g_version.replace(".", "_").replace(' ','_')
+    print("Creating Git tag " + tag_name)
+    if not ctx.run("git add -u "):
+        raise Exception("Cannot add files to git")
+    if not ctx.run(f"git tag {tag_name}"):
+        raise Exception("Cannot create git tag")
+    if not ctx.run(f'git commit -m "{tag_name}"'):
+        raise Exception("Cannot commit on git")
+    if not ctx.run(f"git push origin"):
+        raise Exception("Cannot push")
+    if not ctx.run(f"git push origin {tag_name}"):
+        raise Exception("Cannot push tag")
+    inc_version()  # generates dev build version
