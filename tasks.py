@@ -20,37 +20,37 @@ g_output_folder = ""  # defined at runtime
 g_version = "DEV"
 
 projects = [
-    # ("samples\\01_global_logger\\global_logger.dproj", "Win32"),
-    # ("samples\\02_file_appender\\file_appender.dproj", "Win32"),
-    # ("samples\\03_console_appender\\console_appender.dproj", "Win32"),
-    # (
-    #     "samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj",
-    #     "Win32",
-    # ),
-    # ("samples\\05_vcl_appenders\\vcl_appenders.dproj", "Win32"),
-    # ("samples\\08_email_appender\\email_appender.dproj", "Win32"),
-    # ("samples\\10_multiple_appenders\\multiple_appenders.dproj", "Win32"),
-    # (
-    #     "samples\\15_appenders_with_different_log_levels\\multi_appenders_different_loglevels.dproj",
-    #     "Win32",
-    # ),
-    # ("samples\\20_multiple_loggers\\multiple_loggers.dproj", "Win32"),
-    # ("samples\\50_custom_appender\\custom_appender.dproj", "Win32"),
-    # ("samples\\60_logging_inside_dll\\MainProgram.dproj", "Win32"),
-    # ("samples\\60_logging_inside_dll\\mydll.dproj", "Win32"),
-    # ("samples\\70_isapi_sample\\loggerproisapisample.dproj", "Win32"),
-    # ("samples\\90_remote_logging_with_redis\\REDISAppenderSample.dproj", "Win32"),
-    # (
-    #     "samples\\90_remote_logging_with_redis\\redis_logs_viewer\\REDISLogsViewer.dproj",
-    #     "Win32",
-    # ),
-    # ("samples\\100_udp_syslog\\udp_syslog.dproj", "Win32"),
-    # ("samples\\110_rest_appender\RESTAppenderSample.dproj", "Win32"),
-    # ("samples\\110_rest_appender_mobile\RESTAppenderMobileSample.dproj", "Android"),
-    # (
-    #     "samples\\120_elastic_search_appender\\ElasticSearchAppenderSample.dproj",
-    #     "Win32",
-    # ),
+    ("samples\\01_global_logger\\global_logger.dproj", "Win32"),
+    ("samples\\02_file_appender\\file_appender.dproj", "Win32"),
+    ("samples\\03_console_appender\\console_appender.dproj", "Win32"),
+    (
+        "samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj",
+        "Win32",
+    ),
+    ("samples\\05_vcl_appenders\\vcl_appenders.dproj", "Win32"),
+    ("samples\\08_email_appender\\email_appender.dproj", "Win32"),
+    ("samples\\10_multiple_appenders\\multiple_appenders.dproj", "Win32"),
+    (
+        "samples\\15_appenders_with_different_log_levels\\multi_appenders_different_loglevels.dproj",
+        "Win32",
+    ),
+    ("samples\\20_multiple_loggers\\multiple_loggers.dproj", "Win32"),
+    ("samples\\50_custom_appender\\custom_appender.dproj", "Win32"),
+    ("samples\\60_logging_inside_dll\\MainProgram.dproj", "Win32"),
+    ("samples\\60_logging_inside_dll\\mydll.dproj", "Win32"),
+    ("samples\\70_isapi_sample\\loggerproisapisample.dproj", "Win32"),
+    ("samples\\90_remote_logging_with_redis\\REDISAppenderSample.dproj", "Win32"),
+    (
+        "samples\\90_remote_logging_with_redis\\redis_logs_viewer\\REDISLogsViewer.dproj",
+        "Win32",
+    ),
+    ("samples\\100_udp_syslog\\udp_syslog.dproj", "Win32"),
+    ("samples\\110_rest_appender\RESTAppenderSample.dproj", "Win32"),
+    ("samples\\110_rest_appender_mobile\RESTAppenderMobileSample.dproj", "Android"),
+    (
+        "samples\\120_elastic_search_appender\\ElasticSearchAppenderSample.dproj",
+        "Win32",
+    ),
     ("samples\\rest_logs_collector\RESTLogsCollector.dproj", "Win32"),
 ]
 
@@ -265,14 +265,12 @@ def inc_version():
 
 
 @task(pre=[tests, build])
-def release(
-    ctx, delphi_version=DEFAULT_DELPHI_VERSION, skip_build=False
-):
+def release(ctx, delphi_version=DEFAULT_DELPHI_VERSION, skip_build=False):
     """Builds all the projects, executes unit/integration tests and create release"""
     global g_version
     inc_version()
     print(Fore.RESET)
-    tag_name = g_version.replace(".", "_").replace(' ','_')
+    tag_name = g_version.replace(".", "_").replace(" ", "_")
     print("Creating Git tag " + tag_name)
     if not ctx.run("git add -u "):
         raise Exception("Cannot add files to git")
