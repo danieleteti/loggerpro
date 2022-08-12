@@ -14,7 +14,6 @@ init()
 
 DEFAULT_DELPHI_VERSION = "11.1"
 
-g_releases_path = "releases"
 g_output = "bin"
 g_output_folder = ""  # defined at runtime
 g_version = "DEV"
@@ -107,29 +106,6 @@ def build_delphi_project(
         raise Exit("Build failed for " + delphi_versions[delphi_version]["desc"])
 
 
-def init_build(version):
-    """Required by all tasks"""
-    global g_version
-    global g_output_folder
-    global g_releases_path
-    g_version = version
-    g_output_folder = g_releases_path + "\\" + g_version
-    print()
-    print(Fore.RESET + Fore.RED + "*" * 80)
-    print(Fore.RESET + Fore.RED + " BUILD VERSION: " + g_version + Fore.RESET)
-    print(Fore.RESET + Fore.RED + " OUTPUT PATH  : " + g_output_folder + Fore.RESET)
-    print(Fore.RESET + Fore.RED + "*" * 80)
-
-    rmtree(g_output_folder, True)
-    os.makedirs(g_output_folder, exist_ok=True)
-    f = open(g_output_folder + "\\version.txt", "w")
-    f.write("VERSION " + g_version + "\n")
-    f.write("BUILD DATETIME " + datetime.now().isoformat() + "\n")
-    f.close()
-    copy2("README.md", g_output_folder)
-    copy2("License.txt", g_output_folder)
-
-
 def build_delphi_project_list(
     ctx, projects, config="DEBUG", delphi_version=DEFAULT_DELPHI_VERSION
 ):
@@ -156,51 +132,6 @@ def build_delphi_project_list(
         #     print("\n")
 
     return ret
-
-
-@task
-def clean(ctx, folder=None):
-    global g_output_folder
-    import os
-    import glob
-
-    if folder is None:
-        folder = g_output_folder
-    print(f"Cleaning folder {folder}")
-    output = pathlib.Path(folder)
-    to_delete = []
-    to_delete += glob.glob(folder + r"\**\*.exe", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.dcu", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.stat", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.res", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.map", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.~*", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.rsm", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.drc", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.log", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.local", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.gitignore", recursive=True)
-    to_delete += glob.glob(folder + r"\**\*.gitattributes", recursive=True)
-
-    for f in to_delete:
-        print(f"Deleting {f}")
-        os.remove(f)
-
-    rmtree(folder + r"\lib\loggerpro\Win32", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d100\__history", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d100\Win32\Debug", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d101\__history", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d101\Win32\Debug", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d102\__history", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d102\Win32\Debug", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d103\__history", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d103\Win32\Debug", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d104\__history", True)
-    rmtree(folder + r"\lib\loggerpro\packages\d104\Win32\Debug", True)
-    rmtree(folder + r"\lib\dmustache\.git", True)
-    rmtree(folder + r"\lib\swagdoc\lib", True)
-    rmtree(folder + r"\lib\swagdoc\deploy", True)
-    rmtree(folder + r"\lib\swagdoc\demos", True)
 
 
 @task()
@@ -232,7 +163,6 @@ def tests(ctx, delphi_version=DEFAULT_DELPHI_VERSION):
 @task(post=[tests])
 def build(ctx, version="DEBUG", delphi_version=DEFAULT_DELPHI_VERSION):
     """Builds LoggerPro"""
-    init_build(version)
     delphi_projects = get_delphi_projects_to_build(delphi_version)
     ret = build_delphi_project_list(ctx, delphi_projects, version, delphi_version)
     if not ret:
@@ -265,21 +195,22 @@ def inc_version():
 
 
 @task(pre=[tests, build])
-def release(ctx, delphi_version=DEFAULT_DELPHI_VERSION, skip_build=False):
+def release(ctx, delphi_version=DEFAULT_DELPHI_VERSION, skip_build=False, no_git=False):
     """Builds all the projects, executes unit/integration tests and create release"""
     global g_version
-    inc_version()
     print(Fore.RESET)
-    tag_name = g_version.replace(".", "_").replace(" ", "_")
-    print("Creating Git tag " + tag_name)
-    if not ctx.run("git add -u "):
-        raise Exception("Cannot add files to git")
-    if not ctx.run(f"git tag {tag_name}"):
-        raise Exception("Cannot create git tag")
-    if not ctx.run(f'git commit -m "{tag_name}"'):
-        raise Exception("Cannot commit on git")
-    if not ctx.run(f"git push origin"):
-        raise Exception("Cannot push")
-    if not ctx.run(f"git push origin {tag_name}"):
-        raise Exception("Cannot push tag")
+    if not no_git:
+        inc_version()        
+        tag_name = g_version.replace(".", "_").replace(" ", "_")
+        print("Creating Git tag " + tag_name)
+        if not ctx.run("git add -u "):
+            raise Exception("Cannot add files to git")
+        if not ctx.run(f"git tag {tag_name}"):
+            raise Exception("Cannot create git tag")
+        if not ctx.run(f'git commit -m "{tag_name}"'):
+            raise Exception("Cannot commit on git")
+        if not ctx.run(f"git push origin"):
+            raise Exception("Cannot push")
+        if not ctx.run(f"git push origin {tag_name}"):
+            raise Exception("Cannot push tag")
     inc_version()  # generates dev build version
