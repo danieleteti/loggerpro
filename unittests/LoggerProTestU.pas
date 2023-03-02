@@ -30,12 +30,15 @@ type
     [TestCase('No proxy', 'false')]
     [TestCase('With proxy', 'true')]
     procedure TestLogLevel(UseProxy: boolean);
+
+    [Test]
+    procedure TestAddAndDeleteAppenders;
   end;
 
 implementation
 
 uses
-  System.SysUtils, TestSupportAppendersU, System.SyncObjs;
+  System.SysUtils, TestSupportAppendersU, System.SyncObjs, LoggerPro.OutputDebugStringAppender;
 
 function LogItemAreEquals(A, B: TLogItem): Boolean;
 begin
@@ -53,6 +56,29 @@ end;
 
 procedure TLoggerProTest.TearDown;
 begin
+end;
+
+procedure TLoggerProTest.TestAddAndDeleteAppenders;
+var
+  LAppender1, LAppender2: ILogAppender;
+  LLogWriter: ILogWriter;
+begin
+  LAppender1 := TLoggerProOutputDebugStringAppender.Create();
+  LAppender2 := TLoggerProOutputDebugStringAppender.Create();
+
+  LLogWriter := BuildLogWriter([LAppender1, LAppender2]);
+  LLogWriter.Debug('Added Appenders', 'Appender');
+  Assert.AreEqual(2, LLogWriter.AppendersCount);
+
+  LLogWriter.DelAppender(LAppender1);
+  LLogWriter.Debug('Deleted Appenders', 'Appender');
+  Assert.AreEqual(1, LLogWriter.AppendersCount);
+
+  LLogWriter.DelAppender(LAppender2);
+  LLogWriter.Debug('Deleted Appenders', 'Appender');
+  Assert.AreEqual(0, LLogWriter.AppendersCount);
+
+  LLogWriter.Debug('Deleted Appenders', 'Appender');
 end;
 
 procedure TLoggerProTest.TestLogLevel(UseProxy: boolean);
