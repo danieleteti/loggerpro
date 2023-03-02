@@ -431,7 +431,7 @@ end;
 procedure TCustomLogWriter.AddAppender(const aAppender: ILogAppender);
 begin
   Self.FLogAppenders.Add(aAppender);
-  if Assigned( Self.FLoggerThread.FAppendersDecorators) then
+  if Assigned(Self.FLoggerThread.FAppendersDecorators) then
    Self.FLoggerThread.FAppendersDecorators.Add(TLoggerThread.TAppenderAdapter.Create(aAppender));
 end;
 
@@ -447,9 +447,10 @@ begin
   if i >= 0 then
     Self.FLogAppenders.Delete(i);
 
-  for i := 0 to Self.FLoggerThread.FAppendersDecorators.Count - 1 do
-    if Self.FLoggerThread.FAppendersDecorators[i].FLogAppender = aAppender then
-      Self.FLoggerThread.FAppendersDecorators.Delete(i);
+  if Assigned(Self.FLoggerThread.FAppendersDecorators) then
+    for i := Self.FLoggerThread.FAppendersDecorators.Count - 1 downto 0 do
+      if Self.FLoggerThread.FAppendersDecorators[i].FLogAppender = aAppender then
+        Self.FLoggerThread.FAppendersDecorators.Delete(i);
 end;
 
 function TCustomLogWriter.GetAppendersClassNames: TArray<string>;
