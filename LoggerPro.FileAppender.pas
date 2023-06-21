@@ -250,7 +250,7 @@ constructor TLoggerProFileAppenderBase.Create(aMaxBackupFileCount: Integer; aMax
 begin
   inherited Create(ALogFormat);
   fLogsFolder := aLogsFolder;  
-  fMaxBackupFileCount:= Min(1, aMaxBackupFileCount);
+  fMaxBackupFileCount:= Max(1, aMaxBackupFileCount);
   fMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
   fLogFileNameFormat := aLogFileNameFormat;
   fFileAppenderOptions := aFileAppenderOptions;
