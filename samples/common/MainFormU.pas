@@ -14,11 +14,14 @@ type
     Button3: TButton;
     Button4: TButton;
     Button5: TButton;
+    chkEnableOtherFileAppender: TCheckBox;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure chkEnableOtherFileAppenderClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -86,6 +89,16 @@ begin
   TThread.CreateAnonymousThread(lThreadProc).Start;
   TThread.CreateAnonymousThread(lThreadProc).Start;
   TThread.CreateAnonymousThread(lThreadProc).Start;
+end;
+
+procedure TMainForm.chkEnableOtherFileAppenderClick(Sender: TObject);
+begin
+  Log.Appenders[1].Enabled := chkEnableOtherFileAppender.Checked;
+end;
+
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  Log.Appenders[1].Enabled := chkEnableOtherFileAppender.Checked;
 end;
 
 end.

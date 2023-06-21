@@ -188,7 +188,10 @@ end;
 
 procedure TLoggerProFileAppenderBase.InternalWriteLog(const aStreamWriter: TStreamWriter; const aLogItem: TLogItem);
 begin
-  WriteToStream(aStreamWriter, FormatLog(aLogItem));
+  if Enabled then
+  begin
+    WriteToStream(aStreamWriter, FormatLog(aLogItem));
+  end;
 end;
 
 procedure TLoggerProFileAppenderBase.RetryMove(const aFileSrc, aFileDest: string);

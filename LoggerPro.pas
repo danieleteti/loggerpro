@@ -109,6 +109,10 @@ type
       LastErrorTimestamp. }
     procedure TryToRestart(var Restarted: Boolean);
 
+    procedure SetEnabled(const Value: Boolean);
+    function GetEnabled: Boolean;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
+
     procedure SetLastErrorTimeStamp(const LastErrorTimeStamp: TDateTime);
     function GetLastErrorTimeStamp: TDateTime;
     property LastErrorTimeStamp: TDateTime read GetLastErrorTimeStamp write SetLastErrorTimeStamp;
@@ -295,6 +299,10 @@ type
     function GetLastErrorTimeStamp: TDateTime;
     property LogLevel: TLogType read GetLogLevel write SetLogLevel;
     property OnLogRow: TOnAppenderLogRow read FOnLogRow write FOnLogRow;
+
+    procedure SetEnabled(const Value: Boolean);
+    function GetEnabled: Boolean;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
   end;
 
   { @abstract(Builds a new ILogWriter instance. Call this global function to start logging like a pro.)
@@ -784,6 +792,11 @@ begin
       ALogItem.ThreadID, ALogItem.LogTypeAsString, ALogItem.LogMessage, ALogItem.LogTag]);
 end;
 
+function TLoggerProAppenderBase.GetEnabled: Boolean;
+begin
+  Result := FEnabled;
+end;
+
 function TLoggerProAppenderBase.GetLastErrorTimeStamp: TDateTime;
 begin
   Result := FLastErrorTimeStamp;
@@ -792,6 +805,14 @@ end;
 function TLoggerProAppenderBase.GetLogLevel: TLogType;
 begin
   Result := FLogLevel;
+end;
+
+procedure TLoggerProAppenderBase.SetEnabled(const Value: Boolean);
+begin
+  if Value <> FEnabled then
+  begin
+    FEnabled := Value;
+  end;
 end;
 
 procedure TLoggerProAppenderBase.SetLastErrorTimeStamp(const Value: TDateTime);

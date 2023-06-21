@@ -50,7 +50,8 @@ initialization
 _Log := BuildLogWriter([
   TLoggerProFileAppender.Create(10, 5, '..\..', [],
     TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT, DEFAULT_LOG_FORMAT),
-
+  TLoggerProFileAppender.Create(10, 5, '..\..\otherFileAppender', [],
+    TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT, DEFAULT_LOG_FORMAT),
   TLoggerProFilter.Build(
     TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
     function(ALogItem: TLogItem): boolean
