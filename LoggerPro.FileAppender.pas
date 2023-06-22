@@ -182,6 +182,7 @@ end;
 
 procedure TLoggerProFileAppenderBase.WriteToStream(const aStreamWriter: TStreamWriter; const aValue: string);
 begin
+  //aStreamWriter.BaseStream.Seek(0, soEnd);
   aStreamWriter.WriteLine(aValue);
   aStreamWriter.Flush;
 end;
