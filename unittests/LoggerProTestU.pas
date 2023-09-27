@@ -21,6 +21,7 @@ type
     [TestCase('Type INFO', '1,INFO')]
     [TestCase('Type WARN', '2,WARNING')]
     [TestCase('Type ERROR', '3,ERROR')]
+    [TestCase('Type FATAL', '4,FATAL')]
     procedure TestTLogItemTypeAsString(aLogType: Byte; aExpected: String);
 
 //    [Test]   {refactor this}
@@ -190,14 +191,29 @@ begin
       Assert.AreEqual('ERROR', lLogItem.LogTypeAsString);
       Assert.AreEqual(Int64(0), Int64(TInterlocked.Read(InvalidItemLogged)));
 
+      // fatal message
+      lEvent.ResetEvent;
+      InvalidItemLogged := 0;
+      lLogWriter.Fatal('fatal message', 'fatal');
+      if UseProxy then
+        lLogWriter.Fatal('ignoredmessage', 'fatal');
+      Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000),
+        'Event not released after 5 seconds');
+      Assert.AreEqual('fatal message', lLogItem.LogMessage);
+      Assert.AreEqual('fatal', lLogItem.LogTag);
+      Assert.AreEqual('FATAL', lLogItem.LogTypeAsString);
+      Assert.AreEqual(Int64(0), Int64(TInterlocked.Read(InvalidItemLogged)));
+
+
       lLogWriter := nil;
-      Assert.AreEqual(6, Length(lHistory));
+      Assert.AreEqual(7, Length(lHistory));
       Assert.AreEqual('setup', lHistory[0]);
       Assert.AreEqual('writelogDEBUG', lHistory[1]);
       Assert.AreEqual('writelogINFO', lHistory[2]);
       Assert.AreEqual('writelogWARNING', lHistory[3]);
       Assert.AreEqual('writelogERROR', lHistory[4]);
-      Assert.AreEqual('teardown', lHistory[5]);
+      Assert.AreEqual('writelogFATAL', lHistory[5]);
+      Assert.AreEqual('teardown', lHistory[6]);
     finally
       lEvent.Free;
     end;
