@@ -70,7 +70,8 @@ type
       @item LogTag
       )
     }
-    DEFAULT_FILENAME_FORMAT = '%0:s.%1:2.2d.%2:s.log';
+    //DEFAULT_FILENAME_FORMAT = '%0:s.%1:2.2d.%2:s.log';
+    DEFAULT_FILENAME_FORMAT = '{module}.{number}.{tag}.log';
     { @abstract(Defines number of log file set to maintain during logs rotation) }
     DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
     { @abstract(Defines the max size of each log file)
@@ -134,6 +135,36 @@ uses
     ,Androidapi.JNI.JavaTypes
 {$ENDIF}
     ;
+
+function OccurrencesOfChar(const S: string; const C: char): integer;
+var
+  i: Integer;
+begin
+  result := 0;
+  for i := 1 to Length(S) do
+    if S[i] = C then
+      inc(result);
+end;
+
+function GetNormalizedFileFormatFormat(const LogFileNameFormat: String): String;
+var
+  lCount: Integer;
+begin
+  Result := LogFileNameFormat;
+
+  //DEFAULT_FILENAME_FORMAT = '%0:s.%1:2.2d.%2:s.log';
+  //DEFAULT_FILENAME_FORMAT = '{module}.{number}.{tag}.log';
+
+  Result := Result
+    .Replace('{module}', '%0:s', [rfIgnoreCase])
+    .Replace('{number}', '%1:2.2d', [rfIgnoreCase])
+    .Replace('{tag}', '%2:s', [rfIgnoreCase]);
+  lCount := OccurrencesOfChar(Result, '%');
+  if lCount <> 3 then
+  begin
+    raise ELoggerPro.Create('Wrong FileFormat - File format doesn''t contain the correct number of placeholder - expected 3 got ' + IntToStr(lCount) + '. [HINT] File format must adhere to the following template: ' + TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT);
+  end;
+end;
 
 { TLoggerProFileAppenderBase }
 
@@ -250,10 +281,10 @@ constructor TLoggerProFileAppenderBase.Create(aMaxBackupFileCount: Integer; aMax
   aFileAppenderOptions: TFileAppenderOptions; aLogFileNameFormat: string; aLogFormat: string; aEncoding: TEncoding);
 begin
   inherited Create(ALogFormat);
-  fLogsFolder := aLogsFolder;  
+  fLogsFolder := aLogsFolder;
   fMaxBackupFileCount:= Max(1, aMaxBackupFileCount);
   fMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
-  fLogFileNameFormat := aLogFileNameFormat;
+  fLogFileNameFormat := GetNormalizedFileFormatFormat(aLogFileNameFormat);
   fFileAppenderOptions := aFileAppenderOptions;
   if Assigned(aEncoding) then
     fEncoding := aEncoding
