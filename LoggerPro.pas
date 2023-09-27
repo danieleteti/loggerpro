@@ -806,7 +806,7 @@ end;
 
 procedure TLoggerProAppenderBase.Setup;
 begin
-  FFormatSettings := LoggerPro.GetDefaultFormatSettings;
+  FFormatSettings := GetDefaultFormatSettings;
 end;
 
 procedure TLoggerProAppenderBase.TryToRestart(var Restarted: Boolean);
