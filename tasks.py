@@ -32,6 +32,7 @@ delphi_versions = [
 projects = [
     ("samples\\01_global_logger\\global_logger.dproj", "Win32"),
     ("samples\\02_file_appender\\file_appender.dproj", "Win32"),
+    ("samples\\02a_simple_file_appender\\simple_file_appender.dproj", "Win32"),    
     ("samples\\03_console_appender\\console_appender.dproj", "Win32"),
     (
         "samples\\04_outputdebugstring_appender\\outputdebugstring_appender.dproj",
@@ -61,6 +62,7 @@ projects = [
         "samples\\120_elastic_search_appender\\ElasticSearchAppenderSample.dproj",
         "Win32",
     ),
+    ("samples\\130_simple_console_appender\SimpleConsole_appender.dproj", "Android"),    
     ("samples\\rest_logs_collector\RESTLogsCollector.dproj", "Win32"),
 ]
 
