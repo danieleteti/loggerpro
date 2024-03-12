@@ -403,6 +403,7 @@ function LogLayoutByPlaceHoldersToLogLayoutByIndexes(const LogLayoutByPlaceHolde
 var
   PlaceHolders, PlaceHolderWidthsAndPaddings: TArray<string>;
   I: Integer;
+  lIdx: Integer;
 begin
   if LogLayoutByPlaceHolders.Contains('%s') or LogLayoutByPlaceHolders.Contains('%d') then
   begin
@@ -440,7 +441,7 @@ begin
 
   if UseZeroBasedIncrementalIndexes then
   begin
-    var lIdx := 0;
+    lIdx := 0;
     for I := 0 to High(PlaceHolders) do
     begin
       if Result.Contains('{' + PlaceHolders[I] + '}') then
