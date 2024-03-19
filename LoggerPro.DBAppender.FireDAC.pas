@@ -9,6 +9,7 @@ uses
   LoggerPro, System.SysUtils, Data.DB,
   LoggerPro.DBAppender,
   FireDAC.Stan.Error,
+  FireDAC.DApt,
   FireDAC.Phys,
   FireDAC.Stan.Param,
   FireDAC.Comp.Client;
@@ -22,9 +23,6 @@ type
   end;
 
 implementation
-
-uses
-  System.IOUtils, JsonDataObjects, Winapi.ActiveX;
 
 { TLoggerProDBAppenderFireDAC }
 

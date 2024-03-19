@@ -299,11 +299,9 @@ type
     FEnabled: Boolean;
     FLastErrorTimeStamp: TDateTime;
     FOnLogRow: TOnAppenderLogRow;
-    //FLogFormat: string;
     FLogItemRenderer: ILogItemRenderer;
     FFormatSettings: TFormatSettings;
   protected
-//    property LogFormat: string read FLogFormat;
     property FormatSettings: TFormatSettings read FFormatSettings;
   public
     constructor Create(ALogItemRenderer: ILogItemRenderer = nil); virtual;

@@ -23,9 +23,8 @@ type
   ///<summary>Abstract class for writing logs to database</summary>
   /// <remarks>Subclass with your choice of stored procedure class to get a working logger </remarks>
   TLoggerProDBAppender<T: class> = class(TLoggerProAppenderBase)
-  private
-  protected const
-    MAX_RETRY_COUNT = 5;
+  protected
+    const MAX_RETRY_COUNT = 5;
   protected
     FOnDBWriteError: TOnDBWriteError;
     FGetDBConnection: TGetDBConnection;
@@ -111,21 +110,17 @@ end;
 
 procedure TLoggerProDBAppender<T>.WriteLog(const ALogItem: TLogItem);
 var
-  NeedsParamRefresh: Boolean;
   RetryCount: Integer;
 begin
   RetryCount := 0;
-
   repeat
     try
       if FDBObject = nil then
       begin
+        FDBConnection.Connected := True;  //force an exception if needed
         FDBObject := FGetStoredProc(FDBConnection);
-        NeedsParamRefresh := True;
+        RefreshParams(FDBObject); //this may not raise unhandled exception even in case of disconnection
       end;
-      if NeedsParamRefresh then
-        RefreshParams(FDBObject);
-
       FSetParams(FDBObject, ALogItem);
       ExecuteDataObject(FDBObject);
       Break;
