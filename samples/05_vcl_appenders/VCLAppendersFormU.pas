@@ -28,9 +28,11 @@ type
     PageControl1: TPageControl;
     tsListViewAppender: TTabSheet;
     tsMemoAppender: TTabSheet;
-    Memo1: TMemo;
+    MemoAppenderMemo: TMemo;
     ListView1: TListView;
     Button6: TButton;
+    tsStringListAppender: TTabSheet;
+    StringListAppenderMemo: TMemo;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
@@ -51,6 +53,7 @@ var
 implementation
 
 uses
+  LoggerPro.StringListAppender,
   LoggerPro.VCLMemoAppender,
   LoggerPro.VCLListViewAppender;
 
@@ -115,7 +118,7 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   // Let's create the local loggers for this form
-  FLog := BuildLogWriter([TVCLListViewAppender.Create(ListView1), TVCLMemoLogAppender.Create(Memo1)])
+  FLog := BuildLogWriter([TVCLListViewAppender.Create(ListView1), TVCLMemoLogAppender.Create(MemoAppenderMemo), TStringListLogAppender.Create(StringListAppenderMemo.Lines, 0)])
 end;
 
 function TMainForm.Log: ILogWriter;

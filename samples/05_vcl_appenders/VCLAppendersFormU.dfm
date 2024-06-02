@@ -66,7 +66,7 @@ object MainForm: TMainForm
     Top = 134
     Width = 818
     Height = 393
-    ActivePage = tsListViewAppender
+    ActivePage = tsStringListAppender
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 5
     ExplicitWidth = 814
@@ -98,14 +98,35 @@ object MainForm: TMainForm
         ParentFont = False
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitWidth = 806
-        ExplicitHeight = 364
       end
     end
     object tsMemoAppender: TTabSheet
       Caption = 'Memo Appender DEMO'
       ImageIndex = 1
-      object Memo1: TMemo
+      object MemoAppenderMemo: TMemo
+        Left = 0
+        Top = 0
+        Width = 810
+        Height = 365
+        Align = alClient
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -12
+        Font.Name = 'Courier New'
+        Font.Style = []
+        ParentFont = False
+        ReadOnly = True
+        ScrollBars = ssVertical
+        TabOrder = 0
+        WordWrap = False
+        ExplicitWidth = 806
+        ExplicitHeight = 364
+      end
+    end
+    object tsStringListAppender: TTabSheet
+      Caption = 'Stringlist Appender DEMO'
+      ImageIndex = 2
+      object StringListAppenderMemo: TMemo
         Left = 0
         Top = 0
         Width = 810
