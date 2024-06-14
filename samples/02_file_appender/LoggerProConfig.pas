@@ -53,16 +53,24 @@ initialization
 //
 //  Creates logs in the ..\..\ folder using the default filename
 //  The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file
+//   _Log := BuildLogWriter([
+//     TLoggerProFileAppender.Create(10, 5, '..\..',
+//       TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT,
+//       TLogItemRendererNoTag.Create),
+//     TLoggerProFilter.Build(
+//       TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
+//       function(ALogItem: TLogItem): boolean
+//       begin
+//         Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
+//       end)
+//     ]);
+
+//  Creates logs in the ..\..\ folder using the default filename using the date rotation
+//  The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file
    _Log := BuildLogWriter([
-     TLoggerProFileAppender.Create(10, 5, '..\..',
-       TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT,
-       TLogItemRendererNoTag.Create),
-     TLoggerProFilter.Build(
-       TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
-       function(ALogItem: TLogItem): boolean
-       begin
-         Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
-       end)
+     TLoggerProFileAppender.Create(10, 1000, '..\..',
+       TLoggerProFileAppender.DEFAULT_FILENAME_DAILY_ROTATE_FORMAT,
+       TLogItemRendererNoTag.Create)
      ]);
 
 end.

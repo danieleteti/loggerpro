@@ -40,7 +40,7 @@ type
   }
   TLoggerProJSONLFileAppender = class(TLoggerProSimpleFileAppender)
   protected
-    function GetLogFileName(const aTag: string; const aFileNumber: Integer): string; override;
+    function GetLogFileName(const aTag, aFileDate: string; const aFileNumber: Integer): string; override;
     procedure EmitStartRotateLogItem(aWriter: TStreamWriter); override;
     procedure EmitEndRotateLogItem(aWriter: TStreamWriter); override;
   public
@@ -102,7 +102,7 @@ begin
   // do nothing
 end;
 
-function TLoggerProJSONLFileAppender.GetLogFileName(const aTag: string; const aFileNumber: Integer): string;
+function TLoggerProJSONLFileAppender.GetLogFileName(const aTag, aFileDate: string; const aFileNumber: Integer): string;
 var
   lOrigFName, lOrigExt: string;
 begin
