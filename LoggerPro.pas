@@ -176,6 +176,12 @@ type
     procedure LogFmt(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); deprecated;
   end;
 
+  ILogWriterLogLevel = interface
+    ['{7345DEA0-377E-4799-9187-038B4EE30D62}']
+    function GetLogLevel: TLogType;
+    procedure SetLogLevel(Value: TLogType);
+  end;
+
   TLogAppenderList = TList<ILogAppender>;
 
   TAppenderThread = class(TThread)
@@ -247,9 +253,9 @@ type
     FLoggerThread: TLoggerThread;
     FLogAppenders: TLogAppenderList;
     FFreeAllowed: Boolean;
-    FLogLevel: TLogType;
     function GetAppendersClassNames: TArray<string>;
   protected
+    FLogLevel: TLogType;
     procedure Initialize(const aEventsHandler: TLoggerProEventsHandler);
   public
     constructor Create(const aLogLevel: TLogType = TLogType.Debug); overload;
@@ -289,6 +295,14 @@ type
 
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
     procedure LogFmt(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);
+  end;
+
+  TLogWriterClass = class of TLogWriter;
+
+  TLogDynamicWriter = class(TLogWriter, ILogWriterLogLevel)
+  protected
+    function GetLogLevel: TLogType;
+    procedure SetLogLevel(Value: TLogType);
   end;
 
   TOnAppenderLogRow = reference to procedure(const LogItem: TLogItem; out LogRow: string);
@@ -368,6 +382,8 @@ type
     procedure Setup; virtual;
     procedure TearDown; virtual;
     function RenderLogItem(const aLogItem: TLogItem): String; virtual;abstract;
+  public
+    class function GetDefaultLogItemRenderer: ILogItemRenderer;
   end;
   TLogItemRendererClass = class of TLogItemRenderer;
 
@@ -375,7 +391,14 @@ type
 function GetDefaultFormatSettings: TFormatSettings;
 function StringToLogType(const aLogType: string): TLogType;
 function BuildLogWriter(aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler = nil;
-  aLogLevel: TLogType = TLogType.Debug): ILogWriter;
+  aLogLevel: TLogType = TLogType.Debug): ILogWriter; overload;
+function BuildLogWriter(aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler;
+  aLogLevels: TArray<TLogType>): ILogWriter; overload;
+function BuildLogWriter(aWriterClass: TLogWriterClass; aAppenders: array of ILogAppender;
+  aEventsHandlers: TLoggerProEventsHandler = nil; aLogLevel: TLogType = TLogType.Debug): ILogWriter; overload;
+function BuildLogWriter(aWriterClass: TLogWriterClass; aAppenders: array of ILogAppender;
+  aEventsHandlers: TLoggerProEventsHandler; aLogLevels: TArray<TLogType>): ILogWriter; overload;
+
 function LogLayoutByPlaceHoldersToLogLayoutByIndexes(const LogLayoutByPlaceHolders: String; const UseZeroBasedIncrementalIndexes: Boolean): String;
 
 implementation
@@ -481,18 +504,55 @@ begin
 end;
 
 function BuildLogWriter(aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler; aLogLevel: TLogType): ILogWriter;
+begin
+   Result :=  BuildLogWriter(TLogWriter, aAppenders, aEventsHandlers, aLogLevel);
+end;
+
+function BuildLogWriter(aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler; aLogLevels: TArray<TLogType>): ILogWriter;
+begin
+   Result :=  BuildLogWriter(TLogWriter, aAppenders, aEventsHandlers, aLogLevels);
+end;
+
+function BuildLogWriter(aWriterClass: TLogWriterClass; aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler; aLogLevels: TArray<TLogType>): ILogWriter;
 var
   lLogAppenders: TLogAppenderList;
-  lLogAppender: ILogAppender;
+  lLowestLogLevel: TLogType;
+  I: Integer;
 begin
-  lLogAppenders := TLogAppenderList.Create;
-  for lLogAppender in aAppenders do
+  lLowestLogLevel := TLogType.Fatal;
+  if Length(aAppenders) <> Length(aLogLevels) then
   begin
-    lLogAppenders.Add(lLogAppender);
+    raise ELoggerPro.Create('LogLevels.Count <> Appenders.Count');
   end;
-  Result := TLogWriter.Create(lLogAppenders, aLogLevel);
+  lLogAppenders := TLogAppenderList.Create;
+  for I := 0 to Length(aAppenders) - 1 do
+  begin
+    lLogAppenders.Add(aAppenders[I]);
+    aAppenders[I].SetLogLevel(aLogLevels[I]);
+    if aLogLevels[I] < lLowestLogLevel then
+    begin
+      lLowestLogLevel := aLogLevels[I];
+    end;
+  end;
+  Result :=
+   aWriterClass.Create(lLogAppenders, lLowestLogLevel);
   TLogWriter(Result).Initialize(aEventsHandlers);
 end;
+
+function BuildLogWriter(aWriterClass: TLogWriterClass; aAppenders: array of ILogAppender;
+  aEventsHandlers: TLoggerProEventsHandler = nil; aLogLevel: TLogType = TLogType.Debug): ILogWriter; overload;
+var
+  lLogLevelsArray: TArray<TLogType>;
+  I: Integer;
+begin
+  SetLength(lLogLevelsArray, length(aAppenders));
+  for I := 0 to Length(lLogLevelsArray) - 1 do
+  begin
+    lLogLevelsArray[I] := aLogLevel;
+  end;
+  Result := BuildLogWriter(aWriterClass, aAppenders, aEventsHandlers, lLogLevelsArray);
+end;
+
 
 { TLogger.TCustomLogWriter }
 
@@ -687,6 +747,17 @@ end;
 procedure TLogWriter.WarnFmt(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
 begin
   Warn(aMessage, aParams, aTag);
+end;
+
+{ TLogDynamicWriter }
+function TLogDynamicWriter.GetLogLevel: TLogType;
+begin
+  Result := FLogLevel;
+end;
+
+procedure TLogDynamicWriter.SetLogLevel(Value: TLogType);
+begin
+  FLogLevel := Value;
 end;
 
 { TLogger.TLogItem }
@@ -1092,6 +1163,11 @@ end;
 
 
 { TLogItemRenderer }
+
+class function TLogItemRenderer.GetDefaultLogItemRenderer: ILogItemRenderer;
+begin
+  Result := LoggerPro.Renderers.GetDefaultLogItemRenderer;
+end;
 
 procedure TLogItemRenderer.Setup;
 begin
