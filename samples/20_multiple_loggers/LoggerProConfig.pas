@@ -24,13 +24,10 @@ end;
 
 procedure SetupLogger;
 begin
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create,
+  _Log := BuildLogWriter([
+    TLoggerProFileAppender.Create,
     TLoggerProConsoleAppender.Create,
-    TLoggerProOutputDebugStringAppender.Create]);
-  // only errors on console
-  _Log.Appenders[1].SetLogLevel(TLogType.Error);
-  // only warnings, errors or fatals on outputdebugstring
-  _Log.Appenders[2].SetLogLevel(TLogType.Warning);
+    TLoggerProOutputDebugStringAppender.Create], nil, [TLogType.Debug, TLogType.Error, TLogType.Warning]);
 end;
 
 initialization
