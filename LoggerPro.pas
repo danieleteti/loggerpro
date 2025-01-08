@@ -31,7 +31,8 @@ interface
 uses
   System.Generics.Collections,
   System.Classes,
-  ThreadSafeQueueU, System.SysUtils;
+  ThreadSafeQueueU,
+  System.SysUtils;
 
 var
   DefaultLoggerProMainQueueSize: Cardinal = 50000;
@@ -285,10 +286,10 @@ type
     FLogLevel: TLogType;
     FEnabled: Boolean;
     FLastErrorTimeStamp: TDateTime;
-    FOnLogRow: TOnAppenderLogRow;
-    FLogItemRenderer: ILogItemRenderer;
     FFormatSettings: TFormatSettings;
   protected
+    FOnLogRow: TOnAppenderLogRow;
+    FLogItemRenderer: ILogItemRenderer;
     property FormatSettings: TFormatSettings read FFormatSettings;
     property LogItemRenderer: ILogItemRenderer read FLogItemRenderer;
   public

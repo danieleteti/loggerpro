@@ -12,6 +12,9 @@
         <Projects Include="02a_simple_file_appender\simple_file_appender.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="06_logfmt_appender\logfmt_appender.dproj">
+            <Dependencies/>
+        </Projects>
         <Projects Include="03_console_appender\console_appender.dproj">
             <Dependencies/>
         </Projects>
@@ -88,6 +91,15 @@
     </Target>
     <Target Name="simple_file_appender:Make">
         <MSBuild Projects="02a_simple_file_appender\simple_file_appender.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="logfmt_appender">
+        <MSBuild Projects="06_logfmt_appender\logfmt_appender.dproj"/>
+    </Target>
+    <Target Name="logfmt_appender:Clean">
+        <MSBuild Projects="06_logfmt_appender\logfmt_appender.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="logfmt_appender:Make">
+        <MSBuild Projects="06_logfmt_appender\logfmt_appender.dproj" Targets="Make"/>
     </Target>
     <Target Name="console_appender">
         <MSBuild Projects="03_console_appender\console_appender.dproj"/>
@@ -216,13 +228,13 @@
         <MSBuild Projects="110_rest_appender_mobile\RESTAppenderMobileSample.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="global_logger;file_appender;simple_file_appender;console_appender;outputdebugstring_appender;multiple_appenders;multiple_loggers;jsonl_appender;custom_appender;vcl_appenders;udp_syslog;email_appender;REDISAppenderSample;RESTLogsCollector;RESTAppenderSample;RedisLogsViewer;RESTAppenderMobileSample"/>
+        <CallTarget Targets="global_logger;file_appender;simple_file_appender;logfmt_appender;console_appender;outputdebugstring_appender;multiple_appenders;multiple_loggers;jsonl_appender;custom_appender;vcl_appenders;udp_syslog;email_appender;REDISAppenderSample;RESTLogsCollector;RESTAppenderSample;RedisLogsViewer;RESTAppenderMobileSample"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="global_logger:Clean;file_appender:Clean;simple_file_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;multiple_appenders:Clean;multiple_loggers:Clean;jsonl_appender:Clean;custom_appender:Clean;vcl_appenders:Clean;udp_syslog:Clean;email_appender:Clean;REDISAppenderSample:Clean;RESTLogsCollector:Clean;RESTAppenderSample:Clean;RedisLogsViewer:Clean;RESTAppenderMobileSample:Clean"/>
+        <CallTarget Targets="global_logger:Clean;file_appender:Clean;simple_file_appender:Clean;logfmt_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;multiple_appenders:Clean;multiple_loggers:Clean;jsonl_appender:Clean;custom_appender:Clean;vcl_appenders:Clean;udp_syslog:Clean;email_appender:Clean;REDISAppenderSample:Clean;RESTLogsCollector:Clean;RESTAppenderSample:Clean;RedisLogsViewer:Clean;RESTAppenderMobileSample:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="global_logger:Make;file_appender:Make;simple_file_appender:Make;console_appender:Make;outputdebugstring_appender:Make;multiple_appenders:Make;multiple_loggers:Make;jsonl_appender:Make;custom_appender:Make;vcl_appenders:Make;udp_syslog:Make;email_appender:Make;REDISAppenderSample:Make;RESTLogsCollector:Make;RESTAppenderSample:Make;RedisLogsViewer:Make;RESTAppenderMobileSample:Make"/>
+        <CallTarget Targets="global_logger:Make;file_appender:Make;simple_file_appender:Make;logfmt_appender:Make;console_appender:Make;outputdebugstring_appender:Make;multiple_appenders:Make;multiple_loggers:Make;jsonl_appender:Make;custom_appender:Make;vcl_appenders:Make;udp_syslog:Make;email_appender:Make;REDISAppenderSample:Make;RESTLogsCollector:Make;RESTAppenderSample:Make;RedisLogsViewer:Make;RESTAppenderMobileSample:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
