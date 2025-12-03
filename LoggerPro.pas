@@ -246,6 +246,7 @@ type
     FLogAppenders: TLogAppenderList;
     FFreeAllowed: Boolean;
     FLogLevel: TLogType;
+    FLock: TObject;
     function GetAppendersClassNames: TArray<string>;
   protected
     FEnabled: Boolean;
@@ -525,12 +526,18 @@ end;
 
 function TCustomLogWriter.AppendersCount: Integer;
 begin
-  Result := Self.FLogAppenders.Count;
+  TMonitor.Enter(FLock);
+  try
+    Result := Self.FLogAppenders.Count;
+  finally
+    TMonitor.Exit(FLock);
+  end;
 end;
 
 constructor TCustomLogWriter.Create(const aLogAppenders: TLogAppenderList; const aLogLevel: TLogType = TLogType.Debug);
 begin
   inherited Create;
+  FLock := TObject.Create;
   FFreeAllowed := False;
   FLogAppenders := aLogAppenders;
   FLogLevel := aLogLevel;
@@ -549,44 +556,60 @@ begin
   FLoggerThread.WaitFor;
   FLoggerThread.Free;
   FLogAppenders.Free;
+  FLock.Free;
   inherited Destroy;
 end;
 
 function TCustomLogWriter.GetAppenders(const aIndex: Integer): ILogAppender;
 begin
-  Result := Self.FLogAppenders[aIndex];
+  TMonitor.Enter(FLock);
+  try
+    Result := Self.FLogAppenders[aIndex];
+  finally
+    TMonitor.Exit(FLock);
+  end;
 end;
 
 procedure TCustomLogWriter.AddAppender(const aAppender: ILogAppender);
 begin
-  Self.FLogAppenders.Add(aAppender);
-  if Assigned(Self.FLoggerThread.FAppendersDecorators) then
-   Self.FLoggerThread.FAppendersDecorators.Add(TLoggerThread.TAppenderAdapter.Create(aAppender));
+  TMonitor.Enter(FLock);
+  try
+    Self.FLogAppenders.Add(aAppender);
+    if Assigned(Self.FLoggerThread.FAppendersDecorators) then
+      Self.FLoggerThread.FAppendersDecorators.Add(TLoggerThread.TAppenderAdapter.Create(aAppender));
+  finally
+    TMonitor.Exit(FLock);
+  end;
 end;
 
 procedure TCustomLogWriter.DelAppender(const aAppender: ILogAppender);
 var
   i: Integer;
 begin
-  i := Self.FLoggerThread.FAppenders.IndexOf(aAppender);
-  if i >= 0 then
-    Self.FLoggerThread.FAppenders.Delete(i);
+  TMonitor.Enter(FLock);
+  try
+    i := Self.FLoggerThread.FAppenders.IndexOf(aAppender);
+    if i >= 0 then
+      Self.FLoggerThread.FAppenders.Delete(i);
 
-  i := Self.FLogAppenders.IndexOf(aAppender);
-  if i >= 0 then
-    Self.FLogAppenders.Delete(i);
+    i := Self.FLogAppenders.IndexOf(aAppender);
+    if i >= 0 then
+      Self.FLogAppenders.Delete(i);
 
-  if Assigned(Self.FLoggerThread.FAppendersDecorators) then
-    for i := Self.FLoggerThread.FAppendersDecorators.Count - 1 downto 0 do
-      if Self.FLoggerThread.FAppendersDecorators[i].FLogAppender = aAppender then
-        Self.FLoggerThread.FAppendersDecorators.Delete(i);
+    if Assigned(Self.FLoggerThread.FAppendersDecorators) then
+      for i := Self.FLoggerThread.FAppendersDecorators.Count - 1 downto 0 do
+        if Self.FLoggerThread.FAppendersDecorators[i].FLogAppender = aAppender then
+          Self.FLoggerThread.FAppendersDecorators.Delete(i);
+  finally
+    TMonitor.Exit(FLock);
+  end;
 end;
 
 function TCustomLogWriter.GetAppendersClassNames: TArray<string>;
 var
   I: Cardinal;
 begin
-  TMonitor.Enter(FLogAppenders);
+  TMonitor.Enter(FLock);
   try
     SetLength(Result, FLogAppenders.Count);
     for I := 0 to FLogAppenders.Count - 1 do
@@ -594,7 +617,7 @@ begin
       Result[I] := TObject(FLogAppenders[I]).ClassName;
     end;
   finally
-    TMonitor.Exit(FLogAppenders);
+    TMonitor.Exit(FLock);
   end;
 end;
 
