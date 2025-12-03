@@ -574,6 +574,7 @@ end;
 
 procedure TLoggerProSimpleFileAppender.WriteLog(const aLogItem: TLogItem);
 begin
+  Sleep(100);
   InternalWriteLog(fFileWriter, aLogItem);
   if fFileWriter.BaseStream.Size > fMaxFileSizeInKiloByte * 1024 then
   begin

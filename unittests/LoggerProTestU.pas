@@ -92,7 +92,7 @@ end;
 
 procedure TLoggerProTest.TestLogLayoutToLogIndices(const LogLayout, ResultOutput: string);
 begin
-  var lWithIndices := LogLayoutByPlaceHoldersToLogLayoutByIndexes(LogLayout);
+  var lWithIndices := LogLayoutByPlaceHoldersToLogLayoutByIndexes(LogLayout, True);
   var s := Format(
     lWithIndices,
     [
