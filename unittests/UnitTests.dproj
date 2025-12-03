@@ -124,6 +124,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="LoggerProTestU.pas"/>
+        <DCCReference Include="NewAppendersTestU.pas"/>
         <DCCReference Include="..\LoggerPro.ConsoleAppender.pas"/>
         <DCCReference Include="..\LoggerPro.FileAppender.pas"/>
         <DCCReference Include="..\LoggerPro.OutputDebugStringAppender.pas"/>
@@ -131,6 +132,10 @@
         <DCCReference Include="..\LoggerPro.VCLMemoAppender.pas"/>
         <DCCReference Include="TestSupportAppendersU.pas"/>
         <DCCReference Include="..\LoggerPro.GlobalLogger.pas"/>
+        <DCCReference Include="..\LoggerPro.MemoryAppender.pas"/>
+        <DCCReference Include="..\LoggerPro.CallbackAppender.pas"/>
+        <DCCReference Include="..\LoggerPro.TimeRotatingFileAppender.pas"/>
+        <DCCReference Include="..\LoggerPro.HTTPAppender.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

@@ -109,11 +109,10 @@ type
     procedure WriteLog(const aLogItem: TLogItem);
     { @abstract(This method is internally called by LoggerPro to deinitialize the appender) }
     procedure TearDown;
-    // { @abstract(Enable or disable the log appender. Is used internally by LoggerPro but must be
-    // implemented by each logappender. A simple @code(if enabled then dolog) is enough }
-    // procedure SetEnabled(const Value: Boolean);
-    // { @abstract(Returns if the logappender is currently enabled or not. }
-    // function IsEnabled: Boolean;
+    { @abstract(Enable or disable the log appender) }
+    procedure SetEnabled(const Value: Boolean);
+    { @abstract(Returns if the logappender is currently enabled or not) }
+    function IsEnabled: Boolean;
     { @abstract(Set a custom log level for this appender. This value must be lower than the global LogWriter log level. }
     procedure SetLogLevel(const Value: TLogType);
     { @abstract(Get the loglevel for the appender. }
@@ -220,6 +219,7 @@ type
     FEventsHandlers: TLoggerProEventsHandler;
     FAppendersDecorators: TObjectList<TAppenderAdapter>;
     function BuildAppenderAdapters: TAppenderAdapterList;
+    procedure DispatchLogItem(const aLogItem: TLogItem);
     procedure DoOnAppenderError(const FailAppenderClassName: string; const aFailedLogItem: TLogItem; const aReason: TLogErrorReason;
       var aAction: TLogErrorAction);
     procedure SetEventsHandlers(const Value: TLoggerProEventsHandler);
@@ -314,7 +314,10 @@ type
     function GetLogLevel: TLogType; inline;
     procedure SetLastErrorTimeStamp(const Value: TDateTime);
     function GetLastErrorTimeStamp: TDateTime;
+    procedure SetEnabled(const Value: Boolean);
+    function IsEnabled: Boolean;
     property LogLevel: TLogType read GetLogLevel write SetLogLevel;
+    property Enabled: Boolean read IsEnabled write SetEnabled;
     property OnLogRow: TOnAppenderLogRow read FOnLogRow write FOnLogRow;
   end;
 
@@ -553,6 +556,7 @@ destructor TCustomLogWriter.Destroy;
 begin
   Disable;
   FLoggerThread.Terminate;
+  FLoggerThread.LogWriterQueue.SetEvent; // Wake up thread if blocked in Dequeue
   FLoggerThread.WaitFor;
   FLoggerThread.Free;
   FLogAppenders.Free;
@@ -624,9 +628,10 @@ end;
 procedure TCustomLogWriter.Initialize(const aEventsHandler: TLoggerProEventsHandler);
 begin
   FLoggerThread := TLoggerThread.Create(FLogAppenders);
-
   FLoggerThread.EventsHandlers := aEventsHandler;
   FLoggerThread.Start;
+  while not FLoggerThread.Started do
+    Sleep(1); // Wait for thread to actually start
 end;
 
 procedure TCustomLogWriter.Log(const aType: TLogType; const aMessage, aTag: string);
@@ -760,17 +765,46 @@ begin
   inherited;
 end;
 
+procedure TLoggerThread.DispatchLogItem(const aLogItem: TLogItem);
+var
+  I: Integer;
+  lAction: TLogErrorAction;
+begin
+  for I := 0 to FAppendersDecorators.Count - 1 do
+  begin
+    if aLogItem.LogType >= FAppendersDecorators[I].GetLogLevel then
+    begin
+      if not FAppendersDecorators[I].EnqueueLog(aLogItem) then
+      begin
+        lAction := TLogErrorAction.SkipNewest; // default
+        DoOnAppenderError(TObject(FAppendersDecorators[I].FLogAppender).ClassName, aLogItem,
+          TLogErrorReason.QueueFull, lAction);
+        case lAction of
+          TLogErrorAction.SkipNewest:
+            begin
+              // just skip the new message
+            end;
+          TLogErrorAction.DiscardOlder:
+            begin
+              // just remove the oldest log message
+              FAppendersDecorators[I].Queue.Dequeue.Free;
+            end;
+        end;
+      end;
+    end;
+  end;
+end;
+
 procedure TLoggerThread.Execute;
 var
   lQSize: UInt64;
   lLogItem: TLogItem;
   I: Integer;
-  lAction: TLogErrorAction;
   lWaitResult: TWaitResult;
 begin
   FAppendersDecorators := BuildAppenderAdapters;
   try
-    while True do
+    while (not Terminated) or (FQueue.QueueSize > 0) do
     begin
       lWaitResult := FQueue.Dequeue(lQSize, lLogItem);
       case lWaitResult of
@@ -779,29 +813,7 @@ begin
             if lLogItem <> nil then
             begin
               try
-                for I := 0 to FAppendersDecorators.Count - 1 do
-                begin
-                  if lLogItem.LogType >= FAppendersDecorators[I].GetLogLevel then
-                  begin
-                    if not FAppendersDecorators[I].EnqueueLog(lLogItem) then
-                    begin
-                      lAction := TLogErrorAction.SkipNewest; // default
-                      DoOnAppenderError(TObject(FAppendersDecorators[I].FLogAppender).ClassName, lLogItem,
-                        TLogErrorReason.QueueFull, lAction);
-                      case lAction of
-                        TLogErrorAction.SkipNewest:
-                          begin
-                            // just skip the new message
-                          end;
-                        TLogErrorAction.DiscardOlder:
-                          begin
-                            // just remove the oldest log message
-                            FAppendersDecorators[I].Queue.Dequeue.Free;
-                          end;
-                      end;
-                    end;
-                  end;
-                end;
+                DispatchLogItem(lLogItem);
               finally
                 lLogItem.Free;
               end;
@@ -809,21 +821,18 @@ begin
           end;
         wrTimeout, wrAbandoned, wrError:
           begin
-            if Terminated then
-            begin
-              for I := 0 to FAppendersDecorators.Count - 1 do
-              begin
-                FAppendersDecorators[I].Terminate;
-              end;
-              Break;
-            end;
+            // Continue loop; will exit when Terminated and queue is empty
           end;
         wrIOCompletion:
           begin
             raise ELoggerPro.Create('Unhandled WaitResult: wrIOCompletition');
           end;
       end;
-
+    end;
+    // Terminate all appenders (they will flush their own queues)
+    for I := 0 to FAppendersDecorators.Count - 1 do
+    begin
+      FAppendersDecorators[I].Terminate;
     end;
   finally
     FAppendersDecorators.Free;
@@ -906,8 +915,8 @@ procedure TLoggerThread.TAppenderAdapter.Terminate;
 begin
   if FAppenderThread <> nil then
   begin
-    FAppenderQueue.DoShutDown;
     FAppenderThread.Terminate;
+    FAppenderQueue.SetEvent; // Wake up the thread if it's waiting in Dequeue
     FAppenderThread.WaitFor;
     FreeAndNil(FAppenderThread);
   end;
@@ -981,6 +990,16 @@ end;
 procedure TLoggerProAppenderBase.SetLogLevel(const Value: TLogType);
 begin
   FLogLevel := Value;
+end;
+
+procedure TLoggerProAppenderBase.SetEnabled(const Value: Boolean);
+begin
+  FEnabled := Value;
+end;
+
+function TLoggerProAppenderBase.IsEnabled: Boolean;
+begin
+  Result := FEnabled;
 end;
 
 procedure TLoggerProAppenderBase.Setup;
@@ -1091,7 +1110,8 @@ begin
                 begin
                   try
                     try
-                      FLogAppender.WriteLog(lLogItem);
+                      if FLogAppender.IsEnabled then
+                        FLogAppender.WriteLog(lLogItem);
                     except
                       Failing := true;
                       FLogAppender.LastErrorTimeStamp := now;

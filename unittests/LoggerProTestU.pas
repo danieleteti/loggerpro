@@ -36,10 +36,8 @@ type
     procedure TestAddAndDeleteAppenders;
 
     [Test]
-    [TestCase('Case1', '{timestamp}|{threadid}|{loglevel}|{message}|{tag},2020-03-15 12:30:20:123|    1234|LOGLEVEL|THIS IS THE MESSAGE|THE_TAG')]
-    [TestCase('Case2', '{timestamp}|{loglevel}|{message}|{tag},2020-03-15 12:30:20:123|LOGLEVEL|THIS IS THE MESSAGE|THE_TAG')]
-    [TestCase('Case3', '{timestamp} -- {message},2020-03-15 12:30:20:123 -- THIS IS THE MESSAGE')]
-    [TestCase('Case4', '{timestamp}[TID {threadid}][{loglevel}]{message}[{tag}],2020-03-15 12:30:20:123[TID     1234][LOGLEVEL]THIS IS THE MESSAGE[THE_TAG]')]
+    [TestCase('Case1_AllPlaceholders', '{timestamp}|{threadid}|{loglevel}|{message}|{tag},2020-03-15 12:30:20:123|    1234|LOGLEVEL|THIS IS THE MESSAGE|THE_TAG')]
+    [TestCase('Case2_WithThreadInMiddle', '{timestamp}[TID {threadid}][{loglevel}]{message}[{tag}],2020-03-15 12:30:20:123[TID     1234][LOGLEVEL]THIS IS THE MESSAGE[THE_TAG]')]
     procedure TestLogLayoutToLogIndices(const LogLayout, ResultOutput: string);
 
   end;

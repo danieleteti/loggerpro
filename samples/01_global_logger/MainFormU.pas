@@ -5,7 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
+  System.Generics.Collections;
 
 type
   TMainForm = class(TForm)
@@ -19,8 +20,12 @@ type
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
-    { Private declarations }
+    FRunningThreads: TObjectList<TThread>;
+    procedure WaitForAllThreads;
   public
     { Public declarations }
   end;
@@ -31,11 +36,35 @@ var
 implementation
 
 uses
-  // for fast&dirty logging, you can just include
-  // the unit LoggerPro.GlobalLogger and start to log!
   LoggerPro.GlobalLogger;
 
 {$R *.dfm}
+
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  FRunningThreads := TObjectList<TThread>.Create(True);
+end;
+
+procedure TMainForm.FormDestroy(Sender: TObject);
+begin
+  FRunningThreads.Free;
+end;
+
+procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  WaitForAllThreads;
+end;
+
+procedure TMainForm.WaitForAllThreads;
+var
+  I: Integer;
+begin
+  for I := 0 to FRunningThreads.Count - 1 do
+  begin
+    FRunningThreads[I].WaitFor;
+  end;
+  FRunningThreads.Clear;
+end;
 
 procedure TMainForm.Button1Click(Sender: TObject);
 begin
@@ -53,7 +82,6 @@ procedure TMainForm.Button3Click(Sender: TObject);
 begin
   Log.Warn('This is a warning message with TAG1', 'TAG1');
   Log.Warn('This is a warning message with TAG2', 'TAG2');
-
 end;
 
 procedure TMainForm.Button4Click(Sender: TObject);
@@ -64,15 +92,17 @@ end;
 
 procedure TMainForm.Button5Click(Sender: TObject);
 var
+  lThread: TThread;
   lThreadProc: TProc;
+  I: Integer;
 begin
   lThreadProc := procedure
     var
-      I: Integer;
+      J: Integer;
       lThreadID: String;
     begin
       lThreadID := IntToStr(TThread.CurrentThread.ThreadID);
-      for I := 1 to 200 do
+      for J := 1 to 200 do
       begin
         Log.Debug('log message ' + TimeToStr(now) + ' ThreadID: ' + lThreadID,
           'MULTITHREADING');
@@ -84,10 +114,14 @@ begin
           'MULTITHREADING');
       end;
     end;
-  TThread.CreateAnonymousThread(lThreadProc).Start;
-  TThread.CreateAnonymousThread(lThreadProc).Start;
-  TThread.CreateAnonymousThread(lThreadProc).Start;
-  TThread.CreateAnonymousThread(lThreadProc).Start;
+
+  for I := 1 to 5 do
+  begin
+    lThread := TThread.CreateAnonymousThread(lThreadProc);
+    lThread.FreeOnTerminate := False;
+    FRunningThreads.Add(lThread);
+    lThread.Start;
+  end;
 end;
 
 end.

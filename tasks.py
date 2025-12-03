@@ -27,6 +27,7 @@ delphi_versions = [
     {"version": "11.2", "path": "22.0", "desc": "Delphi 11.2 Alexandria"},
     {"version": "11.3", "path": "22.0", "desc": "Delphi 11.3 Alexandria"},
     {"version": "12.0", "path": "23.0", "desc": "Delphi 12 Athens"},
+    {"version": "13.0", "path": "37.0", "desc": "Delphi 13 Florence"},
 ]
 
 projects = [
@@ -56,14 +57,12 @@ projects = [
         "Win32",
     ),
     ("samples\\100_udp_syslog\\udp_syslog.dproj", "Win32"),
-    ("samples\\110_rest_appender\RESTAppenderSample.dproj", "Win32"),
-    ("samples\\110_rest_appender_mobile\RESTAppenderMobileSample.dproj", "Android"),
     (
         "samples\\120_elastic_search_appender\\ElasticSearchAppenderSample.dproj",
         "Win32",
     ),
-    ("samples\\130_simple_console_appender\SimpleConsole_appender.dproj", "Android"),    
-    ("samples\\rest_logs_collector\RESTLogsCollector.dproj", "Win32"),
+    ("samples\\130_simple_console_appender\\SimpleConsole_appender.dproj", "Android"),
+    ("samples\\rest_logs_collector\\RESTLogsCollector.dproj", "Win32"),
 ]
 
 

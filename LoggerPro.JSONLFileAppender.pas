@@ -55,6 +55,10 @@ implementation
 
 uses
   System.IOUtils,
+  System.DateUtils,
+{$IF Defined(MSWINDOWS)}
+  Winapi.Windows,
+{$ENDIF}
 {$IF Defined(USE_JDO)}
   JsonDataObjects
 {$ELSE}
@@ -66,9 +70,8 @@ uses
 type
   TLogItemRendererJSONL = class(TLogItemRenderer)
   private
-    fFormatSettings: TFormatSettings;
+    fHostName: string;
   protected
-    // ILogLayoutRenderer
     procedure Setup; override;
     procedure TearDown; override;
     function RenderLogItem(const aLogItem: TLogItem): String; override;
@@ -125,16 +128,18 @@ begin
   lJSON := TJSONObject.Create;
   try
     {$IF Defined(USE_JDO)}
-    lJSON.S['type'] := ALogItem.LogTypeAsString;
+    lJSON.S['timestamp'] := DateToISO8601(ALogItem.TimeStamp);
+    lJSON.S['level'] := ALogItem.LogTypeAsString;
     lJSON.S['message'] := ALogItem.LogMessage;
     lJSON.S['tag'] := ALogItem.LogTag;
-    lJSON.S['ts'] := DateTimeToStr(ALogItem.TimeStamp, fFormatSettings).TrimRight;
+    lJSON.S['hostname'] := fHostName;
     lJSON.I['tid'] := ALogItem.ThreadID;
     {$ELSE}
-    lJSON.AddPair('type', ALogItem.LogTypeAsString);
+    lJSON.AddPair('timestamp', DateToISO8601(ALogItem.TimeStamp));
+    lJSON.AddPair('level', ALogItem.LogTypeAsString);
     lJSON.AddPair('message', ALogItem.LogMessage);
     lJSON.AddPair('tag', ALogItem.LogTag);
-    lJSON.AddPair('ts', DateTimeToStr(ALogItem.TimeStamp, fFormatSettings).TrimRight);
+    lJSON.AddPair('hostname', fHostName);
     lJSON.AddPair('tid', ALogItem.ThreadID);
     {$ENDIF}
     Result := lJSON.ToJSON;
@@ -144,9 +149,27 @@ begin
 end;
 
 procedure TLogItemRendererJSONL.Setup;
+{$IF Defined(MSWINDOWS)}
+var
+  lBufferSize: Cardinal;
+  lBuffer: string;
+{$ENDIF}
 begin
   inherited;
-  fFormatSettings := GetDefaultFormatSettings;
+  {$IF Defined(MSWINDOWS)}
+  lBufferSize := 256;
+  SetLength(lBuffer, lBufferSize);
+  if GetComputerName(PChar(lBuffer), lBufferSize) then
+    fHostName := Copy(lBuffer, 1, lBufferSize)
+  else
+    fHostName := 'unknown';
+  {$ELSEIF Defined(POSIX)}
+  fHostName := GetEnvironmentVariable('HOSTNAME');
+  if fHostName.IsEmpty then
+    fHostName := 'unknown';
+  {$ELSE}
+  fHostName := 'unknown';
+  {$ENDIF}
 end;
 
 procedure TLogItemRendererJSONL.TearDown;
