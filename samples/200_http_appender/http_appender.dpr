@@ -8,7 +8,8 @@ uses
   System.SysUtils,
   LoggerPro,
   LoggerPro.HTTPAppender,
-  LoggerPro.SimpleConsoleAppender;
+  LoggerPro.SimpleConsoleAppender,
+  LoggerPro.Builder;
 
 var
   lHTTPAppender: TLoggerProHTTPAppender;
@@ -41,7 +42,13 @@ begin
     lConsoleAppender := TLoggerProSimpleConsoleAppender.Create;
 
     // Create log writer with both appenders
-    lLog := BuildLogWriter([lHTTPAppender, lConsoleAppender]);
+    // BuildLogWriter is the classic way to create a log writer.
+    // The modern and recommended approach is to use LoggerProBuilder.
+    //lLog := BuildLogWriter([lHTTPAppender, lConsoleAppender]);
+    lLog := LoggerProBuilder
+      .AddAppender(lHTTPAppender)
+      .AddAppender(lConsoleAppender)
+      .Build;
 
     // Log some messages
     WriteLn('Sending log messages via HTTP...');

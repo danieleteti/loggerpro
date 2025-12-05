@@ -7,7 +7,8 @@ program callback_appender;
 uses
   System.SysUtils,
   LoggerPro,
-  LoggerPro.CallbackAppender;
+  LoggerPro.CallbackAppender,
+  LoggerPro.Builder;
 
 var
   lCallbackAppender: TLoggerProCallbackAppender;
@@ -45,7 +46,12 @@ begin
     );
 
     // Create log writer
-    lLog := BuildLogWriter([lCallbackAppender]);
+    // BuildLogWriter is the classic way to create a log writer.
+    // The modern and recommended approach is to use LoggerProBuilder.
+    //lLog := BuildLogWriter([lCallbackAppender]);
+    lLog := LoggerProBuilder
+      .AddAppender(lCallbackAppender)
+      .Build;
 
     // Log some messages
     WriteLn('Sending log messages through callback appender:');

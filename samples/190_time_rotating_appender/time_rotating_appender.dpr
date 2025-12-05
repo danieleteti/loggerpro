@@ -8,7 +8,8 @@ uses
   System.SysUtils,
   System.IOUtils,
   LoggerPro,
-  LoggerPro.TimeRotatingFileAppender;
+  LoggerPro.TimeRotatingFileAppender,
+  LoggerPro.Builder;
 
 var
   lTimeRotatingAppender: TLoggerProTimeRotatingFileAppender;
@@ -37,7 +38,12 @@ begin
     );
 
     // Create log writer
-    lLog := BuildLogWriter([lTimeRotatingAppender]);
+    // BuildLogWriter is the classic way to create a log writer.
+    // The modern and recommended approach is to use LoggerProBuilder.
+    //lLog := BuildLogWriter([lTimeRotatingAppender]);
+    lLog := LoggerProBuilder
+      .AddAppender(lTimeRotatingAppender)
+      .Build;
 
     // Log some messages
     WriteLn('Logging messages...');

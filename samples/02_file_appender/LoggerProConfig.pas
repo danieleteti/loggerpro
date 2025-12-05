@@ -11,7 +11,7 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.FileAppender, System.IOUtils {TPath}, LoggerPro.Renderers;
+  LoggerPro.FileAppender, LoggerPro.Builder, System.IOUtils {TPath}, LoggerPro.Renderers;
 
 var
   _Log: ILogWriter;
@@ -53,16 +53,29 @@ initialization
 //
 //  Creates logs in the ..\..\ folder using the default filename
 //  The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file
-   _Log := BuildLogWriter([
-     TLoggerProFileAppender.Create(10, 5, '..\..',
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//   _Log := BuildLogWriter([
+//     TLoggerProFileAppender.Create(10, 5, '..\..',
+//       TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT,
+//       TLogItemRendererNoTag.Create),
+//     TLoggerProFilter.Build(
+//       TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
+//       function(ALogItem: TLogItem): boolean
+//       begin
+//         Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
+//       end)
+//     ]);
+   _Log := LoggerProBuilder
+     .AddAppender(TLoggerProFileAppender.Create(10, 5, '..\..',
        TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT,
-       TLogItemRendererNoTag.Create),
-     TLoggerProFilter.Build(
+       TLogItemRendererNoTag.Create))
+     .AddAppender(TLoggerProFilter.Build(
        TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
        function(ALogItem: TLogItem): boolean
        begin
          Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
-       end)
-     ]);
+       end))
+     .Build;
 
 end.

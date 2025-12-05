@@ -69,8 +69,6 @@ object MainForm: TMainForm
     ActivePage = tsListViewAppender
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 5
-    ExplicitWidth = 814
-    ExplicitHeight = 392
     object tsListViewAppender: TTabSheet
       Caption = 'ListView Appender DEMO'
       object ListView1: TListView
@@ -98,8 +96,6 @@ object MainForm: TMainForm
         ParentFont = False
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitWidth = 806
-        ExplicitHeight = 364
       end
     end
     object tsMemoAppender: TTabSheet

@@ -3,7 +3,7 @@ unit LoggerProConfig;
 interface
 
 uses
-  LoggerPro, LoggerPro.UDPSyslogAppender;
+  LoggerPro, LoggerPro.UDPSyslogAppender, LoggerPro.Builder;
 
 var
   Log: ILogWriter;
@@ -25,6 +25,11 @@ Appender := TLoggerProUDPSyslogAppender.Create(
     , False
   );
 
-Log := BuildLogWriter([Appender]);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//Log := BuildLogWriter([Appender]);
+Log := LoggerProBuilder
+  .AddAppender(Appender)
+  .Build;
 
 end.

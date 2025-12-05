@@ -52,7 +52,8 @@ implementation
 
 uses
   LoggerPro.VCLMemoAppender,
-  LoggerPro.VCLListViewAppender;
+  LoggerPro.VCLListViewAppender,
+  LoggerPro.Builder;
 
 {$R *.dfm}
 
@@ -115,7 +116,15 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   // Let's create the local loggers for this form
-  FLog := BuildLogWriter([TVCLListViewAppender.Create(ListView1), TVCLMemoLogAppender.Create(Memo1)])
+  // BuildLogWriter is the classic way to create a log writer.
+  // The modern and recommended approach is to use LoggerProBuilder.
+  //FLog := BuildLogWriter([TVCLListViewAppender.Create(ListView1), TVCLMemoLogAppender.Create(Memo1)])
+  FLog := LoggerProBuilder
+    .ConfigureVCLListViewAppender(ListView1)
+      .Done
+    .ConfigureVCLMemoAppender(Memo1)
+      .Done
+    .Build;
 end;
 
 function TMainForm.Log: ILogWriter;

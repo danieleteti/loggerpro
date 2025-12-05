@@ -10,7 +10,7 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.RedisAppender, Redis.Client, WinApi.Windows;
+  LoggerPro.RedisAppender, LoggerPro.Builder, Redis.Client, WinApi.Windows;
 
 var
   _Log: ILogWriter;
@@ -35,9 +35,14 @@ _Events.OnAppenderError := procedure(
   end;
 
 DefaultLoggerProAppenderQueueSize := 10;
-_Log := BuildLogWriter([
-  TLoggerProRedisAppender.Create(TRedisClient.Create('127.0.0.1', 6379))
-  ], _Events);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([
+//  TLoggerProRedisAppender.Create(TRedisClient.Create('127.0.0.1', 6379))
+//  ], _Events);
+_Log := LoggerProBuilder
+  .AddAppender(TLoggerProRedisAppender.Create(TRedisClient.Create('127.0.0.1', 6379)))
+  .Build;
 
 finalization
 

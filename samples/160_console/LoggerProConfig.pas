@@ -11,7 +11,8 @@ implementation
 
 uses
   LoggerPro.FileAppender,
-  LoggerPro.SimpleConsoleAppender;
+  LoggerPro.SimpleConsoleAppender,
+  LoggerPro.Builder;
 
 var
   _Log: ILogWriter;
@@ -23,10 +24,16 @@ end;
 
 initialization
 
-_Log := BuildLogWriter([
-  TLoggerProFileAppender.Create,
-  TLoggerProSimpleConsoleAppender.Create
-]);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([
+//  TLoggerProFileAppender.Create,
+//  TLoggerProSimpleConsoleAppender.Create
+//]);
+_Log := LoggerProBuilder
+  .AddFileAppender
+  .AddSimpleConsoleAppender
+  .Build;
 
 finalization
 

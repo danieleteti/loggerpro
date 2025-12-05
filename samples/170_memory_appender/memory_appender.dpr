@@ -8,7 +8,8 @@ uses
   System.SysUtils,
   System.Generics.Collections,
   LoggerPro,
-  LoggerPro.MemoryAppender;
+  LoggerPro.MemoryAppender,
+  LoggerPro.Builder;
 
 var
   lMemoryAppender: TLoggerProMemoryRingBufferAppender;
@@ -27,7 +28,12 @@ begin
     lMemoryAppender := TLoggerProMemoryRingBufferAppender.Create(50);
 
     // Create log writer
-    lLog := BuildLogWriter([lMemoryAppender]);
+    // BuildLogWriter is the classic way to create a log writer.
+    // The modern and recommended approach is to use LoggerProBuilder.
+    //lLog := BuildLogWriter([lMemoryAppender]);
+    lLog := LoggerProBuilder
+      .AddAppender(lMemoryAppender)
+      .Build;
 
     // Log some messages
     WriteLn('Logging 10 messages...');

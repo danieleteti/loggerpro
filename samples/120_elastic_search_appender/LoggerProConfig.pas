@@ -11,6 +11,7 @@ implementation
 
 uses
   LoggerPro.FileAppender,
+  LoggerPro.Builder,
   System.Net.HttpClient,
   System.SysUtils,
   LoggerPro.ElasticSearchAppender;
@@ -55,7 +56,13 @@ TLoggerProElasticSearchAppender(_RESTAppender).OnNetSendError :=
     end;
   end;
 
-_Log := BuildLogWriter([_RESTAppender, TLoggerProFileAppender.Create], _Events);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([_RESTAppender, TLoggerProFileAppender.Create], _Events);
+_Log := LoggerProBuilder
+  .AddAppender(_RESTAppender)
+  .AddFileAppender
+  .Build;
 
 finalization
 

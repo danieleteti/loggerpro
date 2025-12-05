@@ -7,7 +7,8 @@ program SimpleConsole_appender;
 uses
   System.SysUtils, System.Classes, System.Threading,
   LoggerPro,
-  LoggerPro.SimpleConsoleAppender;
+  LoggerPro.SimpleConsoleAppender,
+  LoggerPro.Builder;
 
 const
   MAX_TASK = 5;
@@ -15,7 +16,12 @@ var
   lTasks: array of ITask;
   lLog: ILogWriter;
 begin
-  lLog := BuildLogWriter([TLoggerProSimpleConsoleAppender.Create]);
+  // BuildLogWriter is the classic way to create a log writer.
+  // The modern and recommended approach is to use LoggerProBuilder.
+  //lLog := BuildLogWriter([TLoggerProSimpleConsoleAppender.Create]);
+  lLog := LoggerProBuilder
+    .AddSimpleConsoleAppender
+    .Build;
 
   //Use the following line to enable LogFmt log format
   //lLog := BuildLogWriter([TLoggerProSimpleConsoleLogFmtAppender.Create]);

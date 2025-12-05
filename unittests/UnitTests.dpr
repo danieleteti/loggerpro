@@ -23,7 +23,9 @@ uses
   LoggerPro.MemoryAppender in '..\LoggerPro.MemoryAppender.pas',
   LoggerPro.CallbackAppender in '..\LoggerPro.CallbackAppender.pas',
   LoggerPro.TimeRotatingFileAppender in '..\LoggerPro.TimeRotatingFileAppender.pas',
-  LoggerPro.HTTPAppender in '..\LoggerPro.HTTPAppender.pas';
+  LoggerPro.HTTPAppender in '..\LoggerPro.HTTPAppender.pas',
+  LoggerPro.Builder in '..\LoggerPro.Builder.pas',
+  BuilderTestU in 'BuilderTestU.pas';
 
 var
   runner : ITestRunner;

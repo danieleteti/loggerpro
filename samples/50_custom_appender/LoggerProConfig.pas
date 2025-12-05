@@ -10,7 +10,7 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.ConsoleAppender, System.SysUtils;
+  LoggerPro.ConsoleAppender, LoggerPro.Builder, System.SysUtils;
 
 type
   TMyCustomAppender = class(TLoggerProAppenderBase)
@@ -51,8 +51,14 @@ end;
 
 initialization
 
-_Log := BuildLogWriter([
-  TLoggerProConsoleAppender.Create,
-  TMyCustomAppender.Create])
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([
+//  TLoggerProConsoleAppender.Create,
+//  TMyCustomAppender.Create])
+_Log := LoggerProBuilder
+  .AddConsoleAppender
+  .AddAppender(TMyCustomAppender.Create)
+  .Build;
 
 end.

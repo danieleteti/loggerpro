@@ -10,7 +10,7 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.ConsoleAppender, Winapi.Windows;
+  LoggerPro.ConsoleAppender, LoggerPro.Builder, Winapi.Windows;
 
 var
   _Log: ILogWriter;
@@ -26,7 +26,12 @@ initialization
 
 LoggerPro.Renderers.gDefaultLogItemRenderer := TLogItemRendererNoTag; //optional
 
-_Log := BuildLogWriter([TLoggerProConsoleAppender.Create]);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([TLoggerProConsoleAppender.Create]);
+_Log := LoggerProBuilder
+  .AddConsoleAppender
+  .Build;
 if not IsConsole then
   AllocConsole;
 
