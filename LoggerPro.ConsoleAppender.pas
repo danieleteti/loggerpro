@@ -86,7 +86,7 @@ uses
 // for some reason, AttachConsole has been left out of Winapi.windows.pas
 const
   ATTACH_PARENT_PROCESS = Cardinal(-1);
-function AttachConsole; external kernel32 name 'AllocConsole';
+function AttachConsole; external kernel32 name 'AttachConsole';
 
 const
   { FOREGROUND COLORS - CAN BE COMBINED }

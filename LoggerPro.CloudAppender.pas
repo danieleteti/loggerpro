@@ -61,7 +61,7 @@ uses
   System.Classes,
   System.Generics.Collections,
   LoggerPro,
-  LoggerPro.Cloud;
+  LoggerProCloud.SDK;
 
 type
   /// <summary>
@@ -89,7 +89,7 @@ type
     FOnCloudError: TCloudErrorProc;
     FOnCloudLogsSent: TCloudLogsSentProc;
     FOnCustomDeviceInfo: TCustomDeviceInfoProc;
-    function MapLogType(ALogType: TLogType): LoggerPro.Cloud.TLogLevel;
+    function MapLogType(ALogType: TLogType): LoggerProCloud.SDK.TLogLevel;
   protected
     procedure DoCloudError(const ErrorMessage: string);
     procedure DoCloudLogsSent(AcceptedCount, RejectedCount: Integer);
@@ -236,22 +236,22 @@ begin
   inherited;
 end;
 
-function TLoggerProCloudAppender.MapLogType(ALogType: TLogType): LoggerPro.Cloud.TLogLevel;
+function TLoggerProCloudAppender.MapLogType(ALogType: TLogType): LoggerProCloud.SDK.TLogLevel;
 begin
   case ALogType of
-    TLogType.Debug:   Result := LoggerPro.Cloud.TLogLevel.llDebug;
-    TLogType.Info:    Result := LoggerPro.Cloud.TLogLevel.llInfo;
-    TLogType.Warning: Result := LoggerPro.Cloud.TLogLevel.llWarning;
-    TLogType.Error:   Result := LoggerPro.Cloud.TLogLevel.llError;
-    TLogType.Fatal:   Result := LoggerPro.Cloud.TLogLevel.llFatal;
+    TLogType.Debug:   Result := LoggerProCloud.SDK.TLogLevel.llDebug;
+    TLogType.Info:    Result := LoggerProCloud.SDK.TLogLevel.llInfo;
+    TLogType.Warning: Result := LoggerProCloud.SDK.TLogLevel.llWarning;
+    TLogType.Error:   Result := LoggerProCloud.SDK.TLogLevel.llError;
+    TLogType.Fatal:   Result := LoggerProCloud.SDK.TLogLevel.llFatal;
   else
-    Result := LoggerPro.Cloud.TLogLevel.llInfo;
+    Result := LoggerProCloud.SDK.TLogLevel.llInfo;
   end;
 end;
 
 procedure TLoggerProCloudAppender.WriteLog(const aLogItem: TLogItem);
 var
-  CloudLevel: LoggerPro.Cloud.TLogLevel;
+  CloudLevel: LoggerProCloud.SDK.TLogLevel;
 begin
   if not Assigned(FCloudLogger) then
     Exit;

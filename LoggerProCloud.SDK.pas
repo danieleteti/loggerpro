@@ -13,7 +13,7 @@
   
 ******************************************************************************* }
 
-unit LoggerPro.Cloud;
+unit LoggerProCloud.SDK;
 
 interface
 
