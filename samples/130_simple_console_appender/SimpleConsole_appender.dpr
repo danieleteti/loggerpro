@@ -7,7 +7,7 @@ program SimpleConsole_appender;
 uses
   System.SysUtils, System.Classes, System.Threading,
   LoggerPro,
-  LoggerPro.SimpleConsoleAppender,
+  LoggerPro.ConsoleAppender,
   LoggerPro.Builder;
 
 const

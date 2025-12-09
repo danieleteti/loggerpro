@@ -46,16 +46,8 @@ uses
 
 procedure TMainForm.Button1Click(Sender: TObject);
 begin
-  TThread.CreateAnonymousThread(
-      procedure
-      begin
-        for var I := 1 to 1_000 do
-        begin
-          Log.Warn('This is a debug message with TAG1', 'TAG1');
-          Log.Warn('This is a debug message with TAG2', 'TAG2');
-        end;
-      end
-  ).Start;
+  Log.Debug('This is a debug message with TAG1', 'TAG1');
+  Log.Debug('This is a debug message with TAG2', 'TAG2');
 end;
 
 procedure TMainForm.Button2Click(Sender: TObject);

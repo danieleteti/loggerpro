@@ -11,7 +11,7 @@ implementation
 
 uses
   LoggerPro.FileAppender,
-  LoggerPro.SimpleConsoleAppender,
+  LoggerPro.ConsoleAppender,
   LoggerPro.Builder;
 
 var
@@ -32,7 +32,7 @@ initialization
 //]);
 _Log := LoggerProBuilder
   .AddFileAppender
-  .AddSimpleConsoleAppender
+  .AddConsoleAppender
   .Build;
 
 finalization

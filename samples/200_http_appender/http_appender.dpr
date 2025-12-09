@@ -8,7 +8,7 @@ uses
   System.SysUtils,
   LoggerPro,
   LoggerPro.HTTPAppender,
-  LoggerPro.SimpleConsoleAppender,
+  LoggerPro.ConsoleAppender,
   LoggerPro.Builder;
 
 var

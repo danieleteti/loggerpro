@@ -52,7 +52,6 @@ contains
   LoggerPro.Proxy in '..\..\LoggerPro.Proxy.pas',
   LoggerPro.RedisAppender in '..\..\LoggerPro.RedisAppender.pas',
   LoggerPro.Renderers in '..\..\LoggerPro.Renderers.pas',
-  LoggerPro.SimpleConsoleAppender in '..\..\LoggerPro.SimpleConsoleAppender.pas',
   LoggerPro.TimeRotatingFileAppender in '..\..\LoggerPro.TimeRotatingFileAppender.pas',
   LoggerPro.UDPSyslogAppender in '..\..\LoggerPro.UDPSyslogAppender.pas',
   LoggerPro.Utils in '..\..\LoggerPro.Utils.pas',

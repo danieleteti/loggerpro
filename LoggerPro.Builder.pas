@@ -33,6 +33,7 @@ uses
   LoggerPro.CallbackAppender,
   LoggerPro.TimeRotatingFileAppender,
   LoggerPro.HTTPAppender,
+  LoggerPro.Proxy,
   System.SysUtils,
   System.Classes,
   System.Generics.Collections;
@@ -50,7 +51,7 @@ type
   IConsoleAppenderConfigurator = interface(IAppenderConfigurator)
     ['{B2C3D4E5-F6A7-5B6C-9D0E-1F2A3B4C5D6E}']
     function WithLogLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
-    function WithLogFormat(aLogFormat: string): IConsoleAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator;
   end;
 
   { File appender configurator }
@@ -62,6 +63,7 @@ type
     function WithMaxFileSizeInKB(aMaxFileSizeInKB: Integer): IFileAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IFileAppenderConfigurator;
     function WithEncoding(aEncoding: TEncoding): IFileAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator;
   end;
 
   { JSONL file appender configurator }
@@ -82,6 +84,7 @@ type
     function WithLogsFolder(const aLogsFolder: string): ITimeRotatingFileAppenderConfigurator;
     function WithFileBaseName(const aFileBaseName: string): ITimeRotatingFileAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): ITimeRotatingFileAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): ITimeRotatingFileAppenderConfigurator;
   end;
 
   { HTTP appender configurator }
@@ -111,6 +114,7 @@ type
     ['{B8C9D0E1-F2A3-1B2C-5D6E-7F8A9B0C1D2E}']
     function WithMaxSize(aMaxSize: Integer): IMemoryAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IMemoryAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IMemoryAppenderConfigurator;
   end;
 
   { Callback appender configurator }
@@ -133,6 +137,7 @@ type
   IOutputDebugStringAppenderConfigurator = interface(IAppenderConfigurator)
     ['{E1F2A3B4-C5D6-4E5F-8A9B-0C1D2E3F4A5B}']
     function WithLogLevel(aLogLevel: TLogType): IOutputDebugStringAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IOutputDebugStringAppenderConfigurator;
   end;
 
   { UDP Syslog appender configurator }
@@ -148,13 +153,6 @@ type
     function WithLogLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
   end;
 
-{$IFDEF CONSOLE}
-  { Simple console appender configurator (cross-platform, uses Writeln) }
-  ISimpleConsoleAppenderConfigurator = interface(IAppenderConfigurator)
-    ['{A3B4C5D6-E7F8-6A7B-0C1D-2E3F4A5B6C7D}']
-    function WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
-  end;
-{$ENDIF}
 
 {$IF Defined(MSWINDOWS)}
   { VCL Memo appender configurator (requires VCL, Windows only) }
@@ -163,6 +161,7 @@ type
     function WithMaxLogLines(aMaxLogLines: Word): IVCLMemoAppenderConfigurator;
     function WithClearOnStartup(aValue: Boolean): IVCLMemoAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IVCLMemoAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLMemoAppenderConfigurator;
   end;
 
   { VCL ListBox appender configurator (requires VCL, Windows only) }
@@ -170,6 +169,7 @@ type
     ['{C5D6E7F8-A9B0-8C9D-2E3F-4A5B6C7D8E9F}']
     function WithMaxLogLines(aMaxLogLines: Word): IVCLListBoxAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IVCLListBoxAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLListBoxAppenderConfigurator;
   end;
 
   { VCL ListView appender configurator (requires VCL, Windows only) }
@@ -177,6 +177,7 @@ type
     ['{D6E7F8A9-B0C1-9D0E-3F4A-5B6C7D8E9F0A}']
     function WithMaxLogLines(aMaxLogLines: Word): IVCLListViewAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IVCLListViewAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLListViewAppenderConfigurator;
   end;
 {$ENDIF}
 
@@ -188,16 +189,23 @@ type
     function WithLogLevel(aLogLevel: TLogType): IFireDACAppenderConfigurator;
   end;
 
+  { Filter appender configurator - wraps another appender with a filter }
+  TLogItemFilterFunc = TFunc<TLogItem, Boolean>;
+
+  { Filtered appender configurator - generic filter that wraps any appender }
+  IFilteredAppenderConfigurator = interface(IAppenderConfigurator)
+    ['{F8A9B0C1-D2E3-1F2A-5B6C-7D8E9F0A1B2C}']
+    function WithFilter(aFilter: TLogItemFilterFunc): IFilteredAppenderConfigurator;
+  end;
+
   { Main builder interface }
   ILoggerProBuilder = interface
     ['{1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D}']
     // Simple appender methods (with defaults)
     function AddConsoleAppender: ILoggerProBuilder; overload;
     function AddConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-{$IFDEF CONSOLE}
     function AddSimpleConsoleAppender: ILoggerProBuilder; overload;
     function AddSimpleConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-{$ENDIF}
     function AddFileAppender: ILoggerProBuilder; overload;
     function AddFileAppender(const aLogsFolder: string; const aFileBaseName: string = ''): ILoggerProBuilder; overload;
     function AddJSONLFileAppender: ILoggerProBuilder; overload;
@@ -211,9 +219,6 @@ type
 
     // Configurator methods (for advanced configuration)
     function ConfigureConsoleAppender: IConsoleAppenderConfigurator;
-{$IFDEF CONSOLE}
-    function ConfigureSimpleConsoleAppender: ISimpleConsoleAppenderConfigurator;
-{$ENDIF}
     function ConfigureFileAppender: IFileAppenderConfigurator;
     function ConfigureJSONLFileAppender: IJSONLFileAppenderConfigurator;
     function ConfigureTimeRotatingFileAppender: ITimeRotatingFileAppenderConfigurator;
@@ -233,8 +238,12 @@ type
     { FireDAC appender (cross-platform) }
     function ConfigureFireDACAppender: IFireDACAppenderConfigurator;
 
+    { Filter appender - wraps another appender with a filter function }
+    function ConfigureFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
+
     // Global configuration
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
+    function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
 
     // Build the logger
     function Build: ILogWriter;
@@ -247,9 +256,6 @@ implementation
 
 uses
   LoggerPro.ConsoleAppender,
-{$IFDEF CONSOLE}
-  LoggerPro.SimpleConsoleAppender,
-{$ENDIF}
   LoggerPro.FileAppender,
   LoggerPro.JSONLFileAppender,
   LoggerPro.ElasticSearchAppender,
@@ -276,18 +282,18 @@ type
     FBuilder: TLoggerProBuilder;
     FLogLevel: TLogType;
     FLogLevelSet: Boolean;
+    FRenderer: ILogItemRenderer;
     procedure ApplyLogLevel(aAppender: ILogAppender);
+    function GetRenderer: ILogItemRenderer;
   public
     constructor Create(aBuilder: TLoggerProBuilder);
   end;
 
   { Console appender configurator }
   TConsoleAppenderConfigurator = class(TBaseAppenderConfigurator, IConsoleAppenderConfigurator)
-  private
-    FLogFormat: string;
   public
     function WithLogLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
-    function WithLogFormat(aLogFormat: string): IConsoleAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -307,6 +313,7 @@ type
     function WithMaxFileSizeInKB(aMaxFileSizeInKB: Integer): IFileAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IFileAppenderConfigurator;
     function WithEncoding(aEncoding: TEncoding): IFileAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -341,6 +348,7 @@ type
     function WithLogsFolder(const aLogsFolder: string): ITimeRotatingFileAppenderConfigurator;
     function WithFileBaseName(const aFileBaseName: string): ITimeRotatingFileAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): ITimeRotatingFileAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): ITimeRotatingFileAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -392,6 +400,7 @@ type
     constructor Create(aBuilder: TLoggerProBuilder);
     function WithMaxSize(aMaxSize: Integer): IMemoryAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IMemoryAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IMemoryAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -423,6 +432,7 @@ type
   TOutputDebugStringAppenderConfigurator = class(TBaseAppenderConfigurator, IOutputDebugStringAppenderConfigurator)
   public
     function WithLogLevel(aLogLevel: TLogType): IOutputDebugStringAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IOutputDebugStringAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -449,14 +459,6 @@ type
     function Done: ILoggerProBuilder;
   end;
 
-{$IFDEF CONSOLE}
-  { Simple console appender configurator }
-  TSimpleConsoleAppenderConfigurator = class(TBaseAppenderConfigurator, ISimpleConsoleAppenderConfigurator)
-  public
-    function WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
-    function Done: ILoggerProBuilder;
-  end;
-{$ENDIF}
 
 {$IF Defined(MSWINDOWS)}
   { VCL Memo appender configurator }
@@ -470,6 +472,7 @@ type
     function WithMaxLogLines(aMaxLogLines: Word): IVCLMemoAppenderConfigurator;
     function WithClearOnStartup(aValue: Boolean): IVCLMemoAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IVCLMemoAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLMemoAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -482,6 +485,7 @@ type
     constructor Create(aBuilder: TLoggerProBuilder; aListBox: TListBox);
     function WithMaxLogLines(aMaxLogLines: Word): IVCLListBoxAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IVCLListBoxAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLListBoxAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -494,6 +498,7 @@ type
     constructor Create(aBuilder: TLoggerProBuilder; aListView: TListView);
     function WithMaxLogLines(aMaxLogLines: Word): IVCLListViewAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IVCLListViewAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLListViewAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -511,11 +516,23 @@ type
     function Done: ILoggerProBuilder;
   end;
 
+  { Filtered appender configurator - generic filter for any appender }
+  TFilteredAppenderConfigurator = class(TBaseAppenderConfigurator, IFilteredAppenderConfigurator)
+  private
+    FInnerAppender: ILogAppender;
+    FFilter: TLogItemFilterFunc;
+  public
+    constructor Create(aBuilder: TLoggerProBuilder; aAppender: ILogAppender);
+    function WithFilter(aFilter: TLogItemFilterFunc): IFilteredAppenderConfigurator;
+    function Done: ILoggerProBuilder;
+  end;
+
   { Builder implementation - hidden from interface }
   TLoggerProBuilder = class(TInterfacedObject, ILoggerProBuilder)
   private
     FAppenders: TList<ILogAppender>;
     FDefaultLogLevel: TLogType;
+    FDefaultRenderer: ILogItemRenderer;
   public
     constructor Create;
     destructor Destroy; override;
@@ -523,10 +540,8 @@ type
     // Simple appender methods
     function AddConsoleAppender: ILoggerProBuilder; overload;
     function AddConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-{$IFDEF CONSOLE}
     function AddSimpleConsoleAppender: ILoggerProBuilder; overload;
     function AddSimpleConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-{$ENDIF}
     function AddFileAppender: ILoggerProBuilder; overload;
     function AddFileAppender(const aLogsFolder: string; const aFileBaseName: string = ''): ILoggerProBuilder; overload;
     function AddJSONLFileAppender: ILoggerProBuilder; overload;
@@ -538,9 +553,6 @@ type
     function AddAppender(aAppender: ILogAppender): ILoggerProBuilder;
     // Configurator methods
     function ConfigureConsoleAppender: IConsoleAppenderConfigurator;
-{$IFDEF CONSOLE}
-    function ConfigureSimpleConsoleAppender: ISimpleConsoleAppenderConfigurator;
-{$ENDIF}
     function ConfigureFileAppender: IFileAppenderConfigurator;
     function ConfigureJSONLFileAppender: IJSONLFileAppenderConfigurator;
     function ConfigureTimeRotatingFileAppender: ITimeRotatingFileAppenderConfigurator;
@@ -559,12 +571,16 @@ type
 {$ENDIF}
     // FireDAC appender (cross-platform)
     function ConfigureFireDACAppender: IFireDACAppenderConfigurator;
+    // Filtered appender - wraps any appender with a filter
+    function ConfigureFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
     // Global configuration
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
+    function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
     // Build the logger
     function Build: ILogWriter;
     // Used by configurators
     procedure InternalAddAppender(aAppender: ILogAppender);
+    function GetDefaultRenderer: ILogItemRenderer;
   end;
 
 { TBaseAppenderConfigurator }
@@ -581,6 +597,14 @@ procedure TBaseAppenderConfigurator.ApplyLogLevel(aAppender: ILogAppender);
 begin
   if FLogLevelSet then
     aAppender.SetLogLevel(FLogLevel);
+end;
+
+function TBaseAppenderConfigurator.GetRenderer: ILogItemRenderer;
+begin
+  if Assigned(FRenderer) then
+    Result := FRenderer
+  else
+    Result := FBuilder.GetDefaultRenderer;
 end;
 
 { TLoggerProBuilder }
@@ -633,7 +657,6 @@ begin
   Result := Self;
 end;
 
-{$IFDEF CONSOLE}
 function TLoggerProBuilder.AddSimpleConsoleAppender: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -652,7 +675,6 @@ begin
   FAppenders.Add(lAppender);
   Result := Self;
 end;
-{$ENDIF}
 
 function TLoggerProBuilder.AddFileAppender: ILoggerProBuilder;
 var
@@ -741,12 +763,6 @@ begin
   Result := TConsoleAppenderConfigurator.Create(Self);
 end;
 
-{$IFDEF CONSOLE}
-function TLoggerProBuilder.ConfigureSimpleConsoleAppender: ISimpleConsoleAppenderConfigurator;
-begin
-  Result := TSimpleConsoleAppenderConfigurator.Create(Self);
-end;
-{$ENDIF}
 
 function TLoggerProBuilder.ConfigureFileAppender: IFileAppenderConfigurator;
 begin
@@ -827,10 +843,26 @@ begin
   Result := TFireDACAppenderConfigurator.Create(Self);
 end;
 
+function TLoggerProBuilder.ConfigureFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
+begin
+  Result := TFilteredAppenderConfigurator.Create(Self, aAppender);
+end;
+
 function TLoggerProBuilder.WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
 begin
   FDefaultLogLevel := aLogLevel;
   Result := Self;
+end;
+
+function TLoggerProBuilder.WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
+begin
+  FDefaultRenderer := aRenderer;
+  Result := Self;
+end;
+
+function TLoggerProBuilder.GetDefaultRenderer: ILogItemRenderer;
+begin
+  Result := FDefaultRenderer;
 end;
 
 function TLoggerProBuilder.Build: ILogWriter;
@@ -857,9 +889,9 @@ begin
   Result := Self;
 end;
 
-function TConsoleAppenderConfigurator.WithLogFormat(aLogFormat: string): IConsoleAppenderConfigurator;
+function TConsoleAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator;
 begin
-  FLogFormat := aLogFormat;
+  FRenderer := aRenderer;
   Result := Self;
 end;
 
@@ -867,7 +899,7 @@ function TConsoleAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
 begin
-  lAppender := TLoggerProConsoleAppender.Create;
+  lAppender := TLoggerProConsoleAppender.Create(GetRenderer);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -922,6 +954,12 @@ begin
   Result := Self;
 end;
 
+function TFileAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
 function TFileAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -936,7 +974,7 @@ begin
     FMaxFileSizeInKB,
     FLogsFolder,
     lFileNameFormat,
-    nil,
+    GetRenderer,
     FEncoding);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
@@ -1046,6 +1084,12 @@ begin
   Result := Self;
 end;
 
+function TTimeRotatingFileAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): ITimeRotatingFileAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
 function TTimeRotatingFileAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1054,7 +1098,8 @@ begin
     FInterval,
     FMaxBackupFiles,
     FLogsFolder,
-    FFileBaseName);
+    FFileBaseName,
+    GetRenderer);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -1223,11 +1268,17 @@ begin
   Result := Self;
 end;
 
+function TMemoryAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IMemoryAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
 function TMemoryAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
 begin
-  lAppender := TLoggerProMemoryRingBufferAppender.Create(FMaxSize);
+  lAppender := TLoggerProMemoryRingBufferAppender.Create(FMaxSize, GetRenderer);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -1308,11 +1359,17 @@ begin
   Result := Self;
 end;
 
+function TOutputDebugStringAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IOutputDebugStringAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
 function TOutputDebugStringAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
 begin
-  lAppender := TLoggerProOutputDebugStringAppender.Create;
+  lAppender := TLoggerProOutputDebugStringAppender.Create(GetRenderer);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -1391,27 +1448,6 @@ begin
   Result := FBuilder;
 end;
 
-{$IFDEF CONSOLE}
-{ TSimpleConsoleAppenderConfigurator }
-
-function TSimpleConsoleAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
-begin
-  FLogLevel := aLogLevel;
-  FLogLevelSet := True;
-  Result := Self;
-end;
-
-function TSimpleConsoleAppenderConfigurator.Done: ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProSimpleConsoleAppender.Create;
-  ApplyLogLevel(lAppender);
-  FBuilder.InternalAddAppender(lAppender);
-  Result := FBuilder;
-end;
-{$ENDIF}
-
 { TVCLMemoAppenderConfigurator }
 
 constructor TVCLMemoAppenderConfigurator.Create(aBuilder: TLoggerProBuilder; aMemo: TMemo);
@@ -1441,11 +1477,17 @@ begin
   Result := Self;
 end;
 
+function TVCLMemoAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IVCLMemoAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
 function TVCLMemoAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
 begin
-  lAppender := TVCLMemoLogAppender.Create(FMemo, FMaxLogLines, FClearOnStartup);
+  lAppender := TVCLMemoLogAppender.Create(FMemo, FMaxLogLines, FClearOnStartup, GetRenderer);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -1473,11 +1515,17 @@ begin
   Result := Self;
 end;
 
+function TVCLListBoxAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IVCLListBoxAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
 function TVCLListBoxAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
 begin
-  lAppender := TVCLListBoxAppender.Create(FListBox, FMaxLogLines);
+  lAppender := TVCLListBoxAppender.Create(FListBox, FMaxLogLines, GetRenderer);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -1505,11 +1553,17 @@ begin
   Result := Self;
 end;
 
+function TVCLListViewAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IVCLListViewAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
 function TVCLListViewAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
 begin
-  lAppender := TVCLListViewAppender.Create(FListView, FMaxLogLines);
+  lAppender := TVCLListViewAppender.Create(FListView, FMaxLogLines, GetRenderer);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -1548,6 +1602,33 @@ begin
   lAppender := TLoggerProDBAppenderFireDAC.Create(FConnectionDefName, FStoredProcName, nil);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
+  Result := FBuilder;
+end;
+
+{ TFilteredAppenderConfigurator }
+
+constructor TFilteredAppenderConfigurator.Create(aBuilder: TLoggerProBuilder; aAppender: ILogAppender);
+begin
+  inherited Create(aBuilder);
+  FInnerAppender := aAppender;
+end;
+
+function TFilteredAppenderConfigurator.WithFilter(aFilter: TLogItemFilterFunc): IFilteredAppenderConfigurator;
+begin
+  FFilter := aFilter;
+  Result := Self;
+end;
+
+function TFilteredAppenderConfigurator.Done: ILoggerProBuilder;
+var
+  lFilteredAppender: ILogAppender;
+begin
+  if not Assigned(FFilter) then
+    raise ELoggerPro.Create('Filtered appender requires a filter function. Use WithFilter to set it.');
+
+  lFilteredAppender := TLoggerProFilter.Build(FInnerAppender, FFilter);
+  ApplyLogLevel(lFilteredAppender);
+  FBuilder.InternalAddAppender(lFilteredAppender);
   Result := FBuilder;
 end;
 

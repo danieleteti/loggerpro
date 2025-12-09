@@ -3,15 +3,16 @@ unit LoggerProConfig;
 interface
 
 uses
-  LoggerPro,
-  LoggerPro.Proxy;
+  LoggerPro;
 
 function Log: ILogWriter;
 
 implementation
 
 uses
-  LoggerPro.FileAppender, LoggerPro.Builder, System.IOUtils {TPath}, LoggerPro.Renderers;
+  LoggerPro.FileAppender,
+  LoggerPro.Builder,
+  LoggerPro.Renderers;
 
 var
   _Log: ILogWriter;
@@ -27,55 +28,39 @@ initialization
 //   DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
 //   DEFAULT_MAX_FILE_SIZE_KB = 1000;
 //
-//  You can override these dafaults passing parameters to the constructor.
-//  Here's some configuration examples:
+// You can override these defaults using the Builder pattern.
+// Here are some configuration examples:
 //
-//  Creates log with default settings
-//  _Log := BuildLogWriter([TLoggerProFileAppender.Create]);
+// Creates log with default settings:
+//   _Log := LoggerProBuilder
+//     .AddFileAppender
+//     .Build;
 //
-//  Create logs in the exe' same folder. Backupset = 10, max size for single file 5k
-//  _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);
+// Create logs in the exe's same folder. Backupset = 10, max size for single file 5k:
+//   _Log := LoggerProBuilder
+//     .ConfigureFileAppender
+//       .WithMaxBackupFiles(10)
+//       .WithMaxFileSizeInKB(5)
+//       .Done
+//     .Build;
 //
-//  Creates log in the AppData/Roaming with PID in the filename
-//  _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-//     TPath.GetHomePath,
-//     TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT_WITH_PID
-//   )]);
-//
-//  Creates log in the same folder with PID in the filename
-//  _Log := BuildLogWriter([TLoggerProFileAppender.Create(
-//      10,
-//      5,
-//      '',
-//      TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT_WITH_PID,
-//      GetDefaultLogRenderer
-//      )]);
-//
-//  Creates logs in the ..\..\ folder using the default filename
-//  The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file
-// BuildLogWriter is the classic way to create a log writer.
-// The modern and recommended approach is to use LoggerProBuilder.
-//   _Log := BuildLogWriter([
-//     TLoggerProFileAppender.Create(10, 5, '..\..',
-//       TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT,
-//       TLogItemRendererNoTag.Create),
-//     TLoggerProFilter.Build(
-//       TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
-//       function(ALogItem: TLogItem): boolean
-//       begin
-//         Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
-//       end)
-//     ]);
-   _Log := LoggerProBuilder
-     .AddAppender(TLoggerProFileAppender.Create(10, 5, '..\..',
-       TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT,
-       TLogItemRendererNoTag.Create))
-     .AddAppender(TLoggerProFilter.Build(
-       TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
-       function(ALogItem: TLogItem): boolean
-       begin
-         Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
-       end))
-     .Build;
+// Creates logs in the ..\..\ folder using the NoTag renderer.
+// The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file.
+
+_Log := LoggerProBuilder
+  .ConfigureFileAppender
+    .WithMaxBackupFiles(10)
+    .WithMaxFileSizeInKB(5)
+    .WithLogsFolder('..\..')
+    .WithRenderer(TLogItemRendererNoTag.Create)
+    .Done
+  .ConfigureFilteredAppender(TLoggerProSimpleFileAppender.Create(10, 5, '..\..'))
+    .WithFilter(
+      function(ALogItem: TLogItem): Boolean
+      begin
+        Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
+      end)
+    .Done
+  .Build;
 
 end.

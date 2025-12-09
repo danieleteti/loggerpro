@@ -22,15 +22,15 @@ end;
 
 initialization
 
-
-
-LoggerPro.Renderers.gDefaultLogItemRenderer := TLogItemRendererNoTag; //optional
-
 // BuildLogWriter is the classic way to create a log writer.
-// The modern and recommended approach is to use LoggerProBuilder.
 //_Log := BuildLogWriter([TLoggerProConsoleAppender.Create]);
+
+// The modern and recommended approach is to use LoggerProBuilder.
 _Log := LoggerProBuilder
-  .AddConsoleAppender
+  .WithDefaultRenderer(TLogItemRendererNoTag.Create)
+  .ConfigureConsoleAppender
+    .WithLogLevel(TLogType.Debug)
+    .Done
   .Build;
 
 end.
