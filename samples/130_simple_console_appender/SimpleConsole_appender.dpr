@@ -20,7 +20,7 @@ begin
   // The modern and recommended approach is to use LoggerProBuilder.
   //lLog := BuildLogWriter([TLoggerProSimpleConsoleAppender.Create]);
   lLog := LoggerProBuilder
-    .AddSimpleConsoleAppender
+    .WriteToSimpleConsole.Done
     .Build;
 
   //Use the following line to enable LogFmt log format

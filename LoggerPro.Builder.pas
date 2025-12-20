@@ -54,6 +54,12 @@ type
     function WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator;
   end;
 
+  { Simple console appender configurator }
+  ISimpleConsoleAppenderConfigurator = interface(IAppenderConfigurator)
+    ['{B2C3D4E5-F6A7-5B6C-9D0E-1F2A3B4C5D6F}']
+    function WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
+  end;
+
   { File appender configurator }
   IFileAppenderConfigurator = interface(IAppenderConfigurator)
     ['{C3D4E5F6-A7B8-6C7D-0E1F-2A3B4C5D6E7F}']
@@ -201,45 +207,33 @@ type
   { Main builder interface }
   ILoggerProBuilder = interface
     ['{1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D}']
-    // Simple appender methods (with defaults)
-    function AddConsoleAppender: ILoggerProBuilder; overload;
-    function AddConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-    function AddSimpleConsoleAppender: ILoggerProBuilder; overload;
-    function AddSimpleConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-    function AddFileAppender: ILoggerProBuilder; overload;
-    function AddFileAppender(const aLogsFolder: string; const aFileBaseName: string = ''): ILoggerProBuilder; overload;
-    function AddJSONLFileAppender: ILoggerProBuilder; overload;
-    function AddJSONLFileAppender(const aLogsFolder: string; const aFileBaseName: string = ''): ILoggerProBuilder; overload;
-    function AddMemoryAppender(aMaxSize: Integer = 1000): ILoggerProBuilder;
-    function AddOutputDebugStringAppender: ILoggerProBuilder; overload;
-    function AddOutputDebugStringAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-
-    // Generic method for adding pre-configured appenders
-    function AddAppender(aAppender: ILogAppender): ILoggerProBuilder;
-
-    // Configurator methods (for advanced configuration)
-    function ConfigureConsoleAppender: IConsoleAppenderConfigurator;
-    function ConfigureFileAppender: IFileAppenderConfigurator;
-    function ConfigureJSONLFileAppender: IJSONLFileAppenderConfigurator;
-    function ConfigureTimeRotatingFileAppender: ITimeRotatingFileAppenderConfigurator;
-    function ConfigureHTTPAppender: IHTTPAppenderConfigurator;
-    function ConfigureElasticSearchAppender: IElasticSearchAppenderConfigurator;
-    function ConfigureMemoryAppender: IMemoryAppenderConfigurator;
-    function ConfigureCallbackAppender: ICallbackAppenderConfigurator;
-    function ConfigureSimpleCallbackAppender: ISimpleCallbackAppenderConfigurator;
-    function ConfigureOutputDebugStringAppender: IOutputDebugStringAppenderConfigurator;
-    function ConfigureUDPSyslogAppender: IUDPSyslogAppenderConfigurator;
+    // WriteTo appender methods - all return configurators
+    function WriteToConsole: IConsoleAppenderConfigurator;
+    function WriteToSimpleConsole: ISimpleConsoleAppenderConfigurator;
+    function WriteToFile: IFileAppenderConfigurator;
+    function WriteToJSONLFile: IJSONLFileAppenderConfigurator;
+    function WriteToTimeRotatingFile: ITimeRotatingFileAppenderConfigurator;
+    function WriteToHTTP: IHTTPAppenderConfigurator;
+    function WriteToElasticSearch: IElasticSearchAppenderConfigurator;
+    function WriteToMemory: IMemoryAppenderConfigurator;
+    function WriteToCallback: ICallbackAppenderConfigurator;
+    function WriteToSimpleCallback: ISimpleCallbackAppenderConfigurator;
+    function WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
+    function WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
 {$IF Defined(MSWINDOWS)}
     { VCL appenders - require VCL units (Windows only) }
-    function ConfigureVCLMemoAppender(aMemo: TObject): IVCLMemoAppenderConfigurator;
-    function ConfigureVCLListBoxAppender(aListBox: TObject): IVCLListBoxAppenderConfigurator;
-    function ConfigureVCLListViewAppender(aListView: TObject): IVCLListViewAppenderConfigurator;
+    function WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
+    function WriteToVCLListBox(aListBox: TObject): IVCLListBoxAppenderConfigurator;
+    function WriteToVCLListView(aListView: TObject): IVCLListViewAppenderConfigurator;
 {$ENDIF}
     { FireDAC appender (cross-platform) }
-    function ConfigureFireDACAppender: IFireDACAppenderConfigurator;
+    function WriteToFireDAC: IFireDACAppenderConfigurator;
 
     { Filter appender - wraps another appender with a filter function }
-    function ConfigureFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
+    function WriteToFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
+
+    { Generic method for adding pre-configured appenders }
+    function WriteToAppender(aAppender: ILogAppender): ILoggerProBuilder;
 
     // Global configuration
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
@@ -294,6 +288,13 @@ type
   public
     function WithLogLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
     function WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator;
+    function Done: ILoggerProBuilder;
+  end;
+
+  { Simple console appender configurator }
+  TSimpleConsoleAppenderConfigurator = class(TBaseAppenderConfigurator, ISimpleConsoleAppenderConfigurator)
+  public
+    function WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -537,42 +538,31 @@ type
     constructor Create;
     destructor Destroy; override;
     class function New: ILoggerProBuilder;
-    // Simple appender methods
-    function AddConsoleAppender: ILoggerProBuilder; overload;
-    function AddConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-    function AddSimpleConsoleAppender: ILoggerProBuilder; overload;
-    function AddSimpleConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-    function AddFileAppender: ILoggerProBuilder; overload;
-    function AddFileAppender(const aLogsFolder: string; const aFileBaseName: string = ''): ILoggerProBuilder; overload;
-    function AddJSONLFileAppender: ILoggerProBuilder; overload;
-    function AddJSONLFileAppender(const aLogsFolder: string; const aFileBaseName: string = ''): ILoggerProBuilder; overload;
-    function AddMemoryAppender(aMaxSize: Integer = 1000): ILoggerProBuilder;
-    function AddOutputDebugStringAppender: ILoggerProBuilder; overload;
-    function AddOutputDebugStringAppender(aLogLevel: TLogType): ILoggerProBuilder; overload;
-    // Generic method for adding pre-configured appenders
-    function AddAppender(aAppender: ILogAppender): ILoggerProBuilder;
-    // Configurator methods
-    function ConfigureConsoleAppender: IConsoleAppenderConfigurator;
-    function ConfigureFileAppender: IFileAppenderConfigurator;
-    function ConfigureJSONLFileAppender: IJSONLFileAppenderConfigurator;
-    function ConfigureTimeRotatingFileAppender: ITimeRotatingFileAppenderConfigurator;
-    function ConfigureHTTPAppender: IHTTPAppenderConfigurator;
-    function ConfigureElasticSearchAppender: IElasticSearchAppenderConfigurator;
-    function ConfigureMemoryAppender: IMemoryAppenderConfigurator;
-    function ConfigureCallbackAppender: ICallbackAppenderConfigurator;
-    function ConfigureSimpleCallbackAppender: ISimpleCallbackAppenderConfigurator;
-    function ConfigureOutputDebugStringAppender: IOutputDebugStringAppenderConfigurator;
-    function ConfigureUDPSyslogAppender: IUDPSyslogAppenderConfigurator;
+    // WriteTo appender methods
+    function WriteToConsole: IConsoleAppenderConfigurator;
+    function WriteToSimpleConsole: ISimpleConsoleAppenderConfigurator;
+    function WriteToFile: IFileAppenderConfigurator;
+    function WriteToJSONLFile: IJSONLFileAppenderConfigurator;
+    function WriteToTimeRotatingFile: ITimeRotatingFileAppenderConfigurator;
+    function WriteToHTTP: IHTTPAppenderConfigurator;
+    function WriteToElasticSearch: IElasticSearchAppenderConfigurator;
+    function WriteToMemory: IMemoryAppenderConfigurator;
+    function WriteToCallback: ICallbackAppenderConfigurator;
+    function WriteToSimpleCallback: ISimpleCallbackAppenderConfigurator;
+    function WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
+    function WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
 {$IF Defined(MSWINDOWS)}
     // VCL appenders (Windows only)
-    function ConfigureVCLMemoAppender(aMemo: TObject): IVCLMemoAppenderConfigurator;
-    function ConfigureVCLListBoxAppender(aListBox: TObject): IVCLListBoxAppenderConfigurator;
-    function ConfigureVCLListViewAppender(aListView: TObject): IVCLListViewAppenderConfigurator;
+    function WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
+    function WriteToVCLListBox(aListBox: TObject): IVCLListBoxAppenderConfigurator;
+    function WriteToVCLListView(aListView: TObject): IVCLListViewAppenderConfigurator;
 {$ENDIF}
     // FireDAC appender (cross-platform)
-    function ConfigureFireDACAppender: IFireDACAppenderConfigurator;
+    function WriteToFireDAC: IFireDACAppenderConfigurator;
     // Filtered appender - wraps any appender with a filter
-    function ConfigureFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
+    function WriteToFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
+    // Generic method for adding pre-configured appenders
+    function WriteToAppender(aAppender: ILogAppender): ILoggerProBuilder;
     // Global configuration
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
     function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
@@ -632,218 +622,102 @@ begin
   FAppenders.Add(aAppender);
 end;
 
-function TLoggerProBuilder.AddAppender(aAppender: ILogAppender): ILoggerProBuilder;
+function TLoggerProBuilder.WriteToAppender(aAppender: ILogAppender): ILoggerProBuilder;
 begin
   FAppenders.Add(aAppender);
   Result := Self;
 end;
 
-function TLoggerProBuilder.AddConsoleAppender: ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProConsoleAppender.Create;
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProConsoleAppender.Create;
-  lAppender.SetLogLevel(aLogLevel);
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddSimpleConsoleAppender: ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProSimpleConsoleAppender.Create;
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddSimpleConsoleAppender(aLogLevel: TLogType): ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProSimpleConsoleAppender.Create;
-  lAppender.SetLogLevel(aLogLevel);
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddFileAppender: ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProFileAppender.Create;
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddFileAppender(const aLogsFolder: string; const aFileBaseName: string): ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-  lFileNameFormat: string;
-begin
-  if aFileBaseName.IsEmpty then
-    lFileNameFormat := TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT
-  else
-    lFileNameFormat := aFileBaseName + '.{number}.{tag}.log';
-  lAppender := TLoggerProFileAppender.Create(
-    TLoggerProFileAppender.DEFAULT_MAX_BACKUP_FILE_COUNT,
-    TLoggerProFileAppender.DEFAULT_MAX_FILE_SIZE_KB,
-    aLogsFolder,
-    lFileNameFormat);
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddJSONLFileAppender: ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProJSONLFileAppender.Create;
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddJSONLFileAppender(const aLogsFolder: string; const aFileBaseName: string): ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-  lFileNameFormat: string;
-begin
-  if aFileBaseName.IsEmpty then
-    lFileNameFormat := TLoggerProSimpleFileAppender.DEFAULT_FILENAME_FORMAT
-  else
-    lFileNameFormat := aFileBaseName + '.{number}.log';
-  lAppender := TLoggerProJSONLFileAppender.Create(
-    TLoggerProJSONLFileAppender.DEFAULT_MAX_BACKUP_FILE_COUNT,
-    TLoggerProJSONLFileAppender.DEFAULT_MAX_FILE_SIZE_KB,
-    aLogsFolder,
-    lFileNameFormat);
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddMemoryAppender(aMaxSize: Integer): ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProMemoryRingBufferAppender.Create(aMaxSize);
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddOutputDebugStringAppender: ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProOutputDebugStringAppender.Create;
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.AddOutputDebugStringAppender(aLogLevel: TLogType): ILoggerProBuilder;
-var
-  lAppender: ILogAppender;
-begin
-  lAppender := TLoggerProOutputDebugStringAppender.Create;
-  lAppender.SetLogLevel(aLogLevel);
-  FAppenders.Add(lAppender);
-  Result := Self;
-end;
-
-function TLoggerProBuilder.ConfigureConsoleAppender: IConsoleAppenderConfigurator;
+function TLoggerProBuilder.WriteToConsole: IConsoleAppenderConfigurator;
 begin
   Result := TConsoleAppenderConfigurator.Create(Self);
 end;
 
+function TLoggerProBuilder.WriteToSimpleConsole: ISimpleConsoleAppenderConfigurator;
+begin
+  Result := TSimpleConsoleAppenderConfigurator.Create(Self);
+end;
 
-function TLoggerProBuilder.ConfigureFileAppender: IFileAppenderConfigurator;
+function TLoggerProBuilder.WriteToFile: IFileAppenderConfigurator;
 begin
   Result := TFileAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureJSONLFileAppender: IJSONLFileAppenderConfigurator;
+function TLoggerProBuilder.WriteToJSONLFile: IJSONLFileAppenderConfigurator;
 begin
   Result := TJSONLFileAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureTimeRotatingFileAppender: ITimeRotatingFileAppenderConfigurator;
+function TLoggerProBuilder.WriteToTimeRotatingFile: ITimeRotatingFileAppenderConfigurator;
 begin
   Result := TTimeRotatingFileAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureHTTPAppender: IHTTPAppenderConfigurator;
+function TLoggerProBuilder.WriteToHTTP: IHTTPAppenderConfigurator;
 begin
   Result := THTTPAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureElasticSearchAppender: IElasticSearchAppenderConfigurator;
+function TLoggerProBuilder.WriteToElasticSearch: IElasticSearchAppenderConfigurator;
 begin
   Result := TElasticSearchAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureMemoryAppender: IMemoryAppenderConfigurator;
+function TLoggerProBuilder.WriteToMemory: IMemoryAppenderConfigurator;
 begin
   Result := TMemoryAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureCallbackAppender: ICallbackAppenderConfigurator;
+function TLoggerProBuilder.WriteToCallback: ICallbackAppenderConfigurator;
 begin
   Result := TCallbackAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureSimpleCallbackAppender: ISimpleCallbackAppenderConfigurator;
+function TLoggerProBuilder.WriteToSimpleCallback: ISimpleCallbackAppenderConfigurator;
 begin
   Result := TSimpleCallbackAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureOutputDebugStringAppender: IOutputDebugStringAppenderConfigurator;
+function TLoggerProBuilder.WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
 begin
   Result := TOutputDebugStringAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureUDPSyslogAppender: IUDPSyslogAppenderConfigurator;
+function TLoggerProBuilder.WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
 begin
   Result := TUDPSyslogAppenderConfigurator.Create(Self);
 end;
 
 {$IF Defined(MSWINDOWS)}
-function TLoggerProBuilder.ConfigureVCLMemoAppender(aMemo: TObject): IVCLMemoAppenderConfigurator;
+function TLoggerProBuilder.WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
 begin
   if not (aMemo is TMemo) then
-    raise ELoggerPro.Create('ConfigureVCLMemoAppender requires a TMemo instance');
+    raise ELoggerPro.Create('WriteToVCLMemo requires a TMemo instance');
   Result := TVCLMemoAppenderConfigurator.Create(Self, TMemo(aMemo));
 end;
 
-function TLoggerProBuilder.ConfigureVCLListBoxAppender(aListBox: TObject): IVCLListBoxAppenderConfigurator;
+function TLoggerProBuilder.WriteToVCLListBox(aListBox: TObject): IVCLListBoxAppenderConfigurator;
 begin
   if not (aListBox is TListBox) then
-    raise ELoggerPro.Create('ConfigureVCLListBoxAppender requires a TListBox instance');
+    raise ELoggerPro.Create('WriteToVCLListBox requires a TListBox instance');
   Result := TVCLListBoxAppenderConfigurator.Create(Self, TListBox(aListBox));
 end;
 
-function TLoggerProBuilder.ConfigureVCLListViewAppender(aListView: TObject): IVCLListViewAppenderConfigurator;
+function TLoggerProBuilder.WriteToVCLListView(aListView: TObject): IVCLListViewAppenderConfigurator;
 begin
   if not (aListView is TListView) then
-    raise ELoggerPro.Create('ConfigureVCLListViewAppender requires a TListView instance');
+    raise ELoggerPro.Create('WriteToVCLListView requires a TListView instance');
   Result := TVCLListViewAppenderConfigurator.Create(Self, TListView(aListView));
 end;
 
 {$ENDIF}
 
-function TLoggerProBuilder.ConfigureFireDACAppender: IFireDACAppenderConfigurator;
+function TLoggerProBuilder.WriteToFireDAC: IFireDACAppenderConfigurator;
 begin
   Result := TFireDACAppenderConfigurator.Create(Self);
 end;
 
-function TLoggerProBuilder.ConfigureFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
+function TLoggerProBuilder.WriteToFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
 begin
   Result := TFilteredAppenderConfigurator.Create(Self, aAppender);
 end;
@@ -900,6 +774,25 @@ var
   lAppender: ILogAppender;
 begin
   lAppender := TLoggerProConsoleAppender.Create(GetRenderer);
+  ApplyLogLevel(lAppender);
+  FBuilder.InternalAddAppender(lAppender);
+  Result := FBuilder;
+end;
+
+{ TSimpleConsoleAppenderConfigurator }
+
+function TSimpleConsoleAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
+begin
+  FLogLevel := aLogLevel;
+  FLogLevelSet := True;
+  Result := Self;
+end;
+
+function TSimpleConsoleAppenderConfigurator.Done: ILoggerProBuilder;
+var
+  lAppender: ILogAppender;
+begin
+  lAppender := TLoggerProSimpleConsoleAppender.Create;
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -1448,6 +1341,8 @@ begin
   Result := FBuilder;
 end;
 
+{$IF Defined(MSWINDOWS)}
+
 { TVCLMemoAppenderConfigurator }
 
 constructor TVCLMemoAppenderConfigurator.Create(aBuilder: TLoggerProBuilder; aMemo: TMemo);
@@ -1568,6 +1463,8 @@ begin
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
 end;
+
+{$ENDIF}
 
 { TFireDACAppenderConfigurator }
 

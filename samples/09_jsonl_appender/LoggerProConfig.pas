@@ -50,7 +50,7 @@ initialization
   //        ]
   //    );
   _Log := LoggerProBuilder
-    .ConfigureJSONLFileAppender
+    .WriteToJSONLFile
       .WithMaxBackupFiles(10)
       .WithMaxFileSizeInKB(5)
       .WithLogsFolder('..\logs')

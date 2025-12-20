@@ -77,9 +77,9 @@ begin
   //  TLoggerProOutputDebugStringAppender.Create], nil, LOG_LEVEL);
   _Log := LoggerProBuilder
     .WithDefaultLogLevel(LOG_LEVEL)
-    .AddFileAppender
-    .AddAppender(lEmailAppender)
-    .AddOutputDebugStringAppender
+    .WriteToFile.Done
+    .WriteToAppender(lEmailAppender)
+    .WriteToOutputDebugString.Done
     .Build;
 end;
 

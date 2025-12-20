@@ -120,10 +120,8 @@ begin
   // The modern and recommended approach is to use LoggerProBuilder.
   //FLog := BuildLogWriter([TVCLListViewAppender.Create(ListView1), TVCLMemoLogAppender.Create(Memo1)])
   FLog := LoggerProBuilder
-    .ConfigureVCLListViewAppender(ListView1)
-      .Done
-    .ConfigureVCLMemoAppender(Memo1)
-      .Done
+    .WriteToVCLListView(ListView1).Done
+    .WriteToVCLMemo(Memo1).Done
     .Build;
 end;
 

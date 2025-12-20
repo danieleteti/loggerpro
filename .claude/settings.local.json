@@ -41,7 +41,16 @@
       "Bash(cmd.exe //c \"cd /d C:\\DEV\\loggerpro\\unittests && UnitTests.exe\")",
       "Bash(cmd.exe //c \"cd /d C:\\DEV\\loggerpro\\unittests && .\\UnitTests.exe\")",
       "Bash(cmd.exe //c \"C:\\DEV\\loggerpro\\unittests\\Win32\\CI\\UnitTests.exe\")",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(cmd.exe //c \"cd /d C:\\DEV\\loggerpro\\unittests && .\\build_tests.bat && C:\\DEV\\loggerpro\\unittests\\Win32\\CI\\UnitTests.exe\")",
+      "Bash(C:/DEV/loggerpro/samples/160_console/console_logger.exe)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "WebSearch",
+      "Bash(C:/DEV/loggerpro/samples/160_console/build.bat)",
+      "Bash(C:/DEV/loggerpro/build_all_samples.bat)",
+      "Bash(C:/DEV/loggerpro/samples/09_jsonl_appender/build.bat)",
+      "Bash(del /q C:DEVloggerprobuild_all_samples.bat C:DEVloggerprosamples09_jsonl_appenderbuild.bat)"
     ],
     "deny": [],
     "ask": []

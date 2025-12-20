@@ -53,8 +53,7 @@ begin
   //  TLogType.Info);
   FLogWriter := LoggerProBuilder
     .WithDefaultLogLevel(TLogType.Info)
-    .ConfigureVCLMemoAppender(Memo1)
-      .Done
+    .WriteToVCLMemo(Memo1).Done
     .Build;
   FLogWriter.Info('Local log correctly initialized', 'tag');
 end;

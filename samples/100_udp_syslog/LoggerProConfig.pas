@@ -29,7 +29,7 @@ Appender := TLoggerProUDPSyslogAppender.Create(
 // The modern and recommended approach is to use LoggerProBuilder.
 //Log := BuildLogWriter([Appender]);
 Log := LoggerProBuilder
-  .AddAppender(Appender)
+  .WriteToAppender(Appender)
   .Build;
 
 end.

@@ -41,7 +41,7 @@ DefaultLoggerProAppenderQueueSize := 10;
 //  TLoggerProRedisAppender.Create(TRedisClient.Create('127.0.0.1', 6379))
 //  ], _Events);
 _Log := LoggerProBuilder
-  .AddAppender(TLoggerProRedisAppender.Create(TRedisClient.Create('127.0.0.1', 6379)))
+  .WriteToAppender(TLoggerProRedisAppender.Create(TRedisClient.Create('127.0.0.1', 6379)))
   .Build;
 
 finalization

@@ -38,9 +38,9 @@ begin
   //  TLoggerProOutputDebugStringAppender.Create], nil, LOG_LEVEL);
   _Log := LoggerProBuilder
     .WithDefaultLogLevel(LOG_LEVEL)
-    .AddFileAppender
-    .AddConsoleAppender
-    .AddOutputDebugStringAppender
+    .WriteToFile.Done
+    .WriteToConsole.Done
+    .WriteToOutputDebugString.Done
     .Build;
 end;
 

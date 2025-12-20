@@ -13,7 +13,6 @@ uses
 
 var
   lHTTPAppender: TLoggerProHTTPAppender;
-  lConsoleAppender: TLoggerProSimpleConsoleAppender;
   lLog: ILogWriter;
 
 begin
@@ -38,16 +37,13 @@ begin
     lHTTPAppender.AddHeader('X-API-Key', 'your-api-key-here');
     lHTTPAppender.AddHeader('X-Application', 'LoggerProSample');
 
-    // Also log to console so we can see what's being sent
-    lConsoleAppender := TLoggerProSimpleConsoleAppender.Create;
-
     // Create log writer with both appenders
     // BuildLogWriter is the classic way to create a log writer.
     // The modern and recommended approach is to use LoggerProBuilder.
     //lLog := BuildLogWriter([lHTTPAppender, lConsoleAppender]);
     lLog := LoggerProBuilder
-      .AddAppender(lHTTPAppender)
-      .AddAppender(lConsoleAppender)
+      .WriteToAppender(lHTTPAppender)
+      .WriteToSimpleConsole.Done
       .Build;
 
     // Log some messages

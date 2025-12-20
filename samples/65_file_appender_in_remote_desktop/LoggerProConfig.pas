@@ -70,7 +70,7 @@ initialization
 // The modern and recommended approach is to use LoggerProBuilder.
 //_Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5, '.\logs', [], GetFileNameFormat())]);
 _Log := LoggerProBuilder
-  .AddAppender(TLoggerProFileAppender.Create(10, 5, '.\logs', [], GetFileNameFormat()))
+  .WriteToAppender(TLoggerProFileAppender.Create(10, 5, '.\logs', GetFileNameFormat()))
   .Build;
 // Create logs in the exe' same folder
 // _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);

@@ -40,15 +40,15 @@ begin
   // The modern and recommended approach is to use LoggerProBuilder.
   //_Log := BuildLogWriter([lFileAppender, lErrorsFileAppender, lOutputDebugStringAppender]);
   _Log := LoggerProBuilder
-    .ConfigureFileAppender
+    .WriteToFile
       .WithLogsFolder('logs')
       .WithLogLevel(TLogType.Info)
       .Done
-    .ConfigureFileAppender
+    .WriteToFile
       .WithLogsFolder('logs_errors')
       .WithLogLevel(TLogType.Error)
       .Done
-    .AddOutputDebugStringAppender
+    .WriteToOutputDebugString.Done
     .Build;
 end;
 

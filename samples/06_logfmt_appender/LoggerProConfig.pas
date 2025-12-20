@@ -35,8 +35,8 @@ LoggerPro.Renderers.gDefaultLogItemRenderer := TLogItemRendererNoTag; //optional
 //  TLoggerProConsoleLogFmtAppender.Create,
 //  TLoggerProLogFmtFileAppender.Create]);
 _Log := LoggerProBuilder
-  .AddAppender(TLoggerProConsoleLogFmtAppender.Create)
-  .AddAppender(TLoggerProLogFmtFileAppender.Create)
+  .WriteToAppender(TLoggerProConsoleLogFmtAppender.Create)
+  .WriteToAppender(TLoggerProLogFmtFileAppender.Create)
   .Build;
 if not IsConsole then
   AllocConsole;

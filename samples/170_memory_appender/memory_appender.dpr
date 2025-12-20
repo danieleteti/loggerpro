@@ -32,7 +32,7 @@ begin
     // The modern and recommended approach is to use LoggerProBuilder.
     //lLog := BuildLogWriter([lMemoryAppender]);
     lLog := LoggerProBuilder
-      .AddAppender(lMemoryAppender)
+      .WriteToAppender(lMemoryAppender)
       .Build;
 
     // Log some messages

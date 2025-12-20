@@ -484,7 +484,7 @@ begin
     Exit(TLogType.Error);
   if lLogType = 'fatal' then
     Exit(TLogType.Fatal);
-  raise ELoggerPro.CreateFmt('Invalid LogType: ', [aLogType]);
+  raise ELoggerPro.CreateFmt('Invalid LogType: %s', [aLogType]);
 end;
 
 function BuildLogWriter(aAppenders: array of ILogAppender; aEventsHandlers: TLoggerProEventsHandler; aLogLevel: TLogType): ILogWriter;

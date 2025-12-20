@@ -33,12 +33,12 @@ initialization
 //
 // Creates log with default settings:
 //   _Log := LoggerProBuilder
-//     .AddFileAppender
+//     .WriteToFile.Done
 //     .Build;
 //
 // Create logs in the exe's same folder. Backupset = 10, max size for single file 5k:
 //   _Log := LoggerProBuilder
-//     .ConfigureFileAppender
+//     .WriteToFile
 //       .WithMaxBackupFiles(10)
 //       .WithMaxFileSizeInKB(5)
 //       .Done
@@ -48,13 +48,13 @@ initialization
 // The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file.
 
 _Log := LoggerProBuilder
-  .ConfigureFileAppender
+  .WriteToFile
     .WithMaxBackupFiles(10)
     .WithMaxFileSizeInKB(5)
     .WithLogsFolder('..\..')
     .WithRenderer(TLogItemRendererNoTag.Create)
     .Done
-  .ConfigureFilteredAppender(TLoggerProSimpleFileAppender.Create(10, 5, '..\..'))
+  .WriteToFilteredAppender(TLoggerProSimpleFileAppender.Create(10, 5, '..\..'))
     .WithFilter(
       function(ALogItem: TLogItem): Boolean
       begin

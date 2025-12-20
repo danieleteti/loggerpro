@@ -30,7 +30,7 @@ initialization
 //    TLoggerProSimpleFileAppender.Create(10, 2048, 'logs')
 //  ]);
 _Log := LoggerProBuilder
-  .AddAppender(TLoggerProSimpleFileAppender.Create(10, 2048, 'logs'))
+  .WriteToAppender(TLoggerProSimpleFileAppender.Create(10, 2048, 'logs'))
   .Build;
 
 end.

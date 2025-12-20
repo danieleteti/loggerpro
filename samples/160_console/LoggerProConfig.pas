@@ -31,8 +31,8 @@ initialization
 //  TLoggerProSimpleConsoleAppender.Create
 //]);
 _Log := LoggerProBuilder
-  .AddFileAppender
-  .AddConsoleAppender
+  .WriteToFile.Done
+  .WriteToConsole.Done
   .Build;
 
 finalization

@@ -66,6 +66,7 @@
         <DCC_ImageBase>00400000</DCC_ImageBase>
         <SanitizedProjectName>jsonl_appender</SanitizedProjectName>
         <DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
+        <DCC_UnitSearchPath>..\..;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_Locale>1040</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleName=</VerInfo_Keys>
     </PropertyGroup>
@@ -128,7 +129,9 @@
         <DCCReference Include="..\..\LoggerPro.JSONLFileAppender.pas"/>
         <DCCReference Include="..\..\LoggerPro.FileAppender.pas"/>
         <DCCReference Include="..\..\LoggerPro.pas"/>
+        <DCCReference Include="..\..\LoggerPro.Builder.pas"/>
         <DCCReference Include="..\..\LoggerPro.Renderers.pas"/>
+        <DCCReference Include="..\..\ThreadSafeQueueU.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

@@ -23,19 +23,19 @@ type
     [Test]
     procedure TestBuildWithNoAppendersRaisesException;
     [Test]
-    procedure TestConfigureFileAppenderWithAllOptions;
+    procedure TestWriteToFileWithAllOptions;
     [Test]
-    procedure TestConfigureHTTPAppenderWithHeaders;
+    procedure TestWriteToHTTPWithHeaders;
     [Test]
-    procedure TestConfigureMemoryAppender;
+    procedure TestWriteToMemory;
     [Test]
-    procedure TestConfigureCallbackAppender;
+    procedure TestWriteToCallback;
     [Test]
-    procedure TestConfigureTimeRotatingAppender;
+    procedure TestWriteToTimeRotatingFile;
     [Test]
-    procedure TestMixedSimpleAndConfiguredAppenders;
+    procedure TestMixedAppenders;
     [Test]
-    procedure TestBuilderNewClassMethod;
+    procedure TestBuilderFunction;
     [Test]
     procedure TestWithDefaultLogLevel;
   end;
@@ -57,7 +57,7 @@ var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .AddConsoleAppender
+    .WriteToConsole.Done
     .Build;
 
   Assert.IsNotNull(lLog, 'Logger should be created');
@@ -68,7 +68,7 @@ var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .AddFileAppender
+    .WriteToFile.Done
     .Build;
 
   Assert.IsNotNull(lLog, 'Logger should be created');
@@ -79,9 +79,9 @@ var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .AddConsoleAppender
-    .AddFileAppender
-    .AddMemoryAppender(100)
+    .WriteToConsole.Done
+    .WriteToFile.Done
+    .WriteToMemory.WithMaxSize(100).Done
     .Build;
 
   Assert.IsNotNull(lLog, 'Logger should be created with multiple appenders');
@@ -98,12 +98,12 @@ begin
     'Building without appenders should raise exception');
 end;
 
-procedure TLoggerProBuilderTest.TestConfigureFileAppenderWithAllOptions;
+procedure TLoggerProBuilderTest.TestWriteToFileWithAllOptions;
 var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .ConfigureFileAppender
+    .WriteToFile
       .WithLogsFolder('logs')
       .WithFileBaseName('testapp')
       .WithMaxBackupFiles(10)
@@ -115,12 +115,12 @@ begin
   Assert.IsNotNull(lLog, 'Logger should be created with configured file appender');
 end;
 
-procedure TLoggerProBuilderTest.TestConfigureHTTPAppenderWithHeaders;
+procedure TLoggerProBuilderTest.TestWriteToHTTPWithHeaders;
 var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .ConfigureHTTPAppender
+    .WriteToHTTP
       .WithURL('http://localhost:8080/logs')
       .WithContentType(THTTPContentType.JSON)
       .WithTimeout(10)
@@ -134,12 +134,12 @@ begin
   Assert.IsNotNull(lLog, 'Logger should be created with configured HTTP appender');
 end;
 
-procedure TLoggerProBuilderTest.TestConfigureMemoryAppender;
+procedure TLoggerProBuilderTest.TestWriteToMemory;
 var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .ConfigureMemoryAppender
+    .WriteToMemory
       .WithMaxSize(500)
       .WithLogLevel(TLogType.Debug)
       .Done
@@ -148,7 +148,7 @@ begin
   Assert.IsNotNull(lLog, 'Logger should be created with configured memory appender');
 end;
 
-procedure TLoggerProBuilderTest.TestConfigureCallbackAppender;
+procedure TLoggerProBuilderTest.TestWriteToCallback;
 var
   lLog: ILogWriter;
   lCallbackInvoked: Boolean;
@@ -158,7 +158,7 @@ begin
   lEvent := TEvent.Create(nil, True, False, '');
   try
     lLog := LoggerProBuilder
-      .ConfigureCallbackAppender
+      .WriteToCallback
         .WithCallback(
           procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
           begin
@@ -180,12 +180,12 @@ begin
   end;
 end;
 
-procedure TLoggerProBuilderTest.TestConfigureTimeRotatingAppender;
+procedure TLoggerProBuilderTest.TestWriteToTimeRotatingFile;
 var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .ConfigureTimeRotatingFileAppender
+    .WriteToTimeRotatingFile
       .WithInterval(TTimeRotationInterval.Daily)
       .WithMaxBackupFiles(30)
       .WithLogsFolder('logs')
@@ -197,18 +197,18 @@ begin
   Assert.IsNotNull(lLog, 'Logger should be created with time rotating appender');
 end;
 
-procedure TLoggerProBuilderTest.TestMixedSimpleAndConfiguredAppenders;
+procedure TLoggerProBuilderTest.TestMixedAppenders;
 var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .AddConsoleAppender(TLogType.Warning)
-    .ConfigureFileAppender
+    .WriteToConsole.WithLogLevel(TLogType.Warning).Done
+    .WriteToFile
       .WithLogsFolder('logs')
       .WithMaxBackupFiles(5)
       .Done
-    .AddMemoryAppender(200)
-    .ConfigureCallbackAppender
+    .WriteToMemory.WithMaxSize(200).Done
+    .WriteToCallback
       .WithCallback(
         procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
         begin
@@ -220,13 +220,12 @@ begin
   Assert.IsNotNull(lLog, 'Logger should be created with mixed appenders');
 end;
 
-procedure TLoggerProBuilderTest.TestBuilderNewClassMethod;
+procedure TLoggerProBuilderTest.TestBuilderFunction;
 var
   lLog: ILogWriter;
 begin
-  // LoggerProBuilder function replaces TLoggerProBuilder.New class method
   lLog := LoggerProBuilder
-    .AddConsoleAppender
+    .WriteToConsole.Done
     .Build;
 
   Assert.IsNotNull(lLog, 'Logger should be created using LoggerProBuilder function');
@@ -238,8 +237,8 @@ var
 begin
   lLog := LoggerProBuilder
     .WithDefaultLogLevel(TLogType.Warning)
-    .AddConsoleAppender
-    .AddFileAppender
+    .WriteToConsole.Done
+    .WriteToFile.Done
     .Build;
 
   Assert.IsNotNull(lLog, 'Logger should be created with default log level');

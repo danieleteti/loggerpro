@@ -42,7 +42,7 @@ begin
     // The modern and recommended approach is to use LoggerProBuilder.
     //lLog := BuildLogWriter([lTimeRotatingAppender]);
     lLog := LoggerProBuilder
-      .AddAppender(lTimeRotatingAppender)
+      .WriteToAppender(lTimeRotatingAppender)
       .Build;
 
     // Log some messages

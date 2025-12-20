@@ -55,7 +55,7 @@ begin
     //  TLoggerProSimpleFileAppender.Create(10, 2048, 'logs')
     //]);
     _FallbackLog := LoggerProBuilder
-      .AddAppender(TLoggerProSimpleFileAppender.Create(10, 2048, 'logs'))
+      .WriteToAppender(TLoggerProSimpleFileAppender.Create(10, 2048, 'logs'))
       .Build;
   end;
   Result := _FallbackLog;
@@ -105,7 +105,7 @@ begin
     //    GetFallBackLogger.Error(lIntf.RenderLogItem(LogItem), FailedDBWriteTag);
     //  end)]);
     _Log := LoggerProBuilder
-      .AddAppender(TLoggerProDBAppenderFireDAC.Create(
+      .WriteToAppender(TLoggerProDBAppenderFireDAC.Create(
         // create an ADO DB Connection
         function: TCustomConnection
         begin

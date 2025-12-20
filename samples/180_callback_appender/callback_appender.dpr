@@ -50,7 +50,7 @@ begin
     // The modern and recommended approach is to use LoggerProBuilder.
     //lLog := BuildLogWriter([lCallbackAppender]);
     lLog := LoggerProBuilder
-      .AddAppender(lCallbackAppender)
+      .WriteToAppender(lCallbackAppender)
       .Build;
 
     // Log some messages

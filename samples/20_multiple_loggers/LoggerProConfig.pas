@@ -32,9 +32,9 @@ begin
   //  TLoggerProConsoleAppender.Create,
   //  TLoggerProOutputDebugStringAppender.Create], nil, [TLogType.Debug, TLogType.Error, TLogType.Warning]);
   _Log := LoggerProBuilder
-    .AddFileAppender
-    .AddConsoleAppender
-    .AddOutputDebugStringAppender
+    .WriteToFile.Done
+    .WriteToConsole.Done
+    .WriteToOutputDebugString.Done
     .Build;
 end;
 

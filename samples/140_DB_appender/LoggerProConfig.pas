@@ -68,7 +68,7 @@ begin
     //    // Log.Error('Data: %s', [LogItem.LogMessage], FailedDBWriteTag);
     //  end)]);
     _Log := LoggerProBuilder
-      .AddAppender(TLoggerProDBAppenderADO.Create(
+      .WriteToAppender(TLoggerProDBAppenderADO.Create(
         // create an ADO DB Connection
         function: TCustomConnection
         begin

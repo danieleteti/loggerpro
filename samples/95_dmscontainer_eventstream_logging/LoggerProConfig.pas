@@ -76,7 +76,7 @@ DMSProxy.RPCExecutor.SetOnValidateServerCertificate(TAllowSelfSignedCertificates
 //  // dmsatByTypeThenTag {es logs.dmscontaineresappendersample.debug.tag1}
 //  )], _Events);
 _Log := LoggerProBuilder
-  .AddAppender(TLoggerProDMSContainerAppender.Create(DMSProxy, DMSCONTAINER_API_KEY,
+  .WriteToAppender(TLoggerProDMSContainerAppender.Create(DMSProxy, DMSCONTAINER_API_KEY,
     'logs.' + TLoggerProDMSContainerAppender.GetModuleBaseName,
        dmsatByTag         {es logs.dmscontaineresappendersample.tag1}
     // dmsatByType        {es logs.dmscontaineresappendersample.debug}

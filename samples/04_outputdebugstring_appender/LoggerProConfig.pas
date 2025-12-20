@@ -26,7 +26,7 @@ initialization
 // The modern and recommended approach is to use LoggerProBuilder.
 //_Log := BuildLogWriter([TLoggerProOutputDebugStringAppender.Create])
 _Log := LoggerProBuilder
-  .AddOutputDebugStringAppender
+  .WriteToOutputDebugString.Done
   .Build;
 
 end.

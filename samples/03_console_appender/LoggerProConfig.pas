@@ -28,7 +28,7 @@ initialization
 // The modern and recommended approach is to use LoggerProBuilder.
 _Log := LoggerProBuilder
   .WithDefaultRenderer(TLogItemRendererNoTag.Create)
-  .ConfigureConsoleAppender
+  .WriteToConsole
     .WithLogLevel(TLogType.Debug)
     .Done
   .Build;

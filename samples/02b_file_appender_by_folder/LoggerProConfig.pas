@@ -29,7 +29,7 @@ initialization
 //    TLoggerProFileByFolderAppender.Create(10, 2048, 'logs')
 //  ]);
 _Log := LoggerProBuilder
-  .AddAppender(TLoggerProFileByFolderAppender.Create(10, 2048, 'logs'))
+  .WriteToAppender(TLoggerProFileByFolderAppender.Create(10, 2048, 'logs'))
   .Build;
 
 end.

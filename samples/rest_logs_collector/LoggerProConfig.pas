@@ -55,7 +55,7 @@ TLoggerProFileAppender(_FileAppender).OnLogRow := procedure(const aLogItem: TLog
 // The modern and recommended approach is to use LoggerProBuilder.
 //_Log := BuildLogWriter([_FileAppender]);
 _Log := LoggerProBuilder
-  .AddAppender(_FileAppender)
+  .WriteToAppender(_FileAppender)
   .Build;
 // Create logs in the exe' same folder
 // _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);

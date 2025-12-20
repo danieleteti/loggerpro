@@ -57,8 +57,8 @@ initialization
 //  TLoggerProConsoleAppender.Create,
 //  TMyCustomAppender.Create])
 _Log := LoggerProBuilder
-  .AddConsoleAppender
-  .AddAppender(TMyCustomAppender.Create)
+  .WriteToConsole.Done
+  .WriteToAppender(TMyCustomAppender.Create)
   .Build;
 
 end.
