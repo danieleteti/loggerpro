@@ -31,6 +31,7 @@ interface
 uses
   System.Generics.Collections,
   System.Classes,
+  System.Rtti,
   ThreadSafeQueueU, System.SysUtils;
 
 var
@@ -44,6 +45,20 @@ type
   TLogExtendedInfo = (EIUserName, EIComputerName, EIProcessName, EIProcessID, EIDeviceID { mobile });
   TLoggerProExtendedInfo = set of TLogExtendedInfo;
 
+  { @abstract(Represents a key-value pair for structured logging context) }
+  LogParam = record
+    Key: string;
+    Value: TValue;
+    class function S(const AKey: string; const AValue: string): LogParam; static; inline;
+    class function I(const AKey: string; const AValue: Integer): LogParam; static; inline;
+    class function B(const AKey: string; const AValue: Boolean): LogParam; static; inline;
+    class function F(const AKey: string; const AValue: Double): LogParam; static; inline;
+    class function D(const AKey: string; const AValue: TDateTime): LogParam; static; inline;
+    class function FmtS(const AKey: string; const AFormat: string; const AArgs: array of const): LogParam; static;
+    class function V(const AKey: string; const AValue: TValue): LogParam; static;
+  end;
+  LogParams = TArray<LogParam>;
+
   { @abstract(Represent the single log item)
     Each call to some kind of log method is wrapped in a @link(TLogItem)
     instance and passed down the layour of LoggerPro. }
@@ -54,11 +69,17 @@ type
     FTag: string;
     FTimeStamp: TDateTime;
     FThreadID: TThreadID;
+    FContext: LogParams;
+    FPreRenderedContext: string;
     function GetLogTypeAsString: string;
   public
     constructor Create(const aType: TLogType; const aMessage: string; const aTag: string); overload;
     constructor Create(const aType: TLogType; const aMessage: string; const aTag: string; const aTimeStamp: TDateTime;
       const aThreadID: TThreadID); overload;
+    constructor Create(const aType: TLogType; const aMessage: string; const aTag: string;
+      const aContext: LogParams); overload;
+    constructor Create(const aType: TLogType; const aMessage: string; const aTag: string; const aTimeStamp: TDateTime;
+      const aThreadID: TThreadID; const aContext: LogParams); overload;
 
     function Clone: TLogItem;
     { @abstract(The type of the log)
@@ -81,6 +102,12 @@ type
     property ThreadID: TThreadID read FThreadID;
     { @abstract(The type of the log converted in string) }
     property LogTypeAsString: string read GetLogTypeAsString;
+    { @abstract(The structured context key-value pairs) }
+    property Context: LogParams read FContext;
+    { @abstract(Pre-rendered context string for fixed context optimization) }
+    property PreRenderedContext: string read FPreRenderedContext write FPreRenderedContext;
+    { @abstract(Returns true if the log item has context data) }
+    function HasContext: Boolean; inline;
   end;
 
   ILogItemRenderer = interface
@@ -146,27 +173,44 @@ type
 
     // Base logging method
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
+    // Enqueue a pre-built log item (for internal use with pre-rendered context)
+    procedure EnqueueLogItem(const aLogItem: TLogItem);
   end;
 
   ILogWriter = interface(ICustomLogWriter)
     ['{A717A040-4493-458F-91B2-6F6E2AFB496F}']
     procedure Debug(const aMessage: string; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Info(const aMessage: string; const aTag: string); overload;
     procedure Info(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Info(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Warn(const aMessage: string; const aTag: string); overload;
     procedure Warn(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Error(const aMessage: string; const aTag: string); overload;
     procedure Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Error(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Fatal(const aMessage: string; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    { @abstract(Returns a new ILogWriter with bound context. Thread-safe - creates a new instance.) }
+    function WithProperty(const aKey: string; const aValue: string): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Integer): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Boolean): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Double): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
+    function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
 
     procedure Disable;
     procedure Enable;
@@ -262,7 +306,8 @@ type
     function AppendersCount(): Integer;
 
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
-
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: LogParams); overload;
+    procedure EnqueueLogItem(const aLogItem: TLogItem);
 
     procedure Disable; virtual;
     procedure Enable; virtual;
@@ -272,21 +317,90 @@ type
   public
     procedure Debug(const aMessage: string; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Info(const aMessage: string; const aTag: string); overload;
     procedure Info(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Info(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Warn(const aMessage: string; const aTag: string); overload;
     procedure Warn(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Error(const aMessage: string; const aTag: string); overload;
     procedure Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Error(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Fatal(const aMessage: string; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
+    function WithProperty(const aKey: string; const aValue: string): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Integer): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Boolean): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Double): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
+    function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+  end;
+
+  { @abstract(Wrapper for ILogWriter with bound context) }
+  TLogWriterWithContext = class(TInterfacedObject, ILogWriter)
+  private
+    FInner: ILogWriter;
+    FContext: LogParams;
+    FPreRenderedContext: string;
+    function MergeContext(const aContext: array of LogParam): LogParams;
+    class function RenderContextToString(const AContext: LogParams): string; static;
+  public
+    constructor Create(const AInner: ILogWriter; const AContext: LogParams);
+
+    // ICustomLogWriter
+    function GetAppendersClassNames: TArray<string>;
+    function GetAppenders(const aIndex: Integer): ILogAppender;
+    procedure AddAppender(const aAppenders: ILogAppender);
+    procedure DelAppender(const aAppenders: ILogAppender);
+    function AppendersCount(): Integer;
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
+    procedure EnqueueLogItem(const aLogItem: TLogItem);
+
+    // ILogWriter
+    procedure Debug(const aMessage: string; const aTag: string); overload;
+    procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Info(const aMessage: string; const aTag: string); overload;
+    procedure Info(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Info(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Warn(const aMessage: string; const aTag: string); overload;
+    procedure Warn(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Error(const aMessage: string; const aTag: string); overload;
+    procedure Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Error(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Fatal(const aMessage: string; const aTag: string); overload;
+    procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    function WithProperty(const aKey: string; const aValue: string): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Integer): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Boolean): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Double): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
+    function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+
+    procedure Disable;
+    procedure Enable;
   end;
 
   TOnAppenderLogRow = reference to procedure(const LogItem: TLogItem; out LogRow: string);
@@ -389,6 +503,7 @@ implementation
 
 uses
   System.Types,
+  System.TypInfo,
   LoggerPro.FileAppender,
   System.SyncObjs,
   System.DateUtils,
@@ -402,6 +517,50 @@ begin
   Result.DecimalSeparator := '.';
   Result.ShortDateFormat := 'YYYY-MM-DD HH:NN:SS:ZZZ';
   Result.ShortTimeFormat := 'HH:NN:SS';
+end;
+
+{ LogParam }
+
+class function LogParam.S(const AKey: string; const AValue: string): LogParam;
+begin
+  Result.Key := AKey;
+  Result.Value := TValue.From<string>(AValue);
+end;
+
+class function LogParam.I(const AKey: string; const AValue: Integer): LogParam;
+begin
+  Result.Key := AKey;
+  Result.Value := TValue.From<Integer>(AValue);
+end;
+
+class function LogParam.B(const AKey: string; const AValue: Boolean): LogParam;
+begin
+  Result.Key := AKey;
+  Result.Value := TValue.From<Boolean>(AValue);
+end;
+
+class function LogParam.F(const AKey: string; const AValue: Double): LogParam;
+begin
+  Result.Key := AKey;
+  Result.Value := TValue.From<Double>(AValue);
+end;
+
+class function LogParam.D(const AKey: string; const AValue: TDateTime): LogParam;
+begin
+  Result.Key := AKey;
+  Result.Value := TValue.From<TDateTime>(AValue);
+end;
+
+class function LogParam.FmtS(const AKey: string; const AFormat: string; const AArgs: array of const): LogParam;
+begin
+  Result.Key := AKey;
+  Result.Value := TValue.From<string>(Format(AFormat, AArgs));
+end;
+
+class function LogParam.V(const AKey: string; const AValue: TValue): LogParam;
+begin
+  Result.Key := AKey;
+  Result.Value := AValue;
 end;
 
 function LogLayoutByPlaceHoldersToLogLayoutByIndexes(const LogLayoutByPlaceHolders: String; const UseZeroBasedIncrementalIndexes: Boolean): String;
@@ -654,6 +813,41 @@ begin
   end;
 end;
 
+procedure TCustomLogWriter.Log(const aType: TLogType; const aMessage, aTag: string; const aContext: LogParams);
+var
+  lLogItem: TLogItem;
+begin
+  if FEnabled and (aType >= FLogLevel) then
+  begin
+    lLogItem := TLogItem.Create(aType, aMessage, aTag, aContext);
+    try
+      if not FLoggerThread.LogWriterQueue.Enqueue(lLogItem) then
+      begin
+        raise ELoggerPro.Create
+          ('Main logs queue is full. Hints: Are there appenders? Are these appenders fast enough considering the log item production?');
+      end;
+    except
+      FreeAndNil(lLogItem);
+      raise;
+    end;
+  end;
+end;
+
+procedure TCustomLogWriter.EnqueueLogItem(const aLogItem: TLogItem);
+begin
+  if FEnabled and (aLogItem.LogType >= FLogLevel) then
+  begin
+    if not FLoggerThread.LogWriterQueue.Enqueue(aLogItem) then
+    begin
+      aLogItem.Free;
+      raise ELoggerPro.Create
+        ('Main logs queue is full. Hints: Are there appenders? Are these appenders fast enough considering the log item production?');
+    end;
+  end
+  else
+    aLogItem.Free;
+end;
+
 { TLogger.TLogWriter }
 
 procedure TLogWriter.Debug(const aMessage, aTag: string);
@@ -722,16 +916,93 @@ begin
   Log(TLogType.Warning, aMessage, aParams, aTag);
 end;
 
+procedure TLogWriter.Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Debug, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriter.Info(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Info, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriter.Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Warning, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriter.Error(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Error, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriter.Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Fatal, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriter.Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam);
+var
+  lContext: LogParams;
+  I: Integer;
+begin
+  SetLength(lContext, Length(aContext));
+  for I := 0 to High(aContext) do
+    lContext[I] := aContext[I];
+  inherited Log(aType, aMessage, aTag, lContext);
+end;
+
+function TLogWriter.WithProperty(const aKey: string; const aValue: string): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(Self, [LogParam.S(aKey, aValue)]);
+end;
+
+function TLogWriter.WithProperty(const aKey: string; const aValue: Integer): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(Self, [LogParam.I(aKey, aValue)]);
+end;
+
+function TLogWriter.WithProperty(const aKey: string; const aValue: Boolean): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(Self, [LogParam.B(aKey, aValue)]);
+end;
+
+function TLogWriter.WithProperty(const aKey: string; const aValue: Double): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(Self, [LogParam.F(aKey, aValue)]);
+end;
+
+function TLogWriter.WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(Self, [LogParam.D(aKey, aValue)]);
+end;
+
+function TLogWriter.WithProperty(const aKey: string; const aValue: TValue): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(Self, [LogParam.V(aKey, aValue)]);
+end;
+
+function TLogWriter.WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(Self, [LogParam.FmtS(aKey, aFormat, aArgs)]);
+end;
+
 { TLogger.TLogItem }
 
 function TLogItem.Clone: TLogItem;
 begin
-  Result := TLogItem.Create(FType, FMessage, FTag, FTimeStamp, FThreadID);
+  Result := TLogItem.Create(FType, FMessage, FTag, FTimeStamp, FThreadID, FContext);
 end;
 
 constructor TLogItem.Create(const aType: TLogType; const aMessage, aTag: string);
 begin
-  Create(aType, aMessage, aTag, now, TThread.CurrentThread.ThreadID);
+  Create(aType, aMessage, aTag, now, TThread.CurrentThread.ThreadID, nil);
+end;
+
+constructor TLogItem.Create(const aType: TLogType; const aMessage, aTag: string;
+  const aContext: LogParams);
+begin
+  Create(aType, aMessage, aTag, now, TThread.CurrentThread.ThreadID, aContext);
 end;
 
 { TLogger.TLoggerThread }
@@ -862,12 +1133,24 @@ end;
 
 constructor TLogItem.Create(const aType: TLogType; const aMessage, aTag: string; const aTimeStamp: TDateTime; const aThreadID: TThreadID);
 begin
+  Create(aType, aMessage, aTag, aTimeStamp, aThreadID, nil);
+end;
+
+constructor TLogItem.Create(const aType: TLogType; const aMessage, aTag: string;
+  const aTimeStamp: TDateTime; const aThreadID: TThreadID; const aContext: LogParams);
+begin
   inherited Create;
   FType := aType;
   FMessage := aMessage;
   FTag := aTag;
   FTimeStamp := aTimeStamp;
   FThreadID := aThreadID;
+  FContext := aContext;
+end;
+
+function TLogItem.HasContext: Boolean;
+begin
+  Result := Length(FContext) > 0;
 end;
 
 function TLogItem.GetLogTypeAsString: string;
@@ -1174,6 +1457,233 @@ end;
 procedure TLogItemRenderer.TearDown;
 begin
   // do nothing
+end;
+
+{ TLogWriterWithContext }
+
+class function TLogWriterWithContext.RenderContextToString(const AContext: LogParams): string;
+var
+  I: Integer;
+  lParam: LogParam;
+  lValueStr: string;
+  lFormatSettings: TFormatSettings;
+begin
+  Result := '';
+  if Length(AContext) = 0 then
+    Exit;
+
+  lFormatSettings := TFormatSettings.Create;
+  for I := 0 to High(AContext) do
+  begin
+    lParam := AContext[I];
+    case lParam.Value.Kind of
+      tkInteger, tkInt64:
+        lValueStr := lParam.Value.AsInt64.ToString;
+      tkFloat:
+        if lParam.Value.TypeInfo = TypeInfo(TDateTime) then
+          lValueStr := DateToISO8601(lParam.Value.AsType<TDateTime>, False)
+        else
+          lValueStr := FloatToStr(lParam.Value.AsExtended, lFormatSettings);
+      tkEnumeration:
+        if lParam.Value.TypeInfo = TypeInfo(Boolean) then
+          lValueStr := BoolToStr(lParam.Value.AsBoolean, True).ToLower
+        else
+          lValueStr := lParam.Value.ToString;
+    else
+      lValueStr := lParam.Value.ToString.QuotedString('"');
+    end;
+    Result := Result + ' ' + lParam.Key + '=' + lValueStr;
+  end;
+end;
+
+constructor TLogWriterWithContext.Create(const AInner: ILogWriter; const AContext: LogParams);
+begin
+  inherited Create;
+  FInner := AInner;
+  FContext := AContext;
+  FPreRenderedContext := RenderContextToString(AContext);
+end;
+
+function TLogWriterWithContext.MergeContext(const aContext: array of LogParam): LogParams;
+var
+  I: Integer;
+begin
+  SetLength(Result, Length(FContext) + Length(aContext));
+  for I := 0 to High(FContext) do
+    Result[I] := FContext[I];
+  for I := 0 to High(aContext) do
+    Result[Length(FContext) + I] := aContext[I];
+end;
+
+function TLogWriterWithContext.GetAppendersClassNames: TArray<string>;
+begin
+  Result := FInner.GetAppendersClassNames;
+end;
+
+function TLogWriterWithContext.GetAppenders(const aIndex: Integer): ILogAppender;
+begin
+  Result := FInner.GetAppenders(aIndex);
+end;
+
+procedure TLogWriterWithContext.AddAppender(const aAppenders: ILogAppender);
+begin
+  FInner.AddAppender(aAppenders);
+end;
+
+procedure TLogWriterWithContext.DelAppender(const aAppenders: ILogAppender);
+begin
+  FInner.DelAppender(aAppenders);
+end;
+
+function TLogWriterWithContext.AppendersCount: Integer;
+begin
+  Result := FInner.AppendersCount;
+end;
+
+procedure TLogWriterWithContext.EnqueueLogItem(const aLogItem: TLogItem);
+begin
+  FInner.EnqueueLogItem(aLogItem);
+end;
+
+procedure TLogWriterWithContext.Log(const aType: TLogType; const aMessage, aTag: string);
+var
+  lLogItem: TLogItem;
+begin
+  lLogItem := TLogItem.Create(aType, aMessage, aTag, FContext);
+  lLogItem.PreRenderedContext := FPreRenderedContext;
+  FInner.EnqueueLogItem(lLogItem);
+end;
+
+procedure TLogWriterWithContext.Debug(const aMessage, aTag: string);
+begin
+  Log(TLogType.Debug, aMessage, aTag);
+end;
+
+procedure TLogWriterWithContext.Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Log(TLogType.Debug, Format(aMessage, aParams), aTag, FContext);
+end;
+
+procedure TLogWriterWithContext.Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Log(TLogType.Debug, aMessage, aTag, MergeContext(aContext));
+end;
+
+procedure TLogWriterWithContext.Info(const aMessage, aTag: string);
+begin
+  Log(TLogType.Info, aMessage, aTag);
+end;
+
+procedure TLogWriterWithContext.Info(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Log(TLogType.Info, Format(aMessage, aParams), aTag, FContext);
+end;
+
+procedure TLogWriterWithContext.Info(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Log(TLogType.Info, aMessage, aTag, MergeContext(aContext));
+end;
+
+procedure TLogWriterWithContext.Warn(const aMessage, aTag: string);
+begin
+  Log(TLogType.Warning, aMessage, aTag);
+end;
+
+procedure TLogWriterWithContext.Warn(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Log(TLogType.Warning, Format(aMessage, aParams), aTag, FContext);
+end;
+
+procedure TLogWriterWithContext.Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Log(TLogType.Warning, aMessage, aTag, MergeContext(aContext));
+end;
+
+procedure TLogWriterWithContext.Error(const aMessage, aTag: string);
+begin
+  Log(TLogType.Error, aMessage, aTag);
+end;
+
+procedure TLogWriterWithContext.Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Log(TLogType.Error, Format(aMessage, aParams), aTag, FContext);
+end;
+
+procedure TLogWriterWithContext.Error(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Log(TLogType.Error, aMessage, aTag, MergeContext(aContext));
+end;
+
+procedure TLogWriterWithContext.Fatal(const aMessage, aTag: string);
+begin
+  Log(TLogType.Fatal, aMessage, aTag);
+end;
+
+procedure TLogWriterWithContext.Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Log(TLogType.Fatal, Format(aMessage, aParams), aTag, FContext);
+end;
+
+procedure TLogWriterWithContext.Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Log(TLogType.Fatal, aMessage, aTag, MergeContext(aContext));
+end;
+
+procedure TLogWriterWithContext.Log(const aType: TLogType; const aMessage: string;
+  const aParams: array of const; const aTag: string);
+begin
+  FInner.Log(aType, Format(aMessage, aParams), aTag, FContext);
+end;
+
+procedure TLogWriterWithContext.Log(const aType: TLogType; const aMessage: string;
+  const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Log(aType, aMessage, aTag, MergeContext(aContext));
+end;
+
+function TLogWriterWithContext.WithProperty(const aKey: string; const aValue: string): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(FInner, FContext + [LogParam.S(aKey, aValue)]);
+end;
+
+function TLogWriterWithContext.WithProperty(const aKey: string; const aValue: Integer): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(FInner, FContext + [LogParam.I(aKey, aValue)]);
+end;
+
+function TLogWriterWithContext.WithProperty(const aKey: string; const aValue: Boolean): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(FInner, FContext + [LogParam.B(aKey, aValue)]);
+end;
+
+function TLogWriterWithContext.WithProperty(const aKey: string; const aValue: Double): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(FInner, FContext + [LogParam.F(aKey, aValue)]);
+end;
+
+function TLogWriterWithContext.WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(FInner, FContext + [LogParam.D(aKey, aValue)]);
+end;
+
+function TLogWriterWithContext.WithProperty(const aKey: string; const aValue: TValue): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(FInner, FContext + [LogParam.V(aKey, aValue)]);
+end;
+
+function TLogWriterWithContext.WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+begin
+  Result := TLogWriterWithContext.Create(FInner, FContext + [LogParam.FmtS(aKey, aFormat, aArgs)]);
+end;
+
+procedure TLogWriterWithContext.Disable;
+begin
+  FInner.Disable;
+end;
+
+procedure TLogWriterWithContext.Enable;
+begin
+  FInner.Enable;
 end;
 
 end.

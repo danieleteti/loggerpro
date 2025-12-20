@@ -53,6 +53,14 @@ begin
     lLog.Warn('Old log files are automatically cleaned up', 'main');
     lLog.Error('This is an error for demonstration', 'main');
     lLog.Info('Supported intervals: Hourly, Daily, Weekly, Monthly', 'main');
+
+    // Example using WithProperty for structured context
+    var lRotationLog := lLog
+      .WithProperty('rotation_interval', 'Daily')
+      .WithProperty('max_backups', 7);
+    lRotationLog.Info('Rotation configuration logged with context', 'config');
+    lRotationLog.Debug('Retention policy active', 'config');
+
     lLog.Debug('Application finished', 'main');
 
     // Wait for async processing

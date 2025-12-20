@@ -48,6 +48,15 @@ procedure TMainForm.Button1Click(Sender: TObject);
 begin
   Log.Debug('This is a debug message with TAG1', 'TAG1');
   Log.Debug('This is a debug message with TAG2', 'TAG2');
+  var lLogWithCtx := Log
+                        .WithProperty('value1',1)
+                        .WithProperty('value2','2')
+                        .WithProperty('value3',12.34)
+                        .WithProperty('value4',true)
+                        .WithProperty('value5', Now);
+  //the following logs will contain the context data
+  lLogWithCtx.Debug('This is the first DEBUG MESSAGE with context', 'TAG3');
+  lLogWithCtx.Debug('This is the second DEBUG MESSAGE with context', 'TAG3');
 end;
 
 procedure TMainForm.Button2Click(Sender: TObject);

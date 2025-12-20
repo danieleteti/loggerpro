@@ -84,7 +84,13 @@ begin
     1: Log.Info('info message', 'INFO');
     2: Log.Warn('warn message', 'WARN');
     3: Log.Error('error message', 'ERROR');
-    4: Log.Info('Some Access Violation', 'INFO');
+    4: begin
+         // Example using WithProperty for structured context
+         var lCtxLog := Log
+           .WithProperty('source', 'timer')
+           .WithProperty('interval_ms', UDPClientTimer.Interval);
+         lCtxLog.Info('Message with context from timer', 'INFO');
+       end;
   end;
 end;
 

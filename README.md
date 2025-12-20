@@ -60,6 +60,76 @@ end.
 
 ---
 
+## Structured Context Logging (v2.0)
+
+Add structured key-value context to your log messages:
+
+### One-shot Context
+
+Pass context directly to log methods (zero overhead when not used):
+
+```delphi
+uses
+  LoggerPro;
+
+begin
+  Log.Info('User logged in', 'AUTH', [
+    LogParam.S('username', 'john'),
+    LogParam.I('user_id', 42),
+    LogParam.B('admin', True)
+  ]);
+
+  Log.Error('Query failed', 'DB', [
+    LogParam.S('query', 'SELECT * FROM users'),
+    LogParam.F('duration_ms', 123.45),
+    LogParam.D('timestamp', Now)
+  ]);
+end.
+```
+
+### Bound Context with WithProperty
+
+Create loggers with fixed context (pre-rendered for performance):
+
+```delphi
+var
+  Log: ILogWriter;
+  DbLog: ILogWriter;
+begin
+  Log := LoggerProBuilder
+    .WriteToFile.Done
+    .WriteToConsole.Done
+    .Build;
+
+  // Create a logger with bound context
+  DbLog := Log
+    .WithProperty('component', 'database')
+    .WithProperty('db_host', 'localhost')
+    .WithProperty('db_port', 5432);
+
+  // All messages include the bound context automatically
+  DbLog.Info('Connection established', 'DB');
+  DbLog.Debug('Query executed', 'DB');
+  DbLog.Error('Connection lost', 'DB');
+end.
+```
+
+### Available LogParam Types
+
+| Method | Type | Example |
+|--------|------|---------|
+| `LogParam.S` | String | `LogParam.S('name', 'value')` |
+| `LogParam.I` | Integer | `LogParam.I('count', 42)` |
+| `LogParam.F` | Float/Double | `LogParam.F('price', 19.99)` |
+| `LogParam.B` | Boolean | `LogParam.B('active', True)` |
+| `LogParam.D` | TDateTime | `LogParam.D('created', Now)` |
+| `LogParam.FmtS` | Formatted String | `LogParam.FmtS('msg', 'Item %d', [5])` |
+| `LogParam.V` | TValue (generic) | `LogParam.V('data', someValue)` |
+
+Context is automatically rendered by all appenders in `key=value` format.
+
+---
+
 ## Appenders at a Glance
 
 | Category | Appenders |

@@ -66,6 +66,13 @@ begin
     lLog.Fatal('Critical: Disk space low!', 'system');
     lLog.Debug('Application initialized', 'main');
 
+    // Example using WithProperty for structured context
+    var lDbLog := lLog
+      .WithProperty('db_host', 'localhost')
+      .WithProperty('db_port', 5432);
+    lDbLog.Info('Executing query', 'db');
+    lDbLog.Debug('Query completed in 42ms', 'db');
+
     // Wait for async processing
     Sleep(500);
 

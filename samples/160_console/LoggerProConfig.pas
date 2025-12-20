@@ -32,7 +32,7 @@ initialization
 //]);
 _Log := LoggerProBuilder
   .WriteToFile.Done
-  .WriteToConsole.Done
+  .WriteToSimpleConsole.Done  // All renderers now include context
   .Build;
 
 finalization

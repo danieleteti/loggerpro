@@ -55,6 +55,14 @@ begin
     lLog.Warn('This is a warning message', 'http_sample');
     lLog.Error('This is an error message', 'http_sample');
 
+    // Example using WithProperty for structured context
+    var lRequestLog := lLog
+      .WithProperty('endpoint', 'httpbin.org')
+      .WithProperty('content_type', 'JSON')
+      .WithProperty('timeout_sec', 5);
+    lRequestLog.Info('Request context attached to log entries', 'http_sample');
+    lRequestLog.Debug('HTTP appender configuration logged', 'http_sample');
+
     // Wait for HTTP requests to complete
     Sleep(2000);
 

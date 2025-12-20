@@ -56,6 +56,8 @@ implementation
 uses
   System.IOUtils,
   System.DateUtils,
+  System.Rtti,
+  System.TypInfo,
 {$IF Defined(MSWINDOWS)}
   Winapi.Windows,
 {$ENDIF}
@@ -124,6 +126,11 @@ end;
 function TLogItemRendererJSONL.RenderLogItem(const aLogItem: TLogItem): String;
 var
   lJSON: TJsonObject;
+  {$IF NOT Defined(USE_JDO)}
+  lContextObj: TJSONObject;
+  {$ENDIF}
+  I: Integer;
+  lParam: LogParam;
 begin
   lJSON := TJSONObject.Create;
   try
@@ -134,6 +141,29 @@ begin
     lJSON.S['tag'] := ALogItem.LogTag;
     lJSON.S['hostname'] := fHostName;
     lJSON.I['tid'] := ALogItem.ThreadID;
+    if ALogItem.HasContext then
+    begin
+      for I := 0 to High(ALogItem.Context) do
+      begin
+        lParam := ALogItem.Context[I];
+        case lParam.Value.Kind of
+          tkInteger, tkInt64:
+            lJSON.I[lParam.Key] := lParam.Value.AsInt64;
+          tkFloat:
+            if lParam.Value.TypeInfo = TypeInfo(TDateTime) then
+              lJSON.S[lParam.Key] := DateToISO8601(lParam.Value.AsType<TDateTime>)
+            else
+              lJSON.F[lParam.Key] := lParam.Value.AsExtended;
+          tkEnumeration:
+            if lParam.Value.TypeInfo = TypeInfo(Boolean) then
+              lJSON.B[lParam.Key] := lParam.Value.AsBoolean
+            else
+              lJSON.S[lParam.Key] := lParam.Value.ToString;
+        else
+          lJSON.S[lParam.Key] := lParam.Value.ToString;
+        end;
+      end;
+    end;
     {$ELSE}
     lJSON.AddPair('timestamp', DateToISO8601(ALogItem.TimeStamp));
     lJSON.AddPair('level', ALogItem.LogTypeAsString);
@@ -141,6 +171,31 @@ begin
     lJSON.AddPair('tag', ALogItem.LogTag);
     lJSON.AddPair('hostname', fHostName);
     lJSON.AddPair('tid', ALogItem.ThreadID);
+    if ALogItem.HasContext then
+    begin
+      lContextObj := TJSONObject.Create;
+      for I := 0 to High(ALogItem.Context) do
+      begin
+        lParam := ALogItem.Context[I];
+        case lParam.Value.Kind of
+          tkInteger, tkInt64:
+            lContextObj.AddPair(lParam.Key, TJSONNumber.Create(lParam.Value.AsInt64));
+          tkFloat:
+            if lParam.Value.TypeInfo = TypeInfo(TDateTime) then
+              lContextObj.AddPair(lParam.Key, DateToISO8601(lParam.Value.AsType<TDateTime>))
+            else
+              lContextObj.AddPair(lParam.Key, TJSONNumber.Create(lParam.Value.AsExtended));
+          tkEnumeration:
+            if lParam.Value.TypeInfo = TypeInfo(Boolean) then
+              lContextObj.AddPair(lParam.Key, TJSONBool.Create(lParam.Value.AsBoolean))
+            else
+              lContextObj.AddPair(lParam.Key, lParam.Value.ToString);
+        else
+          lContextObj.AddPair(lParam.Key, lParam.Value.ToString);
+        end;
+      end;
+      lJSON.AddPair('context', lContextObj);
+    end;
     {$ENDIF}
     Result := lJSON.ToJSON;
   finally

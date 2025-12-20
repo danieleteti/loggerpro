@@ -48,6 +48,15 @@ begin
       end;
     end;
 
+    // Example using WithProperty for structured context
+    WriteLn;
+    WriteLn('Logging with context...');
+    var lCtxLog := lLog
+      .WithProperty('component', 'memory_test')
+      .WithProperty('iteration', 1);
+    lCtxLog.Info('Message with context', 'context_test');
+    lCtxLog.Debug('Another message with same context', 'context_test');
+
     // Wait for async processing
     Sleep(500);
 

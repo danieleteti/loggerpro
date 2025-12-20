@@ -24,6 +24,13 @@ begin
     Log.Info('Processing item %d of %d', [5, 10], 'processing');
     Log.Info('Processing item %d of %d', [10, 10], 'processing');
 
+    // Example using WithProperty for structured context
+    var lCtxLog := Log
+      .WithProperty('user_id', 42)
+      .WithProperty('session', 'abc123');
+    lCtxLog.Info('User logged in', 'auth');
+    lCtxLog.Debug('Loading preferences', 'auth');
+
     Log.Debug('Application finished', 'main');
 
 //    WriteLn;

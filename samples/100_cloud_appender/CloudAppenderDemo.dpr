@@ -81,12 +81,22 @@ begin
     Log.Debug('Application started', 'STARTUP');
     Log.Info('Logger initialized with Console, File, and Cloud appenders', 'STARTUP');
 
+    // Example using WithProperty for structured context
+    var lCloudLog := Log
+      .WithProperty('customer_id', CUSTOMER_ID)
+      .WithProperty('endpoint', ENDPOINT);
+    lCloudLog.Info('Cloud appender configured with context', 'STARTUP');
+
     // Simulate some application activity
     for I := 1 to 5 do
     begin
       Log.Info(Format('Processing item %d of 5', [I]), 'PROCESS');
       Sleep(100);
     end;
+
+    // WithProperty in a loop - each iteration has its own context
+    var lProcessLog := Log.WithProperty('batch_id', 'B001');
+    lProcessLog.Info('Processing batch with context', 'PROCESS');
 
     Log.Warn('This is a warning message', 'DEMO');
     Log.Error('This is an error message (not a real error)', 'DEMO');

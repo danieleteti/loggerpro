@@ -90,6 +90,7 @@ object MainForm: TMainForm
         Font.Height = -11
         Font.Name = 'Consolas'
         Font.Style = []
+        HideSelection = False
         OwnerDraw = True
         RowSelect = True
         ParentDoubleBuffered = False

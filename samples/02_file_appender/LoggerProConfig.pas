@@ -44,14 +44,14 @@ initialization
 //       .Done
 //     .Build;
 //
-// Creates logs in the ..\..\ folder using the NoTag renderer.
+// Creates logs in the ..\ folder using the NoTag renderer (context is always included).
 // The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file.
 
 _Log := LoggerProBuilder
   .WriteToFile
     .WithMaxBackupFiles(10)
     .WithMaxFileSizeInKB(5)
-    .WithLogsFolder('..\..')
+    .WithLogsFolder('..')
     .WithRenderer(TLogItemRendererNoTag.Create)
     .Done
   .WriteToFilteredAppender(TLoggerProSimpleFileAppender.Create(10, 5, '..\..'))
