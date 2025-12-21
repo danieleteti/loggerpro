@@ -305,6 +305,7 @@ type
     FFreeAllowed: Boolean;
     FLogLevel: TLogType;
     FLock: TObject;
+    FShuttingDown: Boolean;
     function GetAppendersClassNames: TArray<string>;
   protected
     FEnabled: Boolean;
@@ -796,6 +797,7 @@ begin
   inherited Create;
   FLock := TObject.Create;
   FFreeAllowed := False;
+  FShuttingDown := False;
   FLogAppenders := aLogAppenders;
   FLogLevel := aLogLevel;
   FEnabled := True;
@@ -808,6 +810,7 @@ end;
 
 destructor TCustomLogWriter.Destroy;
 begin
+  FShuttingDown := True;  // Signal shutdown before anything else
   Disable;
   FLoggerThread.Terminate;
   FLoggerThread.LogWriterQueue.SetEvent; // Wake up thread if blocked in Dequeue
@@ -892,6 +895,8 @@ procedure TCustomLogWriter.Log(const aType: TLogType; const aMessage, aTag: stri
 var
   lLogItem: TLogItem;
 begin
+  Assert(not FShuttingDown, 'Cannot log: logger is shutting down');
+  if FShuttingDown then Exit;
   if FEnabled and (aType >= FLogLevel) then
   begin
     lLogItem := TLogItem.Create(aType, aMessage, aTag);
@@ -912,6 +917,8 @@ procedure TCustomLogWriter.Log(const aType: TLogType; const aMessage, aTag: stri
 var
   lLogItem: TLogItem;
 begin
+  Assert(not FShuttingDown, 'Cannot log: logger is shutting down');
+  if FShuttingDown then Exit;
   if FEnabled and (aType >= FLogLevel) then
   begin
     lLogItem := TLogItem.Create(aType, aMessage, aTag, aContext);
@@ -930,6 +937,12 @@ end;
 
 procedure TCustomLogWriter.EnqueueLogItem(const aLogItem: TLogItem);
 begin
+  Assert(not FShuttingDown, 'Cannot log: logger is shutting down');
+  if FShuttingDown then
+  begin
+    aLogItem.Free;
+    Exit;
+  end;
   if FEnabled and (aLogItem.LogType >= FLogLevel) then
   begin
     if not FLoggerThread.LogWriterQueue.Enqueue(aLogItem) then
