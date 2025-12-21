@@ -62,6 +62,24 @@ type
   end;
   LogParams = TArray<LogParam>;
 
+  { @abstract(Function type for pluggable stack trace formatters)
+    Assign a function to extract stack traces using JCL, madExcept, EurekaLog, or
+    any other library. If no formatter is set, exception logging will only
+    include the exception class name and message.
+
+    Example with JCL:
+    @longcode(#
+    Log := LoggerProBuilder
+      .WithStackTraceFormatter(
+        function(E: Exception): string
+        begin
+          Result := JclLastExceptStackListToString;
+        end)
+      .WriteToConsole.Done
+      .Build;
+    #) }
+  TStackTraceFormatter = TFunc<Exception, string>;
+
   { @abstract(Represent the single log item)
     Each call to some kind of log method is wrapped in a @link(TLogItem)
     instance and passed down the layour of LoggerPro. }
@@ -210,6 +228,11 @@ type
     procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
+    { Exception logging - logs exception with optional stack trace if provider is set }
+    procedure LogException(const E: Exception); overload;
+    procedure LogException(const E: Exception; const aMessage: string); overload;
+    procedure LogException(const E: Exception; const aMessage: string; const aTag: string); overload;
+
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
@@ -306,10 +329,12 @@ type
     FLogLevel: TLogType;
     FLock: TObject;
     FShuttingDown: Boolean;
+    FStackTraceFormatter: TStackTraceFormatter;
     function GetAppendersClassNames: TArray<string>;
   protected
     FEnabled: Boolean;
     procedure Initialize(const aEventsHandler: TLoggerProEventsHandler);
+    function FormatExceptionMessage(const E: Exception; const aMessage: string): string;
   public
     constructor Create(const aLogLevel: TLogType = TLogType.Debug); overload;
     constructor Create(const aLogAppenders: TLogAppenderList; const aLogLevel: TLogType = TLogType.Debug); overload;
@@ -326,6 +351,8 @@ type
 
     procedure Disable; virtual;
     procedure Enable; virtual;
+
+    property StackTraceFormatter: TStackTraceFormatter read FStackTraceFormatter write FStackTraceFormatter;
   end;
 
   TLogWriter = class(TCustomLogWriter, ILogWriter)
@@ -357,6 +384,10 @@ type
     procedure Fatal(const aMessage: string; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure LogException(const E: Exception); overload;
+    procedure LogException(const E: Exception; const aMessage: string); overload;
+    procedure LogException(const E: Exception; const aMessage: string; const aTag: string); overload;
 
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
@@ -420,6 +451,10 @@ type
     procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
+    procedure LogException(const E: Exception); overload;
+    procedure LogException(const E: Exception; const aMessage: string); overload;
+    procedure LogException(const E: Exception; const aMessage: string; const aTag: string); overload;
+
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
@@ -481,6 +516,10 @@ type
     procedure Fatal(const aMessage: string; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure LogException(const E: Exception); overload;
+    procedure LogException(const E: Exception; const aMessage: string); overload;
+    procedure LogException(const E: Exception; const aMessage: string; const aTag: string); overload;
 
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
@@ -993,6 +1032,25 @@ begin
   fEnabled := True;
 end;
 
+function TCustomLogWriter.FormatExceptionMessage(const E: Exception; const aMessage: string): string;
+var
+  lStackTrace: string;
+begin
+  if aMessage <> '' then
+    Result := aMessage + ' - '
+  else
+    Result := '';
+
+  Result := Result + E.ClassName + ': ' + E.Message;
+
+  if Assigned(FStackTraceFormatter) then
+  begin
+    lStackTrace := FStackTraceFormatter(E);
+    if lStackTrace <> '' then
+      Result := Result + sLineBreak + lStackTrace;
+  end;
+end;
+
 procedure TLogWriter.Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
 begin
   Log(TLogType.Error, aMessage, aParams, aTag);
@@ -1072,6 +1130,21 @@ end;
 procedure TLogWriter.Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam);
 begin
   Log(TLogType.Fatal, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriter.LogException(const E: Exception);
+begin
+  LogException(E, '', DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriter.LogException(const E: Exception; const aMessage: string);
+begin
+  LogException(E, aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriter.LogException(const E: Exception; const aMessage: string; const aTag: string);
+begin
+  Log(TLogType.Error, FormatExceptionMessage(E, aMessage), aTag);
 end;
 
 procedure TLogWriter.Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam);
@@ -1792,6 +1865,21 @@ begin
   FInner.Log(TLogType.Fatal, aMessage, aTag, MergeContext(aContext));
 end;
 
+procedure TLogWriterWithContext.LogException(const E: Exception);
+begin
+  FInner.LogException(E);
+end;
+
+procedure TLogWriterWithContext.LogException(const E: Exception; const aMessage: string);
+begin
+  FInner.LogException(E, aMessage);
+end;
+
+procedure TLogWriterWithContext.LogException(const E: Exception; const aMessage: string; const aTag: string);
+begin
+  FInner.LogException(E, aMessage, aTag);
+end;
+
 procedure TLogWriterWithContext.Log(const aType: TLogType; const aMessage: string;
   const aParams: array of const; const aTag: string);
 begin
@@ -1996,6 +2084,21 @@ end;
 procedure TLogWriterWithDefaultTag.Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam);
 begin
   FInner.Fatal(aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterWithDefaultTag.LogException(const E: Exception);
+begin
+  FInner.LogException(E, '', FDefaultTag);
+end;
+
+procedure TLogWriterWithDefaultTag.LogException(const E: Exception; const aMessage: string);
+begin
+  FInner.LogException(E, aMessage, FDefaultTag);
+end;
+
+procedure TLogWriterWithDefaultTag.LogException(const E: Exception; const aMessage: string; const aTag: string);
+begin
+  FInner.LogException(E, aMessage, aTag);
 end;
 
 procedure TLogWriterWithDefaultTag.Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);

@@ -74,6 +74,10 @@ type
     procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
 
+    procedure LogException(const E: Exception); overload;
+    procedure LogException(const E: Exception; const aMessage: string); overload;
+    procedure LogException(const E: Exception; const aMessage: string; const aTag: string); overload;
+
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
@@ -307,6 +311,21 @@ end;
 procedure TLogWriterDecorator.Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam);
 begin
   Log(TLogType.Fatal, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterDecorator.LogException(const E: Exception);
+begin
+  fDecoratedLogWriter.LogException(E);
+end;
+
+procedure TLogWriterDecorator.LogException(const E: Exception; const aMessage: string);
+begin
+  fDecoratedLogWriter.LogException(E, aMessage);
+end;
+
+procedure TLogWriterDecorator.LogException(const E: Exception; const aMessage: string; const aTag: string);
+begin
+  fDecoratedLogWriter.LogException(E, aMessage, aTag);
 end;
 
 procedure TLogWriterDecorator.Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam);

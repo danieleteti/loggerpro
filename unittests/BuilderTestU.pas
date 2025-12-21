@@ -46,6 +46,12 @@ type
     procedure TestLogWithoutTagUsesMainAsDefault;
     [Test]
     procedure TestWithDefaultTagOnSubLogger;
+    [Test]
+    procedure TestLogExceptionWithoutFormatter;
+    [Test]
+    procedure TestLogExceptionWithStackTraceFormatter;
+    [Test]
+    procedure TestLogExceptionWithMessageAndTag;
   end;
 
 implementation
@@ -368,6 +374,127 @@ begin
   finally
     lLog := nil;
     lOrderLog := nil;
+    lEvent.Free;
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestLogExceptionWithoutFormatter;
+var
+  lLog: ILogWriter;
+  lReceivedMessage: string;
+  lEvent: TEvent;
+begin
+  lReceivedMessage := '';
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            lReceivedMessage := aLogItem.LogMessage;
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build;
+
+    try
+      raise Exception.Create('Test error message');
+    except
+      on E: Exception do
+        lLog.LogException(E, 'Operation failed');
+    end;
+
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.Contains(lReceivedMessage, 'Exception', 'Should contain exception class name');
+    Assert.Contains(lReceivedMessage, 'Test error message', 'Should contain exception message');
+    Assert.Contains(lReceivedMessage, 'Operation failed', 'Should contain custom message');
+  finally
+    lLog := nil;
+    lEvent.Free;
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestLogExceptionWithStackTraceFormatter;
+var
+  lLog: ILogWriter;
+  lReceivedMessage: string;
+  lEvent: TEvent;
+begin
+  lReceivedMessage := '';
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WithStackTraceFormatter(
+        function(E: Exception): string
+        begin
+          Result := 'FAKE_STACK_TRACE_LINE_1' + sLineBreak + 'FAKE_STACK_TRACE_LINE_2';
+        end)
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            lReceivedMessage := aLogItem.LogMessage;
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build;
+
+    try
+      raise Exception.Create('Test error');
+    except
+      on E: Exception do
+        lLog.LogException(E);
+    end;
+
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.Contains(lReceivedMessage, 'Exception', 'Should contain exception class name');
+    Assert.Contains(lReceivedMessage, 'Test error', 'Should contain exception message');
+    Assert.Contains(lReceivedMessage, 'FAKE_STACK_TRACE_LINE_1', 'Should contain stack trace');
+    Assert.Contains(lReceivedMessage, 'FAKE_STACK_TRACE_LINE_2', 'Should contain full stack trace');
+  finally
+    lLog := nil;
+    lEvent.Free;
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestLogExceptionWithMessageAndTag;
+var
+  lLog: ILogWriter;
+  lReceivedMessage: string;
+  lReceivedTag: string;
+  lEvent: TEvent;
+begin
+  lReceivedMessage := '';
+  lReceivedTag := '';
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            lReceivedMessage := aLogItem.LogMessage;
+            lReceivedTag := aLogItem.LogTag;
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build;
+
+    try
+      raise Exception.Create('Test error message');
+    except
+      on E: Exception do
+        lLog.LogException(E, 'Operation failed', 'MYERRORS');
+    end;
+
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.Contains(lReceivedMessage, 'Exception', 'Should contain exception class name');
+    Assert.Contains(lReceivedMessage, 'Test error message', 'Should contain exception message');
+    Assert.Contains(lReceivedMessage, 'Operation failed', 'Should contain custom message');
+    Assert.AreEqual('MYERRORS', lReceivedTag, 'Should use specified tag');
+  finally
+    lLog := nil;
     lEvent.Free;
   end;
 end;

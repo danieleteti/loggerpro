@@ -239,6 +239,7 @@ type
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
     function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
     function WithDefaultTag(const aTag: string): ILoggerProBuilder;
+    function WithStackTraceFormatter(aFormatter: TStackTraceFormatter): ILoggerProBuilder;
 
     // Build the logger
     function Build: ILogWriter;
@@ -536,6 +537,7 @@ type
     FDefaultLogLevel: TLogType;
     FDefaultRenderer: ILogItemRenderer;
     FDefaultTag: string;
+    FStackTraceFormatter: TStackTraceFormatter;
   public
     constructor Create;
     destructor Destroy; override;
@@ -569,6 +571,7 @@ type
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
     function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
     function WithDefaultTag(const aTag: string): ILoggerProBuilder;
+    function WithStackTraceFormatter(aFormatter: TStackTraceFormatter): ILoggerProBuilder;
     // Build the logger
     function Build: ILogWriter;
     // Used by configurators
@@ -743,6 +746,12 @@ begin
   Result := Self;
 end;
 
+function TLoggerProBuilder.WithStackTraceFormatter(aFormatter: TStackTraceFormatter): ILoggerProBuilder;
+begin
+  FStackTraceFormatter := aFormatter;
+  Result := Self;
+end;
+
 function TLoggerProBuilder.GetDefaultRenderer: ILogItemRenderer;
 begin
   Result := FDefaultRenderer;
@@ -751,6 +760,7 @@ end;
 function TLoggerProBuilder.Build: ILogWriter;
 var
   lAppendersArray: TArray<ILogAppender>;
+  lLogWriter: TCustomLogWriter;
   I: Integer;
 begin
   if FAppenders.Count = 0 then
@@ -761,6 +771,13 @@ begin
     lAppendersArray[I] := FAppenders[I];
 
   Result := BuildLogWriter(lAppendersArray);
+
+  // Set stack trace formatter if configured
+  if Assigned(FStackTraceFormatter) then
+  begin
+    lLogWriter := Result as TCustomLogWriter;
+    lLogWriter.StackTraceFormatter := FStackTraceFormatter;
+  end;
 
   // Wrap with default tag if configured
   if not FDefaultTag.IsEmpty then
