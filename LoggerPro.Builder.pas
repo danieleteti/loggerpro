@@ -238,6 +238,7 @@ type
     // Global configuration
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
     function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
+    function WithDefaultTag(const aTag: string): ILoggerProBuilder;
 
     // Build the logger
     function Build: ILogWriter;
@@ -534,6 +535,7 @@ type
     FAppenders: TList<ILogAppender>;
     FDefaultLogLevel: TLogType;
     FDefaultRenderer: ILogItemRenderer;
+    FDefaultTag: string;
   public
     constructor Create;
     destructor Destroy; override;
@@ -566,6 +568,7 @@ type
     // Global configuration
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
     function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
+    function WithDefaultTag(const aTag: string): ILoggerProBuilder;
     // Build the logger
     function Build: ILogWriter;
     // Used by configurators
@@ -734,6 +737,12 @@ begin
   Result := Self;
 end;
 
+function TLoggerProBuilder.WithDefaultTag(const aTag: string): ILoggerProBuilder;
+begin
+  FDefaultTag := aTag;
+  Result := Self;
+end;
+
 function TLoggerProBuilder.GetDefaultRenderer: ILogItemRenderer;
 begin
   Result := FDefaultRenderer;
@@ -752,6 +761,10 @@ begin
     lAppendersArray[I] := FAppenders[I];
 
   Result := BuildLogWriter(lAppendersArray);
+
+  // Wrap with default tag if configured
+  if not FDefaultTag.IsEmpty then
+    Result := Result.WithDefaultTag(FDefaultTag);
 end;
 
 { TConsoleAppenderConfigurator }

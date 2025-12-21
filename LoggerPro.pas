@@ -34,6 +34,9 @@ uses
   System.Rtti,
   ThreadSafeQueueU, System.SysUtils;
 
+const
+  DEFAULT_LOG_TAG = 'main';
+
 var
   DefaultLoggerProMainQueueSize: Cardinal = 50000;
   DefaultLoggerProAppenderQueueSize: Cardinal = 50000;
@@ -179,6 +182,14 @@ type
 
   ILogWriter = interface(ICustomLogWriter)
     ['{A717A040-4493-458F-91B2-6F6E2AFB496F}']
+    { Logging methods without tag - uses default tag }
+    procedure Debug(const aMessage: string); overload;
+    procedure Info(const aMessage: string); overload;
+    procedure Warn(const aMessage: string); overload;
+    procedure Error(const aMessage: string); overload;
+    procedure Fatal(const aMessage: string); overload;
+
+    { Logging methods with explicit tag }
     procedure Debug(const aMessage: string; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
@@ -211,6 +222,9 @@ type
     function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
     function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
     function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+
+    { @abstract(Returns a new ILogWriter with a custom default tag. Thread-safe - creates a new instance.) }
+    function WithDefaultTag(const aTag: string): ILogWriter;
 
     procedure Disable;
     procedure Enable;
@@ -315,6 +329,14 @@ type
 
   TLogWriter = class(TCustomLogWriter, ILogWriter)
   public
+    { Logging methods without tag - uses DEFAULT_LOG_TAG }
+    procedure Debug(const aMessage: string); overload;
+    procedure Info(const aMessage: string); overload;
+    procedure Warn(const aMessage: string); overload;
+    procedure Error(const aMessage: string); overload;
+    procedure Fatal(const aMessage: string); overload;
+
+    { Logging methods with explicit tag }
     procedure Debug(const aMessage: string; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
@@ -345,6 +367,8 @@ type
     function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
     function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
     function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+
+    function WithDefaultTag(const aTag: string): ILogWriter;
   end;
 
   { @abstract(Wrapper for ILogWriter with bound context) }
@@ -367,7 +391,14 @@ type
     procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
     procedure EnqueueLogItem(const aLogItem: TLogItem);
 
-    // ILogWriter
+    // ILogWriter - without tag (uses DEFAULT_LOG_TAG)
+    procedure Debug(const aMessage: string); overload;
+    procedure Info(const aMessage: string); overload;
+    procedure Warn(const aMessage: string); overload;
+    procedure Error(const aMessage: string); overload;
+    procedure Fatal(const aMessage: string); overload;
+
+    // ILogWriter - with explicit tag
     procedure Debug(const aMessage: string; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
@@ -398,6 +429,70 @@ type
     function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
     function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
     function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+
+    function WithDefaultTag(const aTag: string): ILogWriter;
+
+    procedure Disable;
+    procedure Enable;
+  end;
+
+  { @abstract(Wrapper for ILogWriter with custom default tag) }
+  TLogWriterWithDefaultTag = class(TInterfacedObject, ILogWriter)
+  private
+    FInner: ILogWriter;
+    FDefaultTag: string;
+  public
+    constructor Create(const AInner: ILogWriter; const ADefaultTag: string);
+
+    // ICustomLogWriter
+    function GetAppendersClassNames: TArray<string>;
+    function GetAppenders(const aIndex: Integer): ILogAppender;
+    procedure AddAppender(const aAppenders: ILogAppender);
+    procedure DelAppender(const aAppenders: ILogAppender);
+    function AppendersCount(): Integer;
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
+    procedure EnqueueLogItem(const aLogItem: TLogItem);
+
+    // ILogWriter - without tag (uses FDefaultTag)
+    procedure Debug(const aMessage: string); overload;
+    procedure Info(const aMessage: string); overload;
+    procedure Warn(const aMessage: string); overload;
+    procedure Error(const aMessage: string); overload;
+    procedure Fatal(const aMessage: string); overload;
+
+    // ILogWriter - with explicit tag
+    procedure Debug(const aMessage: string; const aTag: string); overload;
+    procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Info(const aMessage: string; const aTag: string); overload;
+    procedure Info(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Info(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Warn(const aMessage: string; const aTag: string); overload;
+    procedure Warn(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Error(const aMessage: string; const aTag: string); overload;
+    procedure Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Error(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Fatal(const aMessage: string; const aTag: string); overload;
+    procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    function WithProperty(const aKey: string; const aValue: string): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Integer): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Boolean): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Double): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
+    function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+
+    function WithDefaultTag(const aTag: string): ILogWriter;
 
     procedure Disable;
     procedure Enable;
@@ -850,6 +945,11 @@ end;
 
 { TLogger.TLogWriter }
 
+procedure TLogWriter.Debug(const aMessage: string);
+begin
+  Debug(aMessage, DEFAULT_LOG_TAG);
+end;
+
 procedure TLogWriter.Debug(const aMessage, aTag: string);
 begin
   Log(TLogType.Debug, aMessage, aTag);
@@ -863,6 +963,11 @@ end;
 procedure TCustomLogWriter.Disable;
 begin
   fEnabled := False;
+end;
+
+procedure TLogWriter.Error(const aMessage: string);
+begin
+  Error(aMessage, DEFAULT_LOG_TAG);
 end;
 
 procedure TLogWriter.Error(const aMessage, aTag: string);
@@ -880,6 +985,11 @@ begin
   Log(TLogType.Error, aMessage, aParams, aTag);
 end;
 
+procedure TLogWriter.Fatal(const aMessage: string);
+begin
+  Fatal(aMessage, DEFAULT_LOG_TAG);
+end;
+
 procedure TLogWriter.Fatal(const aMessage, aTag: string);
 begin
   Log(TLogType.Fatal, aMessage, aTag);
@@ -889,6 +999,11 @@ procedure TLogWriter.Fatal(const aMessage: string;
   const aParams: array of TVarRec; const aTag: string);
 begin
   Log(TLogType.Fatal, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriter.Info(const aMessage: string);
+begin
+  Info(aMessage, DEFAULT_LOG_TAG);
 end;
 
 procedure TLogWriter.Info(const aMessage, aTag: string);
@@ -904,6 +1019,11 @@ end;
 procedure TLogWriter.Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);
 begin
   Log(aType, Format(aMessage, aParams), aTag);
+end;
+
+procedure TLogWriter.Warn(const aMessage: string);
+begin
+  Warn(aMessage, DEFAULT_LOG_TAG);
 end;
 
 procedure TLogWriter.Warn(const aMessage, aTag: string);
@@ -985,6 +1105,11 @@ end;
 function TLogWriter.WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
 begin
   Result := TLogWriterWithContext.Create(Self, [LogParam.FmtS(aKey, aFormat, aArgs)]);
+end;
+
+function TLogWriter.WithDefaultTag(const aTag: string): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(Self, aTag);
 end;
 
 { TLogger.TLogItem }
@@ -1554,6 +1679,31 @@ begin
   FInner.EnqueueLogItem(lLogItem);
 end;
 
+procedure TLogWriterWithContext.Debug(const aMessage: string);
+begin
+  Debug(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterWithContext.Info(const aMessage: string);
+begin
+  Info(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterWithContext.Warn(const aMessage: string);
+begin
+  Warn(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterWithContext.Error(const aMessage: string);
+begin
+  Error(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterWithContext.Fatal(const aMessage: string);
+begin
+  Fatal(aMessage, DEFAULT_LOG_TAG);
+end;
+
 procedure TLogWriterWithContext.Debug(const aMessage, aTag: string);
 begin
   Log(TLogType.Debug, aMessage, aTag);
@@ -1676,12 +1826,221 @@ begin
   Result := TLogWriterWithContext.Create(FInner, FContext + [LogParam.FmtS(aKey, aFormat, aArgs)]);
 end;
 
+function TLogWriterWithContext.WithDefaultTag(const aTag: string): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(Self, aTag);
+end;
+
 procedure TLogWriterWithContext.Disable;
 begin
   FInner.Disable;
 end;
 
 procedure TLogWriterWithContext.Enable;
+begin
+  FInner.Enable;
+end;
+
+{ TLogWriterWithDefaultTag }
+
+constructor TLogWriterWithDefaultTag.Create(const AInner: ILogWriter; const ADefaultTag: string);
+begin
+  inherited Create;
+  FInner := AInner;
+  FDefaultTag := ADefaultTag;
+end;
+
+function TLogWriterWithDefaultTag.GetAppendersClassNames: TArray<string>;
+begin
+  Result := FInner.GetAppendersClassNames;
+end;
+
+function TLogWriterWithDefaultTag.GetAppenders(const aIndex: Integer): ILogAppender;
+begin
+  Result := FInner.GetAppenders(aIndex);
+end;
+
+procedure TLogWriterWithDefaultTag.AddAppender(const aAppenders: ILogAppender);
+begin
+  FInner.AddAppender(aAppenders);
+end;
+
+procedure TLogWriterWithDefaultTag.DelAppender(const aAppenders: ILogAppender);
+begin
+  FInner.DelAppender(aAppenders);
+end;
+
+function TLogWriterWithDefaultTag.AppendersCount: Integer;
+begin
+  Result := FInner.AppendersCount;
+end;
+
+procedure TLogWriterWithDefaultTag.EnqueueLogItem(const aLogItem: TLogItem);
+begin
+  FInner.EnqueueLogItem(aLogItem);
+end;
+
+procedure TLogWriterWithDefaultTag.Log(const aType: TLogType; const aMessage, aTag: string);
+begin
+  FInner.Log(aType, aMessage, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Debug(const aMessage: string);
+begin
+  FInner.Debug(aMessage, FDefaultTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Info(const aMessage: string);
+begin
+  FInner.Info(aMessage, FDefaultTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Warn(const aMessage: string);
+begin
+  FInner.Warn(aMessage, FDefaultTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Error(const aMessage: string);
+begin
+  FInner.Error(aMessage, FDefaultTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Fatal(const aMessage: string);
+begin
+  FInner.Fatal(aMessage, FDefaultTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Debug(const aMessage, aTag: string);
+begin
+  FInner.Debug(aMessage, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Debug(aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Debug(aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterWithDefaultTag.Info(const aMessage, aTag: string);
+begin
+  FInner.Info(aMessage, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Info(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Info(aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Info(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Info(aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterWithDefaultTag.Warn(const aMessage, aTag: string);
+begin
+  FInner.Warn(aMessage, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Warn(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Warn(aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Warn(aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterWithDefaultTag.Error(const aMessage, aTag: string);
+begin
+  FInner.Error(aMessage, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Error(aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Error(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Error(aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterWithDefaultTag.Fatal(const aMessage, aTag: string);
+begin
+  FInner.Fatal(aMessage, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  FInner.Fatal(aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Fatal(aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterWithDefaultTag.Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);
+begin
+  FInner.Log(aType, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  FInner.Log(aType, aMessage, aTag, aContext);
+end;
+
+function TLogWriterWithDefaultTag.WithProperty(const aKey: string; const aValue: string): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(FInner.WithProperty(aKey, aValue), FDefaultTag);
+end;
+
+function TLogWriterWithDefaultTag.WithProperty(const aKey: string; const aValue: Integer): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(FInner.WithProperty(aKey, aValue), FDefaultTag);
+end;
+
+function TLogWriterWithDefaultTag.WithProperty(const aKey: string; const aValue: Boolean): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(FInner.WithProperty(aKey, aValue), FDefaultTag);
+end;
+
+function TLogWriterWithDefaultTag.WithProperty(const aKey: string; const aValue: Double): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(FInner.WithProperty(aKey, aValue), FDefaultTag);
+end;
+
+function TLogWriterWithDefaultTag.WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(FInner.WithProperty(aKey, aValue), FDefaultTag);
+end;
+
+function TLogWriterWithDefaultTag.WithProperty(const aKey: string; const aValue: TValue): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(FInner.WithProperty(aKey, aValue), FDefaultTag);
+end;
+
+function TLogWriterWithDefaultTag.WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(FInner.WithPropertyFmt(aKey, aFormat, aArgs), FDefaultTag);
+end;
+
+function TLogWriterWithDefaultTag.WithDefaultTag(const aTag: string): ILogWriter;
+begin
+  Result := TLogWriterWithDefaultTag.Create(FInner, aTag);
+end;
+
+procedure TLogWriterWithDefaultTag.Disable;
+begin
+  FInner.Disable;
+end;
+
+procedure TLogWriterWithDefaultTag.Enable;
 begin
   FInner.Enable;
 end;

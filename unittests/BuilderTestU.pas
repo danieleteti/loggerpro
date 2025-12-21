@@ -38,6 +38,14 @@ type
     procedure TestBuilderFunction;
     [Test]
     procedure TestWithDefaultLogLevel;
+    [Test]
+    procedure TestWithDefaultTag;
+    [Test]
+    procedure TestWithDefaultTagOverride;
+    [Test]
+    procedure TestLogWithoutTagUsesMainAsDefault;
+    [Test]
+    procedure TestWithDefaultTagOnSubLogger;
   end;
 
 implementation
@@ -242,6 +250,126 @@ begin
     .Build;
 
   Assert.IsNotNull(lLog, 'Logger should be created with default log level');
+end;
+
+procedure TLoggerProBuilderTest.TestWithDefaultTag;
+var
+  lLog: ILogWriter;
+  lReceivedTag: string;
+  lEvent: TEvent;
+begin
+  lReceivedTag := '';
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WithDefaultTag('MYAPP')
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            lReceivedTag := aLogItem.LogTag;
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build;
+
+    lLog.Info('Test message');  // No tag specified
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.AreEqual('MYAPP', lReceivedTag, 'Default tag from builder should be used');
+  finally
+    lLog := nil;
+    lEvent.Free;
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestWithDefaultTagOverride;
+var
+  lLog: ILogWriter;
+  lReceivedTag: string;
+  lEvent: TEvent;
+begin
+  lReceivedTag := '';
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WithDefaultTag('MYAPP')
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            lReceivedTag := aLogItem.LogTag;
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build;
+
+    lLog.Info('Test message', 'CUSTOM');  // Explicit tag should override
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.AreEqual('CUSTOM', lReceivedTag, 'Explicit tag should override default');
+  finally
+    lLog := nil;
+    lEvent.Free;
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestLogWithoutTagUsesMainAsDefault;
+var
+  lLog: ILogWriter;
+  lReceivedTag: string;
+  lEvent: TEvent;
+begin
+  lReceivedTag := '';
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            lReceivedTag := aLogItem.LogTag;
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build;
+
+    lLog.Info('Test message');  // No tag, no WithDefaultTag -> should use 'main'
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.AreEqual(DEFAULT_LOG_TAG, lReceivedTag, 'Default tag should be "main"');
+  finally
+    lLog := nil;
+    lEvent.Free;
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestWithDefaultTagOnSubLogger;
+var
+  lLog, lOrderLog: ILogWriter;
+  lReceivedTag: string;
+  lEvent: TEvent;
+begin
+  lReceivedTag := '';
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            lReceivedTag := aLogItem.LogTag;
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build;
+
+    lOrderLog := lLog.WithDefaultTag('ORDERS');
+    lOrderLog.Info('Order received');  // Should use 'ORDERS'
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.AreEqual('ORDERS', lReceivedTag, 'Sub-logger should use its own default tag');
+  finally
+    lLog := nil;
+    lOrderLog := nil;
+    lEvent.Free;
+  end;
 end;
 
 initialization

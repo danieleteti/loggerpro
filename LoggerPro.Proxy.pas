@@ -46,7 +46,14 @@ type
     fDecoratedLogWriter: ILogWriter;
     fFilter: TLogWriterPredicate;
   protected
-    { ILogWriter }
+    { ILogWriter - without tag }
+    procedure Debug(const aMessage: string); overload;
+    procedure Info(const aMessage: string); overload;
+    procedure Warn(const aMessage: string); overload;
+    procedure Error(const aMessage: string); overload;
+    procedure Fatal(const aMessage: string); overload;
+
+    { ILogWriter - with tag }
     procedure Debug(const aMessage: string; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
     procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
@@ -78,6 +85,8 @@ type
     function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
     function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
     function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+
+    function WithDefaultTag(const aTag: string): ILogWriter;
 
     procedure Disable;
     procedure Enable;
@@ -343,5 +352,34 @@ begin
   Result := fDecoratedLogWriter.WithPropertyFmt(aKey, aFormat, aArgs);
 end;
 
+function TLogWriterDecorator.WithDefaultTag(const aTag: string): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithDefaultTag(aTag);
+end;
+
+procedure TLogWriterDecorator.Debug(const aMessage: string);
+begin
+  Debug(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterDecorator.Info(const aMessage: string);
+begin
+  Info(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterDecorator.Warn(const aMessage: string);
+begin
+  Warn(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterDecorator.Error(const aMessage: string);
+begin
+  Error(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterDecorator.Fatal(const aMessage: string);
+begin
+  Fatal(aMessage, DEFAULT_LOG_TAG);
+end;
 
 end.

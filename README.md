@@ -34,6 +34,15 @@ end.
 
 That's it. One line of uses, and you're logging to rotating files.
 
+### Optional Tag (v2.0)
+
+Tag is now optional! If omitted, defaults to `'main'`:
+
+```delphi
+Log.Info('Application started');           // tag = 'main'
+Log.Info('Application started', 'CUSTOM'); // tag = 'CUSTOM'
+```
+
 ---
 
 ## Builder Pattern (v2.0)
@@ -55,6 +64,39 @@ begin
       .WithHeader('Authorization', 'Bearer token123')
       .Done
     .Build;
+end.
+```
+
+### Custom Default Tag
+
+Configure a custom default tag in the builder:
+
+```delphi
+Log := LoggerProBuilder
+  .WithDefaultTag('MYAPP')
+  .WriteToConsole.Done
+  .Build;
+
+Log.Info('Started');              // tag = 'MYAPP'
+Log.Info('Request', 'HTTP');      // tag = 'HTTP' (override)
+```
+
+### Sub-Loggers with Default Tag
+
+Create sub-loggers with their own default tag:
+
+```delphi
+var
+  Log, OrderLog, PaymentLog: ILogWriter;
+begin
+  Log := LoggerProBuilder.WriteToConsole.Done.Build;
+
+  OrderLog := Log.WithDefaultTag('ORDERS');
+  PaymentLog := Log.WithDefaultTag('PAYMENTS');
+
+  OrderLog.Info('New order received');    // tag = 'ORDERS'
+  PaymentLog.Info('Payment processed');   // tag = 'PAYMENTS'
+  PaymentLog.Error('Failed', 'STRIPE');   // tag = 'STRIPE' (override)
 end.
 ```
 
