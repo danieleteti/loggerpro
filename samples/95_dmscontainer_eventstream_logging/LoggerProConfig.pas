@@ -10,8 +10,8 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.DMSEventStreamsAppender, LoggerPro.RedisAppender, Redis.Client, WinApi.Windows,
-  EventStreamsRPCProxy, System.Net.URLClient;
+  LoggerPro.DMSEventStreamsAppender, LoggerPro.RedisAppender, LoggerPro.Builder,
+  Redis.Client, WinApi.Windows, EventStreamsRPCProxy, System.Net.URLClient;
 
 const
   DMSCONTAINER_API_KEY =
@@ -66,13 +66,24 @@ DefaultLoggerProAppenderQueueSize := 10;
 DMSProxy := TEventStreamsRPCProxy.Create('http://dms.marr.it:8080/eventstreamsrpc');
 DMSProxy.RPCExecutor.SetOnValidateServerCertificate(TAllowSelfSignedCertificates.OnValidateCertificate);
 
-_Log := BuildLogWriter([TLoggerProDMSContainerAppender.Create(DMSProxy, DMSCONTAINER_API_KEY,
-  'logs.' + TLoggerProDMSContainerAppender.GetModuleBaseName,
-     dmsatByTag         {es logs.dmscontaineresappendersample.tag1}
-  // dmsatByType        {es logs.dmscontaineresappendersample.debug}
-  // dmsatByTagThenType {es logs.dmscontaineresappendersample.tag1.debug}
-  // dmsatByTypeThenTag {es logs.dmscontaineresappendersample.debug.tag1}
-  )], _Events);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([TLoggerProDMSContainerAppender.Create(DMSProxy, DMSCONTAINER_API_KEY,
+//  'logs.' + TLoggerProDMSContainerAppender.GetModuleBaseName,
+//     dmsatByTag         {es logs.dmscontaineresappendersample.tag1}
+//  // dmsatByType        {es logs.dmscontaineresappendersample.debug}
+//  // dmsatByTagThenType {es logs.dmscontaineresappendersample.tag1.debug}
+//  // dmsatByTypeThenTag {es logs.dmscontaineresappendersample.debug.tag1}
+//  )], _Events);
+_Log := LoggerProBuilder
+  .WriteToAppender(TLoggerProDMSContainerAppender.Create(DMSProxy, DMSCONTAINER_API_KEY,
+    'logs.' + TLoggerProDMSContainerAppender.GetModuleBaseName,
+       dmsatByTag         {es logs.dmscontaineresappendersample.tag1}
+    // dmsatByType        {es logs.dmscontaineresappendersample.debug}
+    // dmsatByTagThenType {es logs.dmscontaineresappendersample.tag1.debug}
+    // dmsatByTypeThenTag {es logs.dmscontaineresappendersample.debug.tag1}
+    ))
+  .Build;
 
 finalization
 

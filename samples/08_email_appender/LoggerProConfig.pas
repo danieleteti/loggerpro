@@ -13,6 +13,7 @@ uses
   LoggerPro.FileAppender,
   LoggerPro.EMailAppender,
   LoggerPro.OutputDebugStringAppender,
+  LoggerPro.Builder,
   System.SysUtils,
   idSMTP, System.IOUtils,
   IdIOHandlerStack, IdSSL,
@@ -69,9 +70,17 @@ var
 begin
   lEmailAppender := TLoggerProEMailAppender.Create(GetSMTP, 'LoggerPro<daniele.teti@gmail.com>', 'd.teti@bittime.it');
   lEmailAppender.SetLogLevel(TLogType.Error);
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create,
-    lEmailAppender,
-    TLoggerProOutputDebugStringAppender.Create], nil, LOG_LEVEL);
+  // BuildLogWriter is the classic way to create a log writer.
+  // The modern and recommended approach is to use LoggerProBuilder.
+  //_Log := BuildLogWriter([TLoggerProFileAppender.Create,
+  //  lEmailAppender,
+  //  TLoggerProOutputDebugStringAppender.Create], nil, LOG_LEVEL);
+  _Log := LoggerProBuilder
+    .WithDefaultLogLevel(LOG_LEVEL)
+    .WriteToFile.Done
+    .WriteToAppender(lEmailAppender)
+    .WriteToOutputDebugString.Done
+    .Build;
 end;
 
 initialization

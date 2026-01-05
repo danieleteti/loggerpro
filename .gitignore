@@ -65,7 +65,6 @@ __history/
 *.stat
 /samples/08_email_appender/bin/config.txt
 *.res
-samples/110_rest_appender_mobile/Android/
 *.pyc
 .doit.db.dir
 .doit.db.dat
@@ -73,3 +72,6 @@ unittests/Win32/PLAINDUNITX/dunitx-results.xml
 unittests/Win32/TESTINSIGHT/TestInsightSettings.ini
 *.log
 unittests/Win32/CI/dunitx-results.xml
+**/__recovery/*
+*.delphilsp.json
+nul

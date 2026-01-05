@@ -1,8 +1,32 @@
+// *************************************************************************** }
+//
+// LoggerPro
+//
+// Copyright (c) 2010-2025 Daniele Teti
+//
+// https://github.com/danieleteti/loggerpro
+//
+// ***************************************************************************
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// ***************************************************************************
+
 unit LoggerPro.Proxy;
 
 interface
 
-uses Classes, System.SysUtils, LoggerPro;
+uses Classes, System.SysUtils, System.Rtti, LoggerPro;
 
 type
   ILogAppenderProxy=interface
@@ -13,6 +37,78 @@ type
 
   TLoggerProFilter = class abstract
     class function Build(Appender: ILogAppender; Filter: TFunc<TLogItem, boolean>): ILogAppender;
+  end;
+
+  TLogWriterPredicate = reference to function (const aType: TLogType; const aMessage, aTag: string): Boolean;
+
+  TLogWriterDecorator = class(TInterfacedObject, ILogWriter)
+  private
+    fDecoratedLogWriter: ILogWriter;
+    fFilter: TLogWriterPredicate;
+  protected
+    { ILogWriter - without tag }
+    procedure Debug(const aMessage: string); overload;
+    procedure Info(const aMessage: string); overload;
+    procedure Warn(const aMessage: string); overload;
+    procedure Error(const aMessage: string); overload;
+    procedure Fatal(const aMessage: string); overload;
+
+    { ILogWriter - with tag }
+    procedure Debug(const aMessage: string; const aTag: string); overload;
+    procedure Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Info(const aMessage: string; const aTag: string); overload;
+    procedure Info(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Info(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Warn(const aMessage: string; const aTag: string); overload;
+    procedure Warn(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Error(const aMessage: string; const aTag: string); overload;
+    procedure Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Error(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure Fatal(const aMessage: string; const aTag: string); overload;
+    procedure Fatal(const aMessage: string; const aParams: array of TVarRec; const aTag: string); overload;
+    procedure Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    procedure LogException(const E: Exception); overload;
+    procedure LogException(const E: Exception; const aMessage: string); overload;
+    procedure LogException(const E: Exception; const aMessage: string; const aTag: string); overload;
+
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string); overload;
+    procedure Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string); overload;
+    procedure Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam); overload;
+
+    function WithProperty(const aKey: string; const aValue: string): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Integer): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Boolean): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: Double): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter; overload;
+    function WithProperty(const aKey: string; const aValue: TValue): ILogWriter; overload;
+    function WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+
+    function WithDefaultTag(const aTag: string): ILogWriter;
+
+    procedure Disable;
+    procedure Enable;
+
+    { ICustomLogWriter}
+    function GetAppendersClassNames: TArray<string>;
+    function GetAppenders(const aIndex: Integer): ILogAppender;
+    property Appenders[const aIndex: Integer]: ILogAppender read GetAppenders;
+    procedure AddAppender(const aAppender: ILogAppender);
+    procedure DelAppender(const aAppender: ILogAppender);
+    function AppendersCount(): Integer;
+    procedure EnqueueLogItem(const aLogItem: TLogItem);
+
+
+    ///
+    constructor Create(LogWriter: ILogWriter; Filter: TLogWriterPredicate);
+  public
+    class function Build(LogWriter: ILogWriter; Filter: TLogWriterPredicate): ILogWriter;
   end;
 
 
@@ -70,5 +166,239 @@ begin
   result := TLoggerProAppenderFilterImpl.Create(Appender, Filter);
 end;
 
+
+{ TLogWriterDecorator }
+
+class function TLogWriterDecorator.Build(LogWriter: ILogWriter;
+  Filter: TLogWriterPredicate): ILogWriter;
+begin
+  Result := TLogWriterDecorator.Create(LogWriter, Filter);
+end;
+
+constructor TLogWriterDecorator.Create(LogWriter: ILogWriter; Filter: TLogWriterPredicate);
+begin
+  inherited Create;
+  fDecoratedLogWriter := LogWriter;
+  fFilter := Filter;
+end;
+
+procedure TLogWriterDecorator.AddAppender(const aAppender: ILogAppender);
+begin
+  fDecoratedLogWriter.AddAppender(aAppender);
+end;
+
+function TLogWriterDecorator.AppendersCount: Integer;
+begin
+  Result := fDecoratedLogWriter.AppendersCount;
+end;
+
+procedure TLogWriterDecorator.EnqueueLogItem(const aLogItem: TLogItem);
+begin
+  fDecoratedLogWriter.EnqueueLogItem(aLogItem);
+end;
+
+function TLogWriterDecorator.GetAppenders(const aIndex: Integer): ILogAppender;
+begin
+  Result := fDecoratedLogWriter.GetAppenders(aIndex);
+end;
+
+function TLogWriterDecorator.GetAppendersClassNames: TArray<string>;
+begin
+  Result := fDecoratedLogWriter.GetAppendersClassNames;
+end;
+
+// ILogWriter
+
+procedure TLogWriterDecorator.Debug(const aMessage, aTag: string);
+begin
+  Log(TLogType.Debug, aMessage, aTag);
+end;
+
+procedure TLogWriterDecorator.Debug(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  Log(TLogType.Debug, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterDecorator.DelAppender(const aAppender: ILogAppender);
+begin
+  fDecoratedLogWriter.DelAppender(aAppender);
+end;
+
+procedure TLogWriterDecorator.Disable;
+begin
+  fDecoratedLogWriter.Disable;
+end;
+
+procedure TLogWriterDecorator.Error(const aMessage, aTag: string);
+begin
+  Log(TLogType.Error, aMessage, aTag);
+end;
+
+procedure TLogWriterDecorator.Enable;
+begin
+  fDecoratedLogWriter.Enable;
+end;
+
+procedure TLogWriterDecorator.Error(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  Log(TLogType.Error, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterDecorator.Fatal(const aMessage, aTag: string);
+begin
+  Log(TLogType.Fatal, aMessage, aTag);
+end;
+
+procedure TLogWriterDecorator.Fatal(const aMessage: string;
+  const aParams: array of TVarRec; const aTag: string);
+begin
+  Log(TLogType.Fatal, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterDecorator.Info(const aMessage, aTag: string);
+begin
+  Log(TLogType.Info, aMessage, aTag);
+end;
+
+procedure TLogWriterDecorator.Info(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  Log(TLogType.Info, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterDecorator.Log(const aType: TLogType; const aMessage, aTag: string);
+begin
+  if fFilter(aType, aMessage, aTag) then
+  begin
+    fDecoratedLogWriter.Log(aType, aMessage, aTag);
+  end;
+end;
+
+procedure TLogWriterDecorator.Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);
+begin
+  Log(aType, Format(aMessage, aParams), aTag);
+end;
+
+procedure TLogWriterDecorator.Warn(const aMessage, aTag: string);
+begin
+  Log(TLogType.Warning, aMessage, aTag);
+end;
+
+procedure TLogWriterDecorator.Warn(const aMessage: string; const aParams: array of TVarRec; const aTag: string);
+begin
+  Log(TLogType.Warning, aMessage, aParams, aTag);
+end;
+
+procedure TLogWriterDecorator.Debug(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Debug, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterDecorator.Info(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Info, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterDecorator.Warn(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Warning, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterDecorator.Error(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Error, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterDecorator.Fatal(const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  Log(TLogType.Fatal, aMessage, aTag, aContext);
+end;
+
+procedure TLogWriterDecorator.LogException(const E: Exception);
+begin
+  fDecoratedLogWriter.LogException(E);
+end;
+
+procedure TLogWriterDecorator.LogException(const E: Exception; const aMessage: string);
+begin
+  fDecoratedLogWriter.LogException(E, aMessage);
+end;
+
+procedure TLogWriterDecorator.LogException(const E: Exception; const aMessage: string; const aTag: string);
+begin
+  fDecoratedLogWriter.LogException(E, aMessage, aTag);
+end;
+
+procedure TLogWriterDecorator.Log(const aType: TLogType; const aMessage: string; const aTag: string; const aContext: array of LogParam);
+begin
+  if fFilter(aType, aMessage, aTag) then
+  begin
+    fDecoratedLogWriter.Log(aType, aMessage, aTag, aContext);
+  end;
+end;
+
+function TLogWriterDecorator.WithProperty(const aKey: string; const aValue: string): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithProperty(aKey, aValue);
+end;
+
+function TLogWriterDecorator.WithProperty(const aKey: string; const aValue: Integer): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithProperty(aKey, aValue);
+end;
+
+function TLogWriterDecorator.WithProperty(const aKey: string; const aValue: Boolean): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithProperty(aKey, aValue);
+end;
+
+function TLogWriterDecorator.WithProperty(const aKey: string; const aValue: Double): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithProperty(aKey, aValue);
+end;
+
+function TLogWriterDecorator.WithProperty(const aKey: string; const aValue: TDateTime): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithProperty(aKey, aValue);
+end;
+
+function TLogWriterDecorator.WithProperty(const aKey: string; const aValue: TValue): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithProperty(aKey, aValue);
+end;
+
+function TLogWriterDecorator.WithPropertyFmt(const aKey: string; const aFormat: string; const aArgs: array of const): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithPropertyFmt(aKey, aFormat, aArgs);
+end;
+
+function TLogWriterDecorator.WithDefaultTag(const aTag: string): ILogWriter;
+begin
+  Result := fDecoratedLogWriter.WithDefaultTag(aTag);
+end;
+
+procedure TLogWriterDecorator.Debug(const aMessage: string);
+begin
+  Debug(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterDecorator.Info(const aMessage: string);
+begin
+  Info(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterDecorator.Warn(const aMessage: string);
+begin
+  Warn(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterDecorator.Error(const aMessage: string);
+begin
+  Error(aMessage, DEFAULT_LOG_TAG);
+end;
+
+procedure TLogWriterDecorator.Fatal(const aMessage: string);
+begin
+  Fatal(aMessage, DEFAULT_LOG_TAG);
+end;
 
 end.

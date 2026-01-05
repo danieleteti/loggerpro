@@ -10,8 +10,9 @@ object MainForm: TMainForm
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
-  PixelsPerInch = 96
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
   TextHeight = 13
   object Button1: TButton
     Left = 8

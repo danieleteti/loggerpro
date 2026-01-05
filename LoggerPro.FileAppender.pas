@@ -1,6 +1,28 @@
+// *************************************************************************** }
+//
+// LoggerPro
+//
+// Copyright (c) 2010-2025 Daniele Teti
+//
+// https://github.com/danieleteti/loggerpro
+//
+// ***************************************************************************
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// ***************************************************************************
+
 unit LoggerPro.FileAppender;
-{ <@abstract(The unit to include if you want to use @link(TLoggerProFileAppender))
-  @author(Daniele Teti) }
 
 {$IF Defined(Android) or Defined(iOS)}
 {$DEFINE MOBILE}
@@ -38,24 +60,21 @@ type
 
   }
 
-  TFileAppenderOption = (IncludePID);
-  TFileAppenderOptions = set of TFileAppenderOption;
-
   { @abstract(The base class for different file appenders)
     Do not use this class directly, but one of TLoggerProFileAppender or TLoggerProSimpleFileAppender.
     Check the sample @code(file_appender.dproj)
   }
   TLoggerProFileAppenderBase = class(TLoggerProAppenderBase)
   private
+    procedure RetryMove(const aFileSrc, aFileDest: string);
+    procedure RetryDelete(const aFileSrc: string);
+  protected
+    fEncoding: TEncoding;
     fMaxBackupFileCount: Integer;
     fMaxFileSizeInKiloByte: Integer;
     fLogFileNameFormat: string;
-    fFileAppenderOptions: TFileAppenderOptions;
     fLogsFolder: string;
-    fEncoding: TEncoding;
-    function CreateWriter(const aFileName: string): TStreamWriter;
-    procedure RetryMove(const aFileSrc, aFileDest: string);
-  protected
+    function CreateWriter(const aFileName: string; const aBufferSize: Integer = 32): TStreamWriter;
     procedure CheckLogFileNameFormat(const LogFileNameFormat: String); virtual;
     procedure EmitStartRotateLogItem(aWriter: TStreamWriter); virtual;
     procedure EmitEndRotateLogItem(aWriter: TStreamWriter); virtual;
@@ -67,14 +86,14 @@ type
     { @abstract(Defines the default format string used by the @link(TLoggerProFileAppender).)
       The positional parameters are the following:
       @orderedList(
-      @item SetNumber 0
-      @item ModuleName
-      @item LogNum
-      @item LogTag
+      @item Number
+      @item Module
+      @item Tag
       )
     }
-    //DEFAULT_FILENAME_FORMAT = '%0:s.%1:2.2d.%2:s.log';
     DEFAULT_FILENAME_FORMAT = '{module}.{number}.{tag}.log';
+    DEFAULT_FILENAME_FORMAT_WITH_PID = '{module}.{number}.{pid}.{tag}.log';
+    DEFAULT_FILENAME_FORMAT_WITHOUT_TAG = '{module}.{number}.log';
     { @abstract(Defines number of log file set to maintain during logs rotation) }
     DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
     { @abstract(Defines the max size of each log file)
@@ -88,9 +107,8 @@ type
       aMaxBackupFileCount: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_FILE_SIZE_KB;
       aLogsFolder: string = '';
-      aFileAppenderOptions: TFileAppenderOptions = [];
       aLogFileNameFormat: string = TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT;
-      aLogFormat: string = DEFAULT_LOG_FORMAT;
+      aLogItemRenderer: ILogItemRenderer = nil;
       aEncoding: TEncoding = nil);
       reintroduce; virtual;
     procedure Setup; override;
@@ -134,13 +152,52 @@ type
       aMaxBackupFileCount: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_FILE_SIZE_KB;
       aLogsFolder: string = '';
-      aFileAppenderOptions: TFileAppenderOptions = [];
       aLogFileNameFormat: string = TLoggerProSimpleFileAppender.DEFAULT_FILENAME_FORMAT;
-      aLogFormat: string = DEFAULT_LOG_FORMAT;
+      aLogItemRenderer: ILogItemRenderer = nil;
       aEncoding: TEncoding = nil);
       override;
   end;
 
+
+  TMakeFileNameProc = reference to procedure(out AFileName: string);
+
+  { by an idea of Mark Lobanov <mark.v.lobanov@gmail.com> }
+  TLoggerProFileByFolderAppender = class(TLoggerProSimpleFileAppender)
+  private
+    fCurrentDate: TDateTime;
+    function GetLogFolder: string;
+    function GetFileFormat: string;
+    procedure RotateLog;
+    procedure ChangeLogFolder;
+    procedure RefreshCurrentDate;
+    procedure InternalRotateLog(aMakeFileNameProc: TMakeFileNameProc);
+  protected
+    function GetLogFileName(const aTag: string; const aFileNumber: Integer): string; override;
+    procedure CheckLogFileNameFormat(const aLogFileNameFormat: string); override;
+  public
+    constructor Create(
+      aMaxBackupFileCount: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_BACKUP_FILE_COUNT;
+      aMaxFileSizeInKiloByte: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_FILE_SIZE_KB;
+      const aLogsFolder: string = '';
+      const aLogItemRenderer: ILogItemRenderer = nil;
+      const aEncoding: TEncoding = nil); reintroduce;
+
+    procedure WriteLog(const ALogItem: TLogItem); override;
+    procedure Setup; override;
+    procedure TearDown; override;
+  end;
+
+  TLoggerProLogFmtFileAppender = class(TLoggerProSimpleFileAppender)
+  protected
+    function GetLogFileName(const aTag: string; const aFileNumber: Integer): string; override;
+    procedure EmitStartRotateLogItem(aWriter: TStreamWriter); override;
+    procedure EmitEndRotateLogItem(aWriter: TStreamWriter); override;
+  public
+    constructor Create(aMaxBackupFileCount: Integer = TLoggerProFileAppender.DEFAULT_MAX_BACKUP_FILE_COUNT;
+      aMaxFileSizeInKiloByte: Integer = TLoggerProFileAppender.DEFAULT_MAX_FILE_SIZE_KB; aLogsFolder: string = '';
+      aLogFileNameFormat: string = TLoggerProSimpleFileAppender.DEFAULT_FILENAME_FORMAT; aEncoding: TEncoding = nil);
+      reintroduce;
+  end;
 
 implementation
 
@@ -148,13 +205,16 @@ uses
   System.IOUtils,
   System.StrUtils,
   System.Math,
+  System.DateUtils,
+  LoggerPro.Renderers,
   idGlobal
-{$IF Defined(Android), System.SysUtils}
+{$IF Defined(Android)}
     ,Androidapi.Helpers
     ,Androidapi.JNI.GraphicsContentViewText
     ,Androidapi.JNI.JavaTypes
 {$ENDIF}
     ;
+
 
 function OccurrencesOfChar(const S: string; const C: char): integer;
 var
@@ -185,7 +245,6 @@ end;
 
 function TLoggerProFileAppenderBase.GetLogFileName(const aTag: string; const aFileNumber: Integer): string;
 var
-//  lExt: string;
   lModuleName: string;
   lPath: string;
   lFormat: string;
@@ -201,18 +260,12 @@ begin
 {$ENDIF}
   lFormat := fLogFileNameFormat;
 
-  if TFileAppenderOption.IncludePID in fFileAppenderOptions then
-  begin
-    raise ELoggerPro.Create('TFileAppenderOption.IncludePID is deprecated. ' +
-      'Just include "{pid}" placeholder in the file name format and PID is automatically ' +
-      'added to the log filename');
-  end;
-    //lModuleName := lModuleName + '_pid_' + IntToStr(CurrentProcessId).PadLeft(6, '0');
-
   lPath := fLogsFolder;
   lFormat := lFormat
     .Replace('{module}', lModuleName, [rfReplaceAll])
-    .Replace('{number}', aFileNumber.ToString.PadLeft(2,'0') , [rfReplaceAll])
+    .Replace('{number}', aFileNumber.ToString.PadLeft(
+      Max(2,fMaxBackupFileCount.ToString.Length), //min padding 2
+      '0') , [rfReplaceAll])
     .Replace('{tag}', aTag, [rfReplaceAll])
     .Replace('{pid}', CurrentProcessId.ToString.PadLeft(8,'0'), [rfReplaceAll]);
   Result := TPath.Combine(lPath, lFormat);
@@ -246,6 +299,35 @@ begin
   WriteToStream(aStreamWriter, FormatLog(aLogItem));
 end;
 
+procedure TLoggerProFileAppenderBase.RetryDelete(const aFileSrc: string);
+var
+  lRetries: Integer;
+const
+  MAX_RETRIES = 5;
+begin
+  lRetries := 0;
+  repeat
+    try
+      Sleep(50);
+      // the incidence of "Locked file goes to nearly zero..."
+      TFile.Delete(aFileSrc);
+      if not TFile.Exists(aFileSrc) then
+      begin
+        Break;
+      end;
+    except
+      on E: Exception do
+      begin
+        Inc(lRetries);
+        Sleep(100);
+      end;
+    end;
+  until lRetries = MAX_RETRIES;
+
+  if lRetries = MAX_RETRIES then
+    raise ELoggerPro.CreateFmt('Cannot delete file %s', [aFileSrc]);
+end;
+
 procedure TLoggerProFileAppenderBase.RetryMove(const aFileSrc, aFileDest: string);
 var
   lRetries: Integer;
@@ -263,7 +345,7 @@ begin
       on E: EInOutError do
       begin
         Inc(lRetries);
-        Sleep(50);
+        Sleep(100);
       end;
       on E: Exception do
       begin
@@ -286,36 +368,48 @@ begin
   // remove the last file of backup set
   lRenamedFile := GetLogFileName(aLogTag, fMaxBackupFileCount - 1);
   if TFile.Exists(lRenamedFile) then
+  begin
     TFile.Delete(lRenamedFile);
+    if TFile.Exists(lRenamedFile) then // double check for slow file systems
+    begin
+      RetryDelete(lRenamedFile);
+    end;
+  end;
   // shift the files names
   for I := fMaxBackupFileCount - 1 downto 1 do
   begin
     lCurrentFileName := GetLogFileName(aLogTag, I);
     lRenamedFile := GetLogFileName(aLogTag, I + 1);
     if TFile.Exists(lCurrentFileName) then
+    begin
       RetryMove(lCurrentFileName, lRenamedFile);
+    end;
   end;
   lRenamedFile := GetLogFileName(aLogTag, 1);
   RetryMove(aNewFileName, lRenamedFile);
 end;
 
-constructor TLoggerProFileAppenderBase.Create(aMaxBackupFileCount: Integer; aMaxFileSizeInKiloByte: Integer; aLogsFolder: string;
-  aFileAppenderOptions: TFileAppenderOptions; aLogFileNameFormat: string; aLogFormat: string; aEncoding: TEncoding);
+constructor TLoggerProFileAppenderBase.Create(
+  aMaxBackupFileCount: Integer;
+  aMaxFileSizeInKiloByte: Integer;
+  aLogsFolder: string;
+  aLogFileNameFormat: string;
+  aLogItemRenderer: ILogItemRenderer;
+  aEncoding: TEncoding);
 begin
-  inherited Create(ALogFormat);
+  inherited Create(aLogItemRenderer);
   fLogsFolder := aLogsFolder;
   fMaxBackupFileCount:= Max(1, aMaxBackupFileCount);
   fMaxFileSizeInKiloByte := aMaxFileSizeInKiloByte;
   CheckLogFileNameFormat(aLogFileNameFormat);
   fLogFileNameFormat := aLogFileNameFormat;
-  fFileAppenderOptions := aFileAppenderOptions;
   if Assigned(aEncoding) then
     fEncoding := aEncoding
   else
     fEncoding := TEncoding.DEFAULT;
 end;
 
-function TLoggerProFileAppenderBase.CreateWriter(const aFileName: string): TStreamWriter;
+function TLoggerProFileAppenderBase.CreateWriter(const aFileName: string; const aBufferSize: Integer = 32): TStreamWriter;
 var
   lFileStream: TFileStream;
   lFileAccessMode: Word;
@@ -336,7 +430,7 @@ begin
       lFileStream := TFileStream.Create(aFileName, lFileAccessMode);
       try
         lFileStream.Seek(0, TSeekOrigin.soEnd);
-        Result := TStreamWriter.Create(lFileStream, fEncoding, 32);
+        Result := TStreamWriter.Create(lFileStream, fEncoding, aBufferSize);
         Result.AutoFlush := true;
         Result.OwnStream;
         Break;
@@ -399,7 +493,13 @@ begin
 end;
 
 procedure TLoggerProFileAppender.TearDown;
+var
+  lWriter: TStreamWriter;
 begin
+  for lWriter in fWritersDictionary.Values do
+  begin
+    lWriter.Flush;
+  end;
   fWritersDictionary.Free;
   inherited;
 end;
@@ -439,16 +539,16 @@ begin
 end;
 
 constructor TLoggerProSimpleFileAppender.Create(aMaxBackupFileCount, aMaxFileSizeInKiloByte: Integer;
-  aLogsFolder: string; aFileAppenderOptions: TFileAppenderOptions; aLogFileNameFormat, aLogFormat: string;
+  aLogsFolder: string; aLogFileNameFormat: String;
+  aLogItemRenderer: ILogItemRenderer;
   aEncoding: TEncoding);
 begin
   inherited Create(
     aMaxBackupFileCount,
     aMaxFileSizeInKiloByte,
     aLogsFolder,
-    aFileAppenderOptions,
     aLogFileNameFormat,
-    aLogFormat,
+    aLogItemRenderer,
     aEncoding);
 end;
 
@@ -473,6 +573,7 @@ end;
 
 procedure TLoggerProSimpleFileAppender.TearDown;
 begin
+  fFileWriter.Flush;
   fFileWriter.Free;
   inherited;
 end;
@@ -484,6 +585,163 @@ begin
   begin
     RotateLog;
   end;
+end;
+
+{ TLoggerProFileByFolderAppender }
+
+constructor TLoggerProFileByFolderAppender.Create(
+  aMaxBackupFileCount, aMaxFileSizeInKiloByte: Integer;
+  const aLogsFolder: string;
+  const aLogItemRenderer: ILogItemRenderer;
+  const aEncoding: TEncoding);
+var
+  lEncoding: TEncoding;
+begin
+  if AEncoding = nil then
+    LEncoding := TEncoding.UTF8
+  else
+    LEncoding := AEncoding;
+
+  inherited Create(aMaxBackupFileCount, aMaxFileSizeInKiloByte,
+    aLogsFolder, GetFileFormat, aLogItemRenderer, LEncoding);
+  RefreshCurrentDate;
+end;
+
+procedure TLoggerProFileByFolderAppender.CheckLogFileNameFormat(const ALogFileNameFormat: string);
+begin
+  //do nothing, user cannot change filename format in this appender
+end;
+
+function TLoggerProFileByFolderAppender.GetLogFolder: string;
+const
+  LOG_DIR = 'Logs';
+begin
+  if fLogsFolder.IsEmpty then
+    fLogsFolder := TPath.Combine(TPath.GetDirectoryName({ParamStr(0)} GetModuleName(HInstance)), LOG_DIR)
+  else
+  if not EndsText(LOG_DIR, fLogsFolder) then
+    fLogsFolder := TPath.Combine(FLogsFolder, LOG_DIR);
+  if not TDirectory.Exists(fLogsFolder) then
+    TDirectory.CreateDirectory(fLogsFolder);
+
+  Result := TPath.Combine(fLogsFolder, FormatDateTime('yyyymmdd', Now));
+  if not TDirectory.Exists(Result) then
+    TDirectory.CreateDirectory(Result);
+end;
+
+
+procedure TLoggerProFileByFolderAppender.InternalRotateLog(aMakeFileNameProc: TMakeFileNameProc);
+var
+  lLogFileName: string;
+begin
+  EmitEndRotateLogItem(fFileWriter);
+  FreeAndNil(fFileWriter);
+  aMakeFileNameProc(lLogFileName);
+  fFileWriter := CreateWriter(lLogFileName, 16 * 1024);
+  EmitStartRotateLogItem(fFileWriter);
+end;
+
+procedure TLoggerProFileByFolderAppender.ChangeLogFolder;
+begin
+  InternalRotateLog(
+    procedure(out AFileName: string)
+    begin
+      AFileName := GetLogFileName(EmptyStr, 0);
+    end
+ );
+end;
+
+procedure TLoggerProFileByFolderAppender.RotateLog;
+begin
+  InternalRotateLog(
+    procedure(out AFileName: string)
+    begin
+      RotateFile(EmptyStr, AFileName);
+    end
+ );
+end;
+
+function TLoggerProFileByFolderAppender.GetFileFormat: string;
+begin
+  Result := TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT_WITHOUT_TAG;
+end;
+
+function TLoggerProFileByFolderAppender.GetLogFileName(const ATag: string; const AFileNumber: Integer): string;
+var
+  lOnlyFileName: String;
+begin
+  lOnlyFileName := TPath.GetFileName(inherited);
+  Result := TPath.Combine(GetLogFolder, lOnlyFileName);
+end;
+
+
+procedure TLoggerProFileByFolderAppender.RefreshCurrentDate;
+begin
+  fCurrentDate := Date;
+end;
+
+procedure TLoggerProFileByFolderAppender.Setup;
+begin
+  inherited;
+  RefreshCurrentDate;
+end;
+
+procedure TLoggerProFileByFolderAppender.TearDown;
+begin
+  inherited;
+end;
+
+procedure TLoggerProFileByFolderAppender.WriteLog(const ALogItem: TLogItem);
+begin
+  if not SameDate(fCurrentDate, Date) then
+  begin
+    ChangeLogFolder;
+    RefreshCurrentDate;
+  end;
+
+  WriteToStream(fFileWriter, FormatLog(ALogItem));
+
+  if fFileWriter.BaseStream.Size > fMaxFileSizeInKiloByte * 1024 then
+  begin
+    RotateLog;
+  end;
+end;
+
+{ TLoggerProLogFmtFileAppender }
+
+constructor TLoggerProLogFmtFileAppender.Create(aMaxBackupFileCount, aMaxFileSizeInKiloByte: Integer; aLogsFolder,
+  aLogFileNameFormat: string; aEncoding: TEncoding);
+begin
+  inherited Create(
+    aMaxBackupFileCount,
+    aMaxFileSizeInKiloByte,
+    aLogsFolder,
+    aLogFileNameFormat,
+    TLogItemRendererLogFmt.Create,
+    aEncoding);
+end;
+
+procedure TLoggerProLogFmtFileAppender.EmitEndRotateLogItem(aWriter: TStreamWriter);
+begin
+  // do nothing
+end;
+
+procedure TLoggerProLogFmtFileAppender.EmitStartRotateLogItem(aWriter: TStreamWriter);
+begin
+  // do nothing
+end;
+
+function TLoggerProLogFmtFileAppender.GetLogFileName(const aTag: string; const aFileNumber: Integer): string;
+var
+  lOrigFName, lOrigExt: string;
+begin
+  lOrigFName := inherited;
+  lOrigExt := TPath.GetExtension(lOrigFName);
+  if lOrigExt.IsEmpty then
+  begin
+    lOrigExt := '.log';
+  end;
+  Result := TPath.ChangeExtension(lOrigFName, '.logfmt' + lOrigExt);
 end;
 
 end.

@@ -4,7 +4,6 @@ uses
   Vcl.Forms,
   ESAppenderFormU in 'ESAppenderFormU.pas' {MainForm},
   LoggerProConfig in 'LoggerProConfig.pas',
-  LoggerPro.RESTAppender in '..\..\LoggerPro.RESTAppender.pas',
   LoggerPro.ElasticSearchAppender in '..\..\LoggerPro.ElasticSearchAppender.pas';
 
 {$R *.res}

@@ -1,167 +1,244 @@
 # LoggerPro for Delphi
 
-An modern and pluggable logging framework for Delphi
+![LoggerPro Logo](loggerpro_logo.png)
 
-## Compatibility
+**The modern, async, pluggable logging framework for Delphi.**
 
-LoggerPro is compatibile with
-- Delphi 12 Athens
-- Delphi 11 Alexandria
-- Delphi 10.4 Sydney
-- Delphi 10.3 Rio
-- Delphi 10.2 Tokyo (Added Linux compatibility)
-- Delphi 10.1 Berlin
-- Delphi 10 Seattle
-- Delphi XE8
-- Delphi XE7
-- Delphi XE6
-- Delphi XE5
-- Delphi XE4
-- Delphi XE3
-- Delphi XE2
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Delphi](https://img.shields.io/badge/Delphi-XE2%20to%2013-orange.svg)](https://www.embarcadero.com/products/delphi)
 
-## What's new in 1.5.0 (repo version, beta)
-- Delphi 12 Athens Support
-- FIX https://github.com/danieleteti/loggerpro/issues/72
-- New LogLevel: FATAL (https://github.com/danieleteti/loggerpro/issues/80)
+---
 
-## What's new in 1.4.0 (stable version)
+## Why LoggerPro?
 
-- Improved VCL and FMX visual appenders
-- Appenders can be added and removed programmatically
-- Added packages for latest versions of Delphi
-- Improved algorithm used to handle slow consumers
-- Added [DMSContainer's EventStreams](http://dmscontainer.bittimeprofessionals.com/) Appender
-- Added very basic console appender that assumes is running from console in order to provide simple Linux console logging
-- FIX [Issue 50](https://github.com/danieleteti/loggerpro/issues/50)
-- New filtering log file appender that allows to pick individual tags to be written into a file.
-- FIX [Issue 57](https://github.com/danieleteti/loggerpro/issues/57)
-- FIX [Issue 60](https://github.com/danieleteti/loggerpro/issues/60)
+- **Async by design** - Zero impact on your application performance
+- **20+ built-in appenders** - File, Console, HTTP, Syslog, ElasticSearch, Redis, Database, and more
+- **Cross-platform** - Windows, Linux, macOS, Android, iOS
+- **Thread-safe** - Built for multi-threaded applications
+- **Fluent Builder API** - Clean, readable configuration
 
-## What's new in 1.3.2
+---
 
-- Added support for Android API level 26 in mobile demo
-- Added packages for Delphi 10.3 Rio, Delphi 10.2 Tokyo, Delphi 10.1 Berlin and Delphi 10.0 Seattle.
-- Added packages for Delphi XE7 and Delphi XE8 (these packages do not contain appenders which uses `System.Net.HttpClient`)
-- Added support for Linux in `TLoggerProFileAppender` (Thank you [charoit](https://github.com/charoit))
+## Quick Start
 
-## What's new in 1.3.0
-- Replace `TThreadedList<T>` with a custom implementation (`TThreadSafeQueue<T>`) because of a [bug](https://forums.embarcadero.com/thread.jspa?messageID=941762) and [this](https://quality.embarcadero.com/browse/RSP-19993) in `TMonitor`.
-  - `TThreadSafeQueue<T>` is not a drop-in replacement for the `TThreadedQueue<T>` but can be used in other projects if you are fighting with the same bug.
-- `TVCLMemoLogAppender.Create` gots new parameter: `aClearOnStartup` which optionally clear the memo at the startup.
-- Improvement to the `TLoggerProConsoleAppender` (Thanks to [Fulgan](https://github.com/Fulgan))
-- Improvement to the `TLoggerProFileAppender`; now there is a `OnLogRow` callback that can be used to customize log row format.
-- New overloaded `Log` methods. The `*Fmt` versions are deprecated and will be removed in a future version [ISSUE #17](https://github.com/danieleteti/loggerpro/issues/17)
-- New [NSQ](https://nsq.io) appender (Thanks to [Fulgan](https://github.com/Fulgan))
-- New logger filter decorator (Thanks to [Fulgan](https://github.com/Fulgan))
-- New REST appender with support for extended information (samples for Windows and Android)
-  - Extended information are supported in Windows (fully) and Android (partially)  
-  - In the sample folder is provided also the `RESTLogCollector`
-- New [Elastic Search](https://www.elastic.co/products/elasticsearch) Log appender (Thanks to Salvatore Sparacino)
-
-
-## Getting started
 ```delphi
-program getting_started_console;
-
-{$APPTYPE CONSOLE}
-
 uses
-  System.SysUtils,
-  LoggerPro.GlobalLogger; //this is the global logger, it is perfect to understand the basic operation of LoggerPro.
+  LoggerPro.GlobalLogger;
 
 begin
-  try
-    //the global logger uses a TLoggerProFileAppender, so your logs will be written on a 
-    //set of files with automatic rolling/rotating
-    
-    Log.Debug('Debug message', 'main'); //TLoggerProFileAppender uses the "tag" to select a different log file	
-    Log.Info('Info message', 'main');
-    Log.Warn('Warning message', 'main');
-    Log.Error('Error message', 'errors');
-    WriteLn('Check "getting_started_console.00.main.log" and "getting_started_console.00.errors.log" to see your logs');
-    ReadLn;
-  except
-    on E: Exception do
-      Writeln(E.ClassName, ': ', E.Message);
-  end;
-
+  Log.Info('Application started', 'MAIN');
+  Log.Debug('Processing item %d', [42], 'WORKER');
+  Log.Error('Connection failed', 'DATABASE');
 end.
 ```
 
-The most flexible/correct approach is not much complicated than the global logger one. Check how is simple to create a custom instance of logwriter
+That's it. One line of uses, and you're logging to rotating files.
+
+### Optional Tag (v2.0)
+
+Tag is now optional! If omitted, defaults to `'main'`:
 
 ```delphi
-program getting_started_console_appenders;
+Log.Info('Application started');           // tag = 'main'
+Log.Info('Application started', 'CUSTOM'); // tag = 'CUSTOM'
+```
 
-{$APPTYPE CONSOLE}
+---
 
+## Builder Pattern (v2.0)
+
+Configure your logger with a fluent, Serilog-style API:
+
+```delphi
 uses
-  System.SysUtils,
-  LoggerPro, //LoggerPro core
-  LoggerPro.FileAppender, //File appender
-  LoggerPro.OutputDebugStringAppender; //OutputDebugString appender
+  LoggerPro, LoggerPro.Builder;
 
 var
   Log: ILogWriter;
-
 begin
-  Log := BuildLogWriter([TLoggerProFileAppender.Create,
-    TLoggerProOutputDebugStringAppender.Create]);
-
-  try
-    Log.Debug('Debug message', 'main');
-    Log.Info('Info message', 'main');
-    Log.Warn('Warning message', 'main');
-    Log.Error('Error message', 'errors');
-    WriteLn('Check ');
-    WriteLn('  "getting_started_console.00.main.log"');
-    WriteLn('  "getting_started_console.00.errors.log"');
-
-    if DebugHook <> 0 then //inform the user where his/her logs are
-    begin
-      WriteLn('also, you logs have been sent to the current debugger, check the Delphi''s EventLog window to see them.');
-    end
-    else
-    begin
-      WriteLn('..seems that no debugger is present. The logs can be seen using DebugView.');
-      WriteLn('Download it from here https://technet.microsoft.com/en-us/sysinternals/debugview.aspx');
-      WriteLn('Learn how to use http://tedgustaf.com/blog/2011/5/use-debugview-to-view-debug-output-from-asp-net-web-application/');
-    end;
-    ReadLn;
-  except
-    on E: Exception do
-      WriteLn(E.ClassName, ': ', E.Message);
-  end;
-
+  Log := LoggerProBuilder
+    .WriteToConsole.Done
+    .WriteToFile.Done
+    .WriteToHTTP
+      .WithURL('https://logs.example.com/api')
+      .WithHeader('Authorization', 'Bearer token123')
+      .Done
+    .Build;
 end.
 ```
 
-## Built-in log appenders
-The framework contains the following built-in log appenders
-- File appender (`TLoggerProFileAppender`) (v1.0.0+)
-- Console appender (`TLoggerProConsoleAppender`) (v1.0.0+)
-- OutputDebugString appender (`TLoggerProOutputDebugStringAppender`) (v1.0.0+)
-- VCL Memo appender (`TVCLMemoLogAppender`) (v1.0.0+)
-- VCL ListView appender (`TVCLMemoLogAppender`) -- thanks to [https://github.com/he3p94uu](https://github.com/he3p94uu) (v1.3.0+)
-- Redis Appender with LogsViewer(to aggregate logs from different instances on a single Redis instance) (v1.2.0+)
-- Email appender (to send email as log, very useful for fatal errors) (v1.2.0+)
-- SysLog appender [RFC 5424](https://tools.ietf.org/html/rfc5424) compliant -- thanks to [https://github.com/nurettin](https://github.com/nurettin) (v1.3.0+)
-- [NSQ](https://nsq.io) appender (Thanks to [Fulgan](https://github.com/Fulgan)) (v1.3.0+)
-- Decorator appender (Thanks to [Fulgan](https://github.com/Fulgan)) (v1.3.0+)
+### Custom Default Tag
 
-Next appenders in the development pipeline
-- RESTful Appender (to send logs to a rest endpoint using a specific request format, so that you can implement log server in DelphiMVCFramework, PHP, Java, Python, Node etc)
-- Twitter Appender (to send logs to a Twitter Account)
-- Database appender (to send logs to a database table using FireDAC components -- Thank You Omar Bossoni)
+Configure a custom default tag in the builder:
 
-The log writers and all the appenders are asycnhronous.
+```delphi
+Log := LoggerProBuilder
+  .WithDefaultTag('MYAPP')
+  .WriteToConsole.Done
+  .Build;
 
-**Check the samples to see how to use each appender or even combine different appenders.**
+Log.Info('Started');              // tag = 'MYAPP'
+Log.Info('Request', 'HTTP');      // tag = 'HTTP' (override)
+```
+
+### Sub-Loggers with Default Tag
+
+Create sub-loggers with their own default tag:
+
+```delphi
+var
+  Log, OrderLog, PaymentLog: ILogWriter;
+begin
+  Log := LoggerProBuilder.WriteToConsole.Done.Build;
+
+  OrderLog := Log.WithDefaultTag('ORDERS');
+  PaymentLog := Log.WithDefaultTag('PAYMENTS');
+
+  OrderLog.Info('New order received');    // tag = 'ORDERS'
+  PaymentLog.Info('Payment processed');   // tag = 'PAYMENTS'
+  PaymentLog.Error('Failed', 'STRIPE');   // tag = 'STRIPE' (override)
+end.
+```
+
+---
+
+## Structured Context Logging (v2.0)
+
+Add structured key-value context to your log messages:
+
+### One-shot Context
+
+Pass context directly to log methods (zero overhead when not used):
+
+```delphi
+uses
+  LoggerPro;
+
+begin
+  Log.Info('User logged in', 'AUTH', [
+    LogParam.S('username', 'john'),
+    LogParam.I('user_id', 42),
+    LogParam.B('admin', True)
+  ]);
+
+  Log.Error('Query failed', 'DB', [
+    LogParam.S('query', 'SELECT * FROM users'),
+    LogParam.F('duration_ms', 123.45),
+    LogParam.D('timestamp', Now)
+  ]);
+end.
+```
+
+### Bound Context with WithProperty
+
+Create loggers with fixed context (pre-rendered for performance):
+
+```delphi
+var
+  Log: ILogWriter;
+  DbLog: ILogWriter;
+begin
+  Log := LoggerProBuilder
+    .WriteToFile.Done
+    .WriteToConsole.Done
+    .Build;
+
+  // Create a logger with bound context
+  DbLog := Log
+    .WithProperty('component', 'database')
+    .WithProperty('db_host', 'localhost')
+    .WithProperty('db_port', 5432);
+
+  // All messages include the bound context automatically
+  DbLog.Info('Connection established', 'DB');
+  DbLog.Debug('Query executed', 'DB');
+  DbLog.Error('Connection lost', 'DB');
+end.
+```
+
+### Available LogParam Types
+
+| Method | Type | Example |
+|--------|------|---------|
+| `LogParam.S` | String | `LogParam.S('name', 'value')` |
+| `LogParam.I` | Integer | `LogParam.I('count', 42)` |
+| `LogParam.F` | Float/Double | `LogParam.F('price', 19.99)` |
+| `LogParam.B` | Boolean | `LogParam.B('active', True)` |
+| `LogParam.D` | TDateTime | `LogParam.D('created', Now)` |
+| `LogParam.FmtS` | Formatted String | `LogParam.FmtS('msg', 'Item %d', [5])` |
+| `LogParam.V` | TValue (generic) | `LogParam.V('data', someValue)` |
+
+Context is automatically rendered by all appenders in `key=value` format.
+
+---
+
+## Appenders at a Glance
+
+| Category | Appenders |
+|----------|-----------|
+| **File** | Rotating, Simple, JSONL, Time-based rotation |
+| **Console** | Colored (Win/Linux/macOS), Simple |
+| **Network** | HTTP/REST, Syslog (UDP), Redis, ElasticSearch, NSQ |
+| **Database** | FireDAC, ADO |
+| **Visual** | TMemo, TListView, TListBox |
+| **Utility** | OutputDebugString, Email, Memory buffer, Callback |
+
+---
+
+## Platforms
+
+| OS | Status |
+|----|--------|
+| Windows (32/64-bit) | Full support |
+| Linux | Full support |
+| macOS | Full support |
+| Android | Full support |
+| iOS | Full support |
+
+**Delphi versions:** 13 Florence down to XE2
+
+---
 
 ## Documentation
 
-Documentation is available in the `docs` folder as HTML.
+**Full documentation, tutorials, and examples:**
 
-## Other
-You can install [Delphinus package manager](https://github.com/Memnarch/Delphinus/wiki/Installing-Delphinus) and install LoggerPro as a package there. (Delphinus-Support)
+### https://www.danieleteti.it/loggerpro/
+
+---
+
+## Installation
+
+### Boss (recommended)
+
+```bash
+boss install loggerpro
+```
+
+### Manual
+
+Add the LoggerPro folder to your Library Path.
+
+### Delphinus
+
+Search for "LoggerPro" in the package manager.
+
+---
+
+## Sample Projects
+
+The `samples/` folder contains 25+ working examples covering every appender and use case.
+
+---
+
+## License
+
+Apache License 2.0
+
+## Author
+
+**Daniele Teti** - [danieleteti.it](https://www.danieleteti.it)
+
+---
+
+*Keywords: Delphi logging, Pascal logger, async logging, thread-safe logging, cross-platform Delphi logging, Delphi syslog, Delphi HTTP logging, Delphi JSON logging, FireMonkey logging, VCL logging.*

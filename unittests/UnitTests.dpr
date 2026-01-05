@@ -12,13 +12,21 @@ uses
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
   LoggerProTestU in 'LoggerProTestU.pas',
+  NewAppendersTestU in 'NewAppendersTestU.pas',
   LoggerPro.ConsoleAppender in '..\LoggerPro.ConsoleAppender.pas',
   LoggerPro.FileAppender in '..\LoggerPro.FileAppender.pas',
   LoggerPro.OutputDebugStringAppender in '..\LoggerPro.OutputDebugStringAppender.pas',
   LoggerPro in '..\LoggerPro.pas',
   LoggerPro.VCLMemoAppender in '..\LoggerPro.VCLMemoAppender.pas',
   TestSupportAppendersU in 'TestSupportAppendersU.pas',
-  LoggerPro.GlobalLogger in '..\LoggerPro.GlobalLogger.pas';
+  LoggerPro.GlobalLogger in '..\LoggerPro.GlobalLogger.pas',
+  LoggerPro.MemoryAppender in '..\LoggerPro.MemoryAppender.pas',
+  LoggerPro.CallbackAppender in '..\LoggerPro.CallbackAppender.pas',
+  LoggerPro.TimeRotatingFileAppender in '..\LoggerPro.TimeRotatingFileAppender.pas',
+  LoggerPro.HTTPAppender in '..\LoggerPro.HTTPAppender.pas',
+  LoggerPro.Builder in '..\LoggerPro.Builder.pas',
+  BuilderTestU in 'BuilderTestU.pas',
+  ThreadSafetyTestU in 'ThreadSafetyTestU.pas';
 
 var
   runner : ITestRunner;

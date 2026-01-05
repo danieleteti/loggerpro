@@ -73,15 +73,18 @@ begin
     var
       I: Integer;
       lThreadID: string;
+      lThreadLog: ILogWriter;
     begin
       lThreadID := IntToStr(TThread.Current.ThreadID);
+      // Example using WithProperty for structured context per thread
+      lThreadLog := Log.WithProperty('thread_id', lThreadID);
       for I := 1 to 100 do
       begin
-        Log.Debug('log message %s ThreadID: %s', [TimeToStr(now), lThreadID], 'MULTITHREADING');
-        Log.Info('log message %s ThreadID: %s', [TimeToStr(now), lThreadID], 'MULTITHREADING');
-        Log.Warn('log message %s ThreadID: %s', [TimeToStr(now), lThreadID], 'MULTITHREADING');
-        Log.Error('log message %s ThreadID: %s', [TimeToStr(now), lThreadID], 'MULTITHREADING');
-		Log.Fatal('log message %s ThreadID: %s', [TimeToStr(now), lThreadID], 'MULTITHREADING');		
+        lThreadLog.Debug('log message %s', [TimeToStr(now)], 'MULTITHREADING');
+        lThreadLog.Info('log message %s', [TimeToStr(now)], 'MULTITHREADING');
+        lThreadLog.Warn('log message %s', [TimeToStr(now)], 'MULTITHREADING');
+        lThreadLog.Error('log message %s', [TimeToStr(now)], 'MULTITHREADING');
+        lThreadLog.Fatal('log message %s', [TimeToStr(now)], 'MULTITHREADING');
       end;
     end;
   TThread.CreateAnonymousThread(lThreadProc).Start;

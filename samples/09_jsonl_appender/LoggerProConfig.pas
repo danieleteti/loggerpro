@@ -11,7 +11,10 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.FileAppender, LoggerPro.JSONLFileAppender, System.SysUtils;
+  LoggerPro.FileAppender,
+  LoggerPro.JSONLFileAppender,
+  LoggerPro.Builder,
+  System.SysUtils;
 
 var
   _Log: ILogWriter;
@@ -23,20 +26,35 @@ end;
 
 initialization
 
-//  The TLoggerProFileAppender has its defaults defined as follows:
-//  TLoggerProJSONLFileAppender = '{module}.{number}.{tag}.log';
-//  DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
-//  DEFAULT_MAX_FILE_SIZE_KB = 1000;
+  DefaultLoggerProMainQueueSize := 5;
+  DefaultLoggerProAppenderQueueSize := 5;
 
-// Creates logs in the ..\logs folder without PID in the filename
-_Log := BuildLogWriter([
-  TLoggerProJSONLFileAppender.Create(10, 5, '..\logs', [],
-    { default filename format}
-    //TLoggerProJSONLFileAppender.DEFAULT_FILENAME_FORMAT,
-    { filename format including pid }
-    '{module}.{pid}.{number}.log',
-    TEncoding.UTF8
-    )
-  ]);
+  //  The TLoggerProFileAppender has its defaults defined as follows:
+  //  TLoggerProJSONLFileAppender = '{module}.{number}.{tag}.log';
+  //  DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
+  //  DEFAULT_MAX_FILE_SIZE_KB = 1000;
+
+  // Creates logs in the ..\logs folder without PID in the filename
+  // BuildLogWriter is the classic way to create a log writer.
+  // The modern and recommended approach is to use LoggerProBuilder.
+  //_Log :=
+  //    BuildLogWriter(
+  //        [
+  //            TLoggerProJSONLFileAppender.Create(
+  //                10,
+  //                5,
+  //                '..\logs',
+  //                TLoggerProJSONLFileAppender.DEFAULT_FILENAME_FORMAT,
+  //                TEncoding.UTF8
+  //            )
+  //        ]
+  //    );
+  _Log := LoggerProBuilder
+    .WriteToJSONLFile
+      .WithMaxBackupFiles(10)
+      .WithMaxFileSizeInKB(5)
+      .WithLogsFolder('..\logs')
+      .Done
+    .Build;
 
 end.

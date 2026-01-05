@@ -11,6 +11,7 @@ implementation
 
 uses
   LoggerPro.FileAppender,
+  LoggerPro.Builder,
   System.Net.HttpClient,
   System.SysUtils,
   LoggerPro.ElasticSearchAppender;
@@ -41,21 +42,27 @@ _RESTAppender := TLoggerProElasticSearchAppender.Create('http://localhost', 9200
 {$IF Defined(Android)}
 _RESTAppender := TLoggerProElasticSearchAppender.Create('http://192.168.1.6:8080/api/logs');
 {$ENDIF}
-TLoggerProElasticSearchAppender(_RESTAppender).OnNetSendError :=
-    procedure(const Sender: TObject; const LogItem: TLogItem; const NetError: Exception; var RetryCount: Integer)
+TLoggerProElasticSearchAppender(_RESTAppender).OnSendError :=
+    procedure(const Sender: TObject; const aLogItem: TLogItem; const aException: Exception; var aRetryCount: Integer)
   begin
     // retries to send log for 5 times, then discard the logitem
-    if RetryCount = 5 then
+    if aRetryCount = 5 then
     begin
-      RetryCount := 0
+      aRetryCount := 0
     end
     else
     begin
-      Inc(RetryCount);
+      Inc(aRetryCount);
     end;
   end;
 
-_Log := BuildLogWriter([_RESTAppender, TLoggerProFileAppender.Create], _Events);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([_RESTAppender, TLoggerProFileAppender.Create], _Events);
+_Log := LoggerProBuilder
+  .WriteToAppender(_RESTAppender)
+  .WriteToFile.Done
+  .Build;
 
 finalization
 

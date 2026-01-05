@@ -3,15 +3,16 @@ unit LoggerProConfig;
 interface
 
 uses
-  LoggerPro,
-  LoggerPro.Proxy;
+  LoggerPro;
 
 function Log: ILogWriter;
 
 implementation
 
 uses
-  LoggerPro.FileAppender;
+  LoggerPro.FileAppender,
+  LoggerPro.Builder,
+  LoggerPro.Renderers;
 
 var
   _Log: ILogWriter;
@@ -23,51 +24,43 @@ end;
 
 initialization
 
-{ The TLoggerProFileAppender has its defaults defined as follows:
-  DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
-  DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
-  DEFAULT_MAX_FILE_SIZE_KB = 1000;
+// The TLoggerProFileAppender has its defaults defined as follows:
+//   DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
+//   DEFAULT_MAX_FILE_SIZE_KB = 1000;
+//
+// You can override these defaults using the Builder pattern.
+// Here are some configuration examples:
+//
+// Creates log with default settings:
+//   _Log := LoggerProBuilder
+//     .WriteToFile.Done
+//     .Build;
+//
+// Create logs in the exe's same folder. Backupset = 10, max size for single file 5k:
+//   _Log := LoggerProBuilder
+//     .WriteToFile
+//       .WithMaxBackupFiles(10)
+//       .WithMaxFileSizeInKB(5)
+//       .Done
+//     .Build;
+//
+// Creates logs in the ..\ folder using the NoTag renderer (context is always included).
+// The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file.
 
-  You can override these dafaults passing parameters to the constructor.
-  Here's some configuration examples:
-  @longcode(#
-  // Creates log in the same exe folder without PID in the filename
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-  [TFileAppenderOption.LogsInTheSameFolder])]);
-
-  // Creates log in the AppData/Roaming with PID in the filename
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-  [TFileAppenderOption.IncludePID])]);
-
-  // Creates log in the same folder with PID in the filename
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-  [TFileAppenderOption.IncludePID])]);
-  #)
-}
-
-// Creates logs in the ..\..\ folder without PID in the filename
-// The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file
-_Log := BuildLogWriter([
-  TLoggerProFileAppender.Create(10, 5, '..\..', [],
-    TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT,
-    DEFAULT_LOG_FORMAT),
-
-  TLoggerProFilter.Build(
-    TLoggerProSimpleFileAppender.Create(10, 5, '..\..'),
-    function(ALogItem: TLogItem): boolean
-    begin
-      Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
-    end)
-  ]);
-// Create logs in the exe' same folder
-// _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);
-
-// Creates log in the AppData/Roaming with PID in the filename
-// _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-// [TFileAppenderOption.IncludePID])]);
-
-// Creates log in the same folder with PID in the filename
-// _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-// [TFileAppenderOption.IncludePID])]);
+_Log := LoggerProBuilder
+  .WriteToFile
+    .WithMaxBackupFiles(10)
+    .WithMaxFileSizeInKB(5)
+    .WithLogsFolder('..')
+    .WithRenderer(TLogItemRendererNoTag.Create)
+    .Done
+  .WriteToFilteredAppender(TLoggerProSimpleFileAppender.Create(10, 5, '..\..'))
+    .WithFilter(
+      function(ALogItem: TLogItem): Boolean
+      begin
+        Result := (ALogItem.LogTag = 'TAG1') or (ALogItem.LogTag = 'TAG2');
+      end)
+    .Done
+  .Build;
 
 end.

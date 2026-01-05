@@ -11,7 +11,7 @@ implementation
 
 uses
   WinAPI.Windows, System.SysUtils,
-  LoggerPro.FileAppender;
+  LoggerPro.FileAppender, LoggerPro.Builder;
 
 var
   _Log: ILogWriter;
@@ -66,7 +66,12 @@ initialization
 }
 
 // Creates log in the ..\..\ folder without PID in the filename
-_Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5, '.\logs', [], GetFileNameFormat())]);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5, '.\logs', [], GetFileNameFormat())]);
+_Log := LoggerProBuilder
+  .WriteToAppender(TLoggerProFileAppender.Create(10, 5, '.\logs', GetFileNameFormat()))
+  .Build;
 // Create logs in the exe' same folder
 // _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);
 

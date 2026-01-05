@@ -3,7 +3,7 @@ unit LoggerProTestU;
 interface
 
 uses
-  DUnitX.TestFramework, LoggerPro, LoggerPro.Proxy;
+  DUnitX.TestFramework, LoggerPro, LoggerPro.Proxy, System.SysUtils, System.Rtti;
 
 type
 
@@ -34,12 +34,32 @@ type
 
     [Test]
     procedure TestAddAndDeleteAppenders;
+
+    [Test]
+    [TestCase('Case1_AllPlaceholders', '{timestamp}|{threadid}|{loglevel}|{message}|{tag},2020-03-15 12:30:20:123|    1234|LOGLEVEL|THIS IS THE MESSAGE|THE_TAG')]
+    [TestCase('Case2_WithThreadInMiddle', '{timestamp}[TID {threadid}][{loglevel}]{message}[{tag}],2020-03-15 12:30:20:123[TID     1234][LOGLEVEL]THIS IS THE MESSAGE[THE_TAG]')]
+    procedure TestLogLayoutToLogIndices(const LogLayout, ResultOutput: string);
+
+    // Context Tests
+    [Test]
+    procedure TestLogParamHelpers;
+    [Test]
+    procedure TestTLogItemWithContext;
+    [Test]
+    procedure TestTLogItemHasContext;
+    [Test]
+    procedure TestTLogItemCloneWithContext;
+    [Test]
+    procedure TestLogWriterWithContext;
+    [Test]
+    procedure TestLogWithContextOneShot;
+
   end;
 
 implementation
 
 uses
-  System.SysUtils, TestSupportAppendersU, System.SyncObjs, LoggerPro.OutputDebugStringAppender;
+  TestSupportAppendersU, System.SyncObjs, LoggerPro.OutputDebugStringAppender;
 
 function LogItemAreEquals(A, B: TLogItem): Boolean;
 begin
@@ -80,6 +100,21 @@ begin
   Assert.AreEqual(0, LLogWriter.AppendersCount);
 
   LLogWriter.Debug('Deleted Appenders', 'Appender');
+end;
+
+procedure TLoggerProTest.TestLogLayoutToLogIndices(const LogLayout, ResultOutput: string);
+begin
+  var lWithIndices := LogLayoutByPlaceHoldersToLogLayoutByIndexes(LogLayout, True);
+  var s := Format(
+    lWithIndices,
+    [
+      FormatDateTime('yyyy-mm-dd hh:nn:ss:zzz', encodedate(2020,3,15) + EncodeTime(12,30,20,123)),
+      '1234',
+      'LOGLEVEL',
+      'THIS IS THE MESSAGE',
+      'THE_TAG'
+    ]);
+  Assert.AreEqual(ResultOutput, s);
 end;
 
 procedure TLoggerProTest.TestLogLevel(UseProxy: boolean);
@@ -331,6 +366,228 @@ begin
     Assert.AreEqual(aExpected, lLogItem.LogTypeAsString);
   finally
     lLogItem.Free;
+  end;
+end;
+
+procedure TLoggerProTest.TestLogParamHelpers;
+var
+  lParam: LogParam;
+begin
+  // Test string param
+  lParam := LogParam.S('user', 'john');
+  Assert.AreEqual('user', lParam.Key);
+  Assert.AreEqual('john', lParam.Value.AsString);
+
+  // Test integer param
+  lParam := LogParam.I('count', 42);
+  Assert.AreEqual('count', lParam.Key);
+  Assert.AreEqual(42, lParam.Value.AsInteger);
+
+  // Test boolean param
+  lParam := LogParam.B('active', True);
+  Assert.AreEqual('active', lParam.Key);
+  Assert.AreEqual(True, lParam.Value.AsBoolean);
+
+  // Test float param
+  lParam := LogParam.F('price', 19.99);
+  Assert.AreEqual('price', lParam.Key);
+  Assert.AreEqual(19.99, lParam.Value.AsExtended, 0.001);
+
+  // Test generic value param
+  lParam := LogParam.V('data', TValue.From<string>('test'));
+  Assert.AreEqual('data', lParam.Key);
+  Assert.AreEqual('test', lParam.Value.AsString);
+end;
+
+procedure TLoggerProTest.TestTLogItemWithContext;
+var
+  lLogItem: TLogItem;
+  lContext: LogParams;
+begin
+  SetLength(lContext, 2);
+  lContext[0] := LogParam.S('user', 'john');
+  lContext[1] := LogParam.I('request_id', 123);
+
+  lLogItem := TLogItem.Create(TLogType.Info, 'User login', 'AUTH', lContext);
+  try
+    Assert.AreEqual(TLogType.Info, lLogItem.LogType);
+    Assert.AreEqual('User login', lLogItem.LogMessage);
+    Assert.AreEqual('AUTH', lLogItem.LogTag);
+    Assert.AreEqual(2, Length(lLogItem.Context));
+    Assert.AreEqual('user', lLogItem.Context[0].Key);
+    Assert.AreEqual('john', lLogItem.Context[0].Value.AsString);
+    Assert.AreEqual('request_id', lLogItem.Context[1].Key);
+    Assert.AreEqual(123, lLogItem.Context[1].Value.AsInteger);
+  finally
+    lLogItem.Free;
+  end;
+end;
+
+procedure TLoggerProTest.TestTLogItemHasContext;
+var
+  lLogItemNoContext: TLogItem;
+  lLogItemWithContext: TLogItem;
+begin
+  lLogItemNoContext := TLogItem.Create(TLogType.Info, 'message', 'tag');
+  try
+    Assert.IsFalse(lLogItemNoContext.HasContext, 'LogItem without context should return False');
+  finally
+    lLogItemNoContext.Free;
+  end;
+
+  lLogItemWithContext := TLogItem.Create(TLogType.Info, 'message', 'tag',
+    [LogParam.S('key', 'value')]);
+  try
+    Assert.IsTrue(lLogItemWithContext.HasContext, 'LogItem with context should return True');
+  finally
+    lLogItemWithContext.Free;
+  end;
+end;
+
+procedure TLoggerProTest.TestTLogItemCloneWithContext;
+var
+  lOriginal, lClone: TLogItem;
+  lContext: LogParams;
+begin
+  SetLength(lContext, 2);
+  lContext[0] := LogParam.S('user', 'john');
+  lContext[1] := LogParam.I('count', 5);
+
+  lOriginal := TLogItem.Create(TLogType.Debug, 'test message', 'test_tag', lContext);
+  try
+    lClone := lOriginal.Clone;
+    try
+      Assert.AreEqual(lOriginal.LogType, lClone.LogType);
+      Assert.AreEqual(lOriginal.LogMessage, lClone.LogMessage);
+      Assert.AreEqual(lOriginal.LogTag, lClone.LogTag);
+      Assert.AreEqual(Length(lOriginal.Context), Length(lClone.Context));
+      Assert.AreEqual(lOriginal.Context[0].Key, lClone.Context[0].Key);
+      Assert.AreEqual(lOriginal.Context[0].Value.AsString, lClone.Context[0].Value.AsString);
+      Assert.AreEqual(lOriginal.Context[1].Key, lClone.Context[1].Key);
+      Assert.AreEqual(lOriginal.Context[1].Value.AsInteger, lClone.Context[1].Value.AsInteger);
+    finally
+      lClone.Free;
+    end;
+  finally
+    lOriginal.Free;
+  end;
+end;
+
+procedure TLoggerProTest.TestLogWriterWithContext;
+var
+  lLogWriter: ILogWriter;
+  lLogWriterWithCtx: ILogWriter;
+  lLogItem: TLogItem;
+  lEvent: TEvent;
+  lLock: TObject;
+  lWriteLog: TProc<TLogItem>;
+  lSetup, lTearDown: TProc;
+  Appender: ILogAppender;
+begin
+  lLogItem := nil;
+  lLock := TObject.Create;
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lSetup := procedure begin end;
+    lTearDown := procedure begin end;
+    lWriteLog := procedure(aLogItem: TLogItem)
+      begin
+        TMonitor.Enter(lLock);
+        try
+          FreeAndNil(lLogItem);
+          lLogItem := aLogItem.Clone;
+          lEvent.SetEvent;
+        finally
+          TMonitor.Exit(lLock);
+        end;
+      end;
+
+    Appender := TMyAppender.Create(lSetup, lTearDown, lWriteLog);
+    lLogWriter := BuildLogWriter([Appender]);
+
+    // Test .WithProperty() creates wrapper with bound context
+    lLogWriterWithCtx := lLogWriter.WithProperty('user', 'john').WithProperty('session_id', 12345);
+
+    lEvent.ResetEvent;
+    lLogWriterWithCtx.Info('User action', 'USER');
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Event not signaled');
+
+    Assert.AreEqual('User action', lLogItem.LogMessage);
+    Assert.AreEqual('USER', lLogItem.LogTag);
+    Assert.IsTrue(lLogItem.HasContext);
+    Assert.AreEqual(2, Length(lLogItem.Context));
+    Assert.AreEqual('user', lLogItem.Context[0].Key);
+    Assert.AreEqual('john', lLogItem.Context[0].Value.AsString);
+    Assert.AreEqual('session_id', lLogItem.Context[1].Key);
+    Assert.AreEqual(12345, lLogItem.Context[1].Value.AsInteger);
+
+    lLogWriter := nil;
+  finally
+    lEvent.Free;
+    lLock.Free;
+    FreeAndNil(lLogItem);
+  end;
+end;
+
+procedure TLoggerProTest.TestLogWithContextOneShot;
+var
+  lLogWriter: ILogWriter;
+  lLogItem: TLogItem;
+  lEvent: TEvent;
+  lLock: TObject;
+  lWriteLog: TProc<TLogItem>;
+  lSetup, lTearDown: TProc;
+  Appender: ILogAppender;
+begin
+  lLogItem := nil;
+  lLock := TObject.Create;
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lSetup := procedure begin end;
+    lTearDown := procedure begin end;
+    lWriteLog := procedure(aLogItem: TLogItem)
+      begin
+        TMonitor.Enter(lLock);
+        try
+          FreeAndNil(lLogItem);
+          lLogItem := aLogItem.Clone;
+          lEvent.SetEvent;
+        finally
+          TMonitor.Exit(lLock);
+        end;
+      end;
+
+    Appender := TMyAppender.Create(lSetup, lTearDown, lWriteLog);
+    lLogWriter := BuildLogWriter([Appender]);
+
+    // Test one-shot context with array of LogParam
+    lEvent.ResetEvent;
+    lLogWriter.Info('Order placed', 'ORDERS', [
+      LogParam.S('customer', 'alice'),
+      LogParam.I('order_id', 9876),
+      LogParam.F('amount', 149.99),
+      LogParam.B('express', True)
+    ]);
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Event not signaled');
+
+    Assert.AreEqual('Order placed', lLogItem.LogMessage);
+    Assert.AreEqual('ORDERS', lLogItem.LogTag);
+    Assert.IsTrue(lLogItem.HasContext);
+    Assert.AreEqual(4, Length(lLogItem.Context));
+    Assert.AreEqual('customer', lLogItem.Context[0].Key);
+    Assert.AreEqual('alice', lLogItem.Context[0].Value.AsString);
+    Assert.AreEqual('order_id', lLogItem.Context[1].Key);
+    Assert.AreEqual(9876, lLogItem.Context[1].Value.AsInteger);
+    Assert.AreEqual('amount', lLogItem.Context[2].Key);
+    Assert.AreEqual(149.99, lLogItem.Context[2].Value.AsExtended, 0.01);
+    Assert.AreEqual('express', lLogItem.Context[3].Key);
+    Assert.AreEqual(True, lLogItem.Context[3].Value.AsBoolean);
+
+    lLogWriter := nil;
+  finally
+    lEvent.Free;
+    lLock.Free;
+    FreeAndNil(lLogItem);
   end;
 end;
 

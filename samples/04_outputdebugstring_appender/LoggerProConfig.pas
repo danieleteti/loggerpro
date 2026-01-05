@@ -10,7 +10,7 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.OutputDebugStringAppender;
+  LoggerPro.OutputDebugStringAppender, LoggerPro.Builder;
 
 var
   _Log: ILogWriter;
@@ -22,6 +22,11 @@ end;
 
 initialization
 
-_Log := BuildLogWriter([TLoggerProOutputDebugStringAppender.Create])
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([TLoggerProOutputDebugStringAppender.Create])
+_Log := LoggerProBuilder
+  .WriteToOutputDebugString.Done
+  .Build;
 
 end.

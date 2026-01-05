@@ -11,6 +11,7 @@ implementation
 
 uses
   LoggerPro.FileAppender,
+  LoggerPro.Builder,
   System.SysUtils;
 
 var
@@ -50,7 +51,12 @@ TLoggerProFileAppender(_FileAppender).OnLogRow := procedure(const aLogItem: TLog
   begin
     aLogRow := Format(_CustomLogFormat, [datetimetostr(aLogItem.TimeStamp, _FormatSettings), aLogItem.LogMessage]);
   end;
-_Log := BuildLogWriter([_FileAppender]);
+// BuildLogWriter is the classic way to create a log writer.
+// The modern and recommended approach is to use LoggerProBuilder.
+//_Log := BuildLogWriter([_FileAppender]);
+_Log := LoggerProBuilder
+  .WriteToAppender(_FileAppender)
+  .Build;
 // Create logs in the exe' same folder
 // _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);
 

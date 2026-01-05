@@ -12,7 +12,8 @@ implementation
 uses
   LoggerPro.FileAppender,
   LoggerPro.ConsoleAppender,
-  LoggerPro.OutputDebugStringAppender;
+  LoggerPro.OutputDebugStringAppender,
+  LoggerPro.Builder;
 
 var
   _Log: ILogWriter;
@@ -24,13 +25,17 @@ end;
 
 procedure SetupLogger;
 begin
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create,
-    TLoggerProConsoleAppender.Create,
-    TLoggerProOutputDebugStringAppender.Create]);
-  // only errors on console
-  _Log.Appenders[1].SetLogLevel(TLogType.Error);
-  // only warnings or errors on outputdebugstring
-  _Log.Appenders[2].SetLogLevel(TLogType.Warning);
+  // BuildLogWriter is the classic way to create a log writer.
+  // The modern and recommended approach is to use LoggerProBuilder.
+  //_Log := BuildLogWriter([
+  //  TLoggerProFileAppender.Create,
+  //  TLoggerProConsoleAppender.Create,
+  //  TLoggerProOutputDebugStringAppender.Create], nil, [TLogType.Debug, TLogType.Error, TLogType.Warning]);
+  _Log := LoggerProBuilder
+    .WriteToFile.Done
+    .WriteToConsole.Done
+    .WriteToOutputDebugString.Done
+    .Build;
 end;
 
 initialization

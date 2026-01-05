@@ -28,7 +28,7 @@ var
 implementation
 
 uses
-  LoggerPro.VCLMemoAppender, LoggerProConfig;
+  LoggerPro.VCLMemoAppender, LoggerPro.Builder, LoggerProConfig;
 
 {$R *.dfm}
 
@@ -47,8 +47,14 @@ end;
 
 procedure TMultipleLoggersForm.FormCreate(Sender: TObject);
 begin
-  FLogWriter := BuildLogWriter([TVCLMemoLogAppender.Create(Memo1)], nil,
-    TLogType.Info);
+  // BuildLogWriter is the classic way to create a log writer.
+  // The modern and recommended approach is to use LoggerProBuilder.
+  //FLogWriter := BuildLogWriter([TVCLMemoLogAppender.Create(Memo1)], nil,
+  //  TLogType.Info);
+  FLogWriter := LoggerProBuilder
+    .WithDefaultLogLevel(TLogType.Info)
+    .WriteToVCLMemo(Memo1).Done
+    .Build;
   FLogWriter.Info('Local log correctly initialized', 'tag');
 end;
 

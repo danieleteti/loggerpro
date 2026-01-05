@@ -3,14 +3,14 @@ unit LoggerProConfig;
 interface
 
 uses
-  LoggerPro;
+  LoggerPro, LoggerPro.Renderers;
 
 function Log: ILogWriter;
 
 implementation
 
 uses
-  LoggerPro.ConsoleAppender, Winapi.Windows;
+  LoggerPro.ConsoleAppender, LoggerPro.Builder;
 
 var
   _Log: ILogWriter;
@@ -22,8 +22,15 @@ end;
 
 initialization
 
-_Log := BuildLogWriter([TLoggerProConsoleAppender.Create]);
-if not IsConsole then
-  AllocConsole;
+// BuildLogWriter is the classic way to create a log writer.
+//_Log := BuildLogWriter([TLoggerProConsoleAppender.Create]);
+
+// The modern and recommended approach is to use LoggerProBuilder.
+_Log := LoggerProBuilder
+  .WithDefaultRenderer(TLogItemRendererNoTag.Create)
+  .WriteToConsole
+    .WithLogLevel(TLogType.Debug)
+    .Done
+  .Build;
 
 end.
