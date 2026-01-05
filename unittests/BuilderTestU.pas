@@ -39,6 +39,8 @@ type
     [Test]
     procedure TestWithDefaultLogLevel;
     [Test]
+    procedure TestWithMinimumLevel;
+    [Test]
     procedure TestWithDefaultTag;
     [Test]
     procedure TestWithDefaultTagOverride;
@@ -256,6 +258,42 @@ begin
     .Build;
 
   Assert.IsNotNull(lLog, 'Logger should be created with default log level');
+end;
+
+procedure TLoggerProBuilderTest.TestWithMinimumLevel;
+var
+  lLog: ILogWriter;
+  lMessageCount: Integer;
+  lEvent: TEvent;
+begin
+  lMessageCount := 0;
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WithMinimumLevel(TLogType.Warning)  // Only Warning, Error, Fatal
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            Inc(lMessageCount);
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build;
+
+    // These should be filtered out (below minimum level)
+    lLog.Debug('Debug message', 'TEST');
+    lLog.Info('Info message', 'TEST');
+
+    // These should be logged (at or above minimum level)
+    lLog.Warn('Warning message', 'TEST');
+
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked for Warning');
+    Assert.AreEqual(1, lMessageCount, 'Only Warning message should be logged (Debug and Info filtered out)');
+  finally
+    lLog := nil;
+    lEvent.Free;
+  end;
 end;
 
 procedure TLoggerProBuilderTest.TestWithDefaultTag;

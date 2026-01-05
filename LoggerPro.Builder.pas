@@ -237,6 +237,7 @@ type
 
     // Global configuration
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
+    function WithMinimumLevel(aLevel: TLogType): ILoggerProBuilder;
     function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
     function WithDefaultTag(const aTag: string): ILoggerProBuilder;
     function WithStackTraceFormatter(aFormatter: TStackTraceFormatter): ILoggerProBuilder;
@@ -535,6 +536,8 @@ type
   private
     FAppenders: TList<ILogAppender>;
     FDefaultLogLevel: TLogType;
+    FMinimumLevel: TLogType;
+    FMinimumLevelSet: Boolean;
     FDefaultRenderer: ILogItemRenderer;
     FDefaultTag: string;
     FStackTraceFormatter: TStackTraceFormatter;
@@ -569,6 +572,7 @@ type
     function WriteToAppender(aAppender: ILogAppender): ILoggerProBuilder;
     // Global configuration
     function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
+    function WithMinimumLevel(aLevel: TLogType): ILoggerProBuilder;
     function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
     function WithDefaultTag(const aTag: string): ILoggerProBuilder;
     function WithStackTraceFormatter(aFormatter: TStackTraceFormatter): ILoggerProBuilder;
@@ -610,6 +614,7 @@ begin
   inherited Create;
   FAppenders := TList<ILogAppender>.Create;
   FDefaultLogLevel := TLogType.Debug;
+  FMinimumLevelSet := False;
 end;
 
 destructor TLoggerProBuilder.Destroy;
@@ -734,6 +739,13 @@ begin
   Result := Self;
 end;
 
+function TLoggerProBuilder.WithMinimumLevel(aLevel: TLogType): ILoggerProBuilder;
+begin
+  FMinimumLevel := aLevel;
+  FMinimumLevelSet := True;
+  Result := Self;
+end;
+
 function TLoggerProBuilder.WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
 begin
   FDefaultRenderer := aRenderer;
@@ -771,13 +783,15 @@ begin
     lAppendersArray[I] := FAppenders[I];
 
   Result := BuildLogWriter(lAppendersArray);
+  lLogWriter := Result as TCustomLogWriter;
+
+  // Set minimum log level if configured
+  if FMinimumLevelSet then
+    lLogWriter.MinimumLevel := FMinimumLevel;
 
   // Set stack trace formatter if configured
   if Assigned(FStackTraceFormatter) then
-  begin
-    lLogWriter := Result as TCustomLogWriter;
     lLogWriter.StackTraceFormatter := FStackTraceFormatter;
-  end;
 
   // Wrap with default tag if configured
   if not FDefaultTag.IsEmpty then

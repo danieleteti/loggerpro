@@ -353,6 +353,7 @@ type
     procedure Enable; virtual;
 
     property StackTraceFormatter: TStackTraceFormatter read FStackTraceFormatter write FStackTraceFormatter;
+    property MinimumLevel: TLogType read FLogLevel write FLogLevel;
   end;
 
   TLogWriter = class(TCustomLogWriter, ILogWriter)
