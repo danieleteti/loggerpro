@@ -8,7 +8,8 @@ uses
   LoggerPro.Builder,
   System.SysUtils,
   System.Classes,
-  System.SyncObjs;
+  System.SyncObjs,
+  System.Rtti;
 
 type
   [TestFixture]
@@ -175,5 +176,8 @@ begin
 
   Assert.Pass('Rapid create/destroy cycles completed without issues');
 end;
+
+initialization
+  TDUnitX.RegisterTestFixture(TThreadSafetyTest);
 
 end.
