@@ -10,6 +10,8 @@ function Log: ILogWriter;
 implementation
 
 uses
+  System.SysUtils,
+  System.IOUtils,
   LoggerPro.FileAppender,
   LoggerPro.ConsoleAppender,
   LoggerPro.Builder;
@@ -31,8 +33,10 @@ initialization
 //  TLoggerProSimpleConsoleAppender.Create
 //]);
 _Log := LoggerProBuilder
-  .WriteToFile.Done
-  .WriteToSimpleConsole.Done  // All renderers now include context
+  .WriteToFile
+    .WithLogsFolder(TPath.Combine(ExtractFilePath(ParamStr(0)), 'logs'))
+    .Done
+  .WriteToSimpleConsole.Done
   .Build;
 
 finalization

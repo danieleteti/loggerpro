@@ -50,7 +50,6 @@ contains
   LoggerPro.NSQAppender in '..\..\LoggerPro.NSQAppender.pas',
   LoggerPro.OutputDebugStringAppender in '..\..\LoggerPro.OutputDebugStringAppender.pas',
   LoggerPro.Proxy in '..\..\LoggerPro.Proxy.pas',
-  LoggerPro.RedisAppender in '..\..\LoggerPro.RedisAppender.pas',
   LoggerPro.Renderers in '..\..\LoggerPro.Renderers.pas',
   LoggerPro.TimeRotatingFileAppender in '..\..\LoggerPro.TimeRotatingFileAppender.pas',
   LoggerPro.UDPSyslogAppender in '..\..\LoggerPro.UDPSyslogAppender.pas',

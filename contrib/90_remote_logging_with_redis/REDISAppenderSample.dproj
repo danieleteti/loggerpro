@@ -110,7 +110,7 @@
             <Form>MainForm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="..\..\LoggerPro.RedisAppender.pas"/>
+        <DCCReference Include="..\LoggerPro.RedisAppender.pas"/>
         <DCCReference Include="LoggerProConfig.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

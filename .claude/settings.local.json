@@ -50,7 +50,22 @@
       "Bash(C:/DEV/loggerpro/samples/160_console/build.bat)",
       "Bash(C:/DEV/loggerpro/build_all_samples.bat)",
       "Bash(C:/DEV/loggerpro/samples/09_jsonl_appender/build.bat)",
-      "Bash(del /q C:DEVloggerprobuild_all_samples.bat C:DEVloggerprosamples09_jsonl_appenderbuild.bat)"
+      "Bash(del /q C:DEVloggerprobuild_all_samples.bat C:DEVloggerprosamples09_jsonl_appenderbuild.bat)",
+      "Bash(cmd.exe //c \"call \"\"C:\\\\Program Files \\(x86\\)\\\\Embarcadero\\\\Studio\\\\37.0\\\\bin\\\\rsvars.bat\"\" && msbuild \"\"C:\\\\DEV\\\\loggerpro\\\\samples\\\\160_console\\\\console_logger.dproj\"\" /t:Build /p:Config=Debug /p:Platform=Win32 /v:minimal\")",
+      "Bash(cmd.exe //c \"C:\\\\DEV\\\\loggerpro\\\\copy_to_dmvcframework.bat\")",
+      "Bash(cmd.exe //c \"del /q C:\\\\DEV\\\\dmvcframework\\\\lib\\\\loggerpro\\\\*.dcu\")",
+      "Bash(cmd.exe //c \"cd /d C:\\\\DEV\\\\dmvcframework && build_tests.bat\")",
+      "Bash(cmd.exe //c \"C:\\\\DEV\\\\dmvcframework\\\\build_tests.bat\")",
+      "Bash(cmd.exe //c \"call \"\"C:\\\\Program Files \\(x86\\)\\\\Embarcadero\\\\Studio\\\\37.0\\\\bin\\\\rsvars.bat\"\" && msbuild \"\"C:\\\\DEV\\\\dmvcframework\\\\unittests\\\\general\\\\TestClient\\\\DMVCFrameworkTests.dproj\"\" /p:Config=CI /p:Platform=Win32 /v:minimal\")",
+      "Bash(cmd.exe //c \"call \"\"C:\\\\Program Files \\(x86\\)\\\\Embarcadero\\\\Studio\\\\37.0\\\\bin\\\\rsvars.bat\"\" && msbuild \"\"C:\\\\DEV\\\\dmvcframework\\\\packages\\\\d130\\\\dmvcframeworkRT.dproj\"\" /t:Build /p:Config=Debug /p:Platform=Win32 /v:minimal\")",
+      "Bash(C:/DEV/dmvcframework/build_package.bat)",
+      "Bash(del:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(C:/DEV/dmvcframework/samples/Logger/build.bat)",
+      "Bash(C:/DEV/dmvcframework/samples/Logger/Win32/Debug/LoggerSample.exe)",
+      "Bash(C:/DEV/dmvcframework/samples/Logger/bin/LoggerSample.exe)",
+      "Bash(C:/DEV/dmvcframework/samples/custom_logger/build.bat)",
+      "Bash(C:/DEV/loggerpro/copy_to_dmvcframework.bat)"
     ],
     "deny": [],
     "ask": []

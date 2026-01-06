@@ -3,7 +3,7 @@ program REDISAppenderSample;
 uses
   Vcl.Forms,
   RedisAppenderFormU in 'RedisAppenderFormU.pas' {MainForm},
-  LoggerPro.RedisAppender in '..\..\LoggerPro.RedisAppender.pas',
+  LoggerPro.RedisAppender in '..\LoggerPro.RedisAppender.pas',
   LoggerProConfig in 'LoggerProConfig.pas';
 
 {$R *.res}
