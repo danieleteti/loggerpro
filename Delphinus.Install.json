@@ -1,25 +1,29 @@
 {
-  "search_pathes": [{
-    "pathes": ".",
+  "search_paths": [{
+    "paths": ".",
+    "platforms": "Win32;Win64"
+  },
+  {
+    "paths": "contrib",
     "platforms": "Win32;Win64"
   }],
-  "browsing_pathes": [{
-    "pathes": ".",
+  "browsing_paths": [{
+    "paths": ".",
+    "platforms": "Win32;Win64"
+  },
+  {
+    "paths": "contrib",
     "platforms": "Win32;Win64"
   }],
   "source_folders": [{
     "folder": "."
   },
   {
-    "folder": "docs",
+    "folder": "contrib",
     "recursive": true
   },
   {
     "folder": "samples",
-    "recursive": true
-  },
-  {
-    "folder": "unittests",
     "recursive": true
   }]
 }

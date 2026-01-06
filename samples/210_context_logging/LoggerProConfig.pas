@@ -36,7 +36,7 @@ _Log := LoggerProBuilder
   // JSONL appender - context is included as a nested JSON object
   // Great for log aggregation tools (ELK, Splunk, etc.)
   .WriteToJSONLFile
-    .WithFileNameFormat('context_logging')
+    .WithFileBaseName('context_logging')
     .WithMaxBackupFiles(5)
     .WithMaxFileSizeInKB(1000)
     .Done

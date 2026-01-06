@@ -1,244 +1,135 @@
 # LoggerPro for Delphi
 
-![LoggerPro Logo](loggerpro_logo.png)
+<p align="center">
+  <img src="loggerpro_logo.png" alt="LoggerPro Logo" width="300"/>
+</p>
 
-**The modern, async, pluggable logging framework for Delphi.**
+<h3 align="center">The Modern, Async, Pluggable Logging Framework for Delphi</h3>
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Delphi](https://img.shields.io/badge/Delphi-XE2%20to%2013-orange.svg)](https://www.embarcadero.com/products/delphi)
-
----
-
-## Why LoggerPro?
-
-- **Async by design** - Zero impact on your application performance
-- **20+ built-in appenders** - File, Console, HTTP, Syslog, ElasticSearch, Redis, Database, and more
-- **Cross-platform** - Windows, Linux, macOS, Android, iOS
-- **Thread-safe** - Built for multi-threaded applications
-- **Fluent Builder API** - Clean, readable configuration
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
+  <a href="https://www.embarcadero.com/products/delphi"><img src="https://img.shields.io/badge/Delphi-10%20to%2013-orange.svg" alt="Delphi"></a>
+  <a href="https://www.danieleteti.it/loggerpro/"><img src="https://img.shields.io/badge/docs-danieleteti.it-green.svg" alt="Documentation"></a>
+</p>
 
 ---
 
-## Quick Start
+## Why Developers Love LoggerPro
+
+**LoggerPro** is the most complete and battle-tested logging framework for Delphi. Used in thousands of production applications worldwide, it provides everything you need for professional-grade logging.
+
+### Key Features
+
+- **Async by Design** - Non-blocking logging with zero impact on application performance
+- **20+ Built-in Appenders** - File, Console, HTTP, Syslog, ElasticSearch, Database, Email, and many more
+- **Cross-Platform** - Windows, Linux, macOS, Android, iOS - write once, log everywhere
+- **Thread-Safe** - Built from the ground up for multi-threaded applications
+- **Fluent Builder API** - Clean, readable, Serilog-style configuration
+- **Structured Logging** - First-class support for key-value context in log messages
+- **Production Ready** - Stable, maintained, and continuously improved since 2010
+
+---
+
+## Quick Taste
 
 ```delphi
 uses
   LoggerPro.GlobalLogger;
 
 begin
-  Log.Info('Application started', 'MAIN');
+  Log.Info('Application started');
   Log.Debug('Processing item %d', [42], 'WORKER');
   Log.Error('Connection failed', 'DATABASE');
 end.
 ```
 
-That's it. One line of uses, and you're logging to rotating files.
+One line of `uses`, and you're logging to rotating files. It's that simple.
 
-### Optional Tag (v2.0)
-
-Tag is now optional! If omitted, defaults to `'main'`:
-
-```delphi
-Log.Info('Application started');           // tag = 'main'
-Log.Info('Application started', 'CUSTOM'); // tag = 'CUSTOM'
-```
-
----
-
-## Builder Pattern (v2.0)
-
-Configure your logger with a fluent, Serilog-style API:
-
-```delphi
-uses
-  LoggerPro, LoggerPro.Builder;
-
-var
-  Log: ILogWriter;
-begin
-  Log := LoggerProBuilder
-    .WriteToConsole.Done
-    .WriteToFile.Done
-    .WriteToHTTP
-      .WithURL('https://logs.example.com/api')
-      .WithHeader('Authorization', 'Bearer token123')
-      .Done
-    .Build;
-end.
-```
-
-### Custom Default Tag
-
-Configure a custom default tag in the builder:
+### Builder API (v2.0)
 
 ```delphi
 Log := LoggerProBuilder
   .WithDefaultTag('MYAPP')
+  .WriteToFile
+    .WithLogsFolder('logs')
+    .Done
   .WriteToConsole.Done
+  .WriteToHTTP
+    .WithURL('https://logs.example.com/api')
+    .Done
   .Build;
-
-Log.Info('Started');              // tag = 'MYAPP'
-Log.Info('Request', 'HTTP');      // tag = 'HTTP' (override)
 ```
 
-### Sub-Loggers with Default Tag
-
-Create sub-loggers with their own default tag:
+### Structured Context Logging
 
 ```delphi
-var
-  Log, OrderLog, PaymentLog: ILogWriter;
-begin
-  Log := LoggerProBuilder.WriteToConsole.Done.Build;
-
-  OrderLog := Log.WithDefaultTag('ORDERS');
-  PaymentLog := Log.WithDefaultTag('PAYMENTS');
-
-  OrderLog.Info('New order received');    // tag = 'ORDERS'
-  PaymentLog.Info('Payment processed');   // tag = 'PAYMENTS'
-  PaymentLog.Error('Failed', 'STRIPE');   // tag = 'STRIPE' (override)
-end.
+Log.Info('Order completed', 'ORDERS', [
+  LogParam.I('order_id', 12345),
+  LogParam.S('customer', 'John Doe'),
+  LogParam.F('total', 299.99)
+]);
 ```
 
 ---
 
-## Structured Context Logging (v2.0)
+## Full Documentation
 
-Add structured key-value context to your log messages:
+For complete documentation, tutorials, advanced examples, and best practices:
 
-### One-shot Context
-
-Pass context directly to log methods (zero overhead when not used):
-
-```delphi
-uses
-  LoggerPro;
-
-begin
-  Log.Info('User logged in', 'AUTH', [
-    LogParam.S('username', 'john'),
-    LogParam.I('user_id', 42),
-    LogParam.B('admin', True)
-  ]);
-
-  Log.Error('Query failed', 'DB', [
-    LogParam.S('query', 'SELECT * FROM users'),
-    LogParam.F('duration_ms', 123.45),
-    LogParam.D('timestamp', Now)
-  ]);
-end.
-```
-
-### Bound Context with WithProperty
-
-Create loggers with fixed context (pre-rendered for performance):
-
-```delphi
-var
-  Log: ILogWriter;
-  DbLog: ILogWriter;
-begin
-  Log := LoggerProBuilder
-    .WriteToFile.Done
-    .WriteToConsole.Done
-    .Build;
-
-  // Create a logger with bound context
-  DbLog := Log
-    .WithProperty('component', 'database')
-    .WithProperty('db_host', 'localhost')
-    .WithProperty('db_port', 5432);
-
-  // All messages include the bound context automatically
-  DbLog.Info('Connection established', 'DB');
-  DbLog.Debug('Query executed', 'DB');
-  DbLog.Error('Connection lost', 'DB');
-end.
-```
-
-### Available LogParam Types
-
-| Method | Type | Example |
-|--------|------|---------|
-| `LogParam.S` | String | `LogParam.S('name', 'value')` |
-| `LogParam.I` | Integer | `LogParam.I('count', 42)` |
-| `LogParam.F` | Float/Double | `LogParam.F('price', 19.99)` |
-| `LogParam.B` | Boolean | `LogParam.B('active', True)` |
-| `LogParam.D` | TDateTime | `LogParam.D('created', Now)` |
-| `LogParam.FmtS` | Formatted String | `LogParam.FmtS('msg', 'Item %d', [5])` |
-| `LogParam.V` | TValue (generic) | `LogParam.V('data', someValue)` |
-
-Context is automatically rendered by all appenders in `key=value` format.
-
----
-
-## Appenders at a Glance
-
-| Category | Appenders |
-|----------|-----------|
-| **File** | Rotating, Simple, JSONL, Time-based rotation |
-| **Console** | Colored (Win/Linux/macOS), Simple |
-| **Network** | HTTP/REST, Syslog (UDP), Redis, ElasticSearch, NSQ |
-| **Database** | FireDAC, ADO |
-| **Visual** | TMemo, TListView, TListBox |
-| **Utility** | OutputDebugString, Email, Memory buffer, Callback |
-
----
-
-## Platforms
-
-| OS | Status |
-|----|--------|
-| Windows (32/64-bit) | Full support |
-| Linux | Full support |
-| macOS | Full support |
-| Android | Full support |
-| iOS | Full support |
-
-**Delphi versions:** 13 Florence down to XE2
-
----
-
-## Documentation
-
-**Full documentation, tutorials, and examples:**
-
-### https://www.danieleteti.it/loggerpro/
+<h2 align="center">
+  <a href="https://www.danieleteti.it/loggerpro/">https://www.danieleteti.it/loggerpro/</a>
+</h2>
 
 ---
 
 ## Installation
 
-### Boss (recommended)
-
-```bash
-boss install loggerpro
-```
-
 ### Manual
 
-Add the LoggerPro folder to your Library Path.
+Add the LoggerPro source folder to your Delphi Library Path.
 
 ### Delphinus
 
-Search for "LoggerPro" in the package manager.
+Search for "LoggerPro" in the Delphinus package manager.
+
+---
+
+## Supported Platforms
+
+| Platform | Status |
+|----------|--------|
+| Windows (32/64-bit) | Full Support |
+| Linux | Full Support |
+| macOS | Full Support |
+| Android | Full Support |
+| iOS | Full Support |
+
+**Delphi Versions:** 13 Florence, 12 Athens, 11 Alexandria, 10.4 Sydney, 10.3 Rio, 10.2 Tokyo, 10.1 Berlin, 10 Seattle
 
 ---
 
 ## Sample Projects
 
-The `samples/` folder contains 25+ working examples covering every appender and use case.
+The `samples/` folder contains **25+ working examples** covering every appender and use case. The best way to learn LoggerPro is by exploring these samples.
 
 ---
 
 ## License
 
-Apache License 2.0
-
-## Author
-
-**Daniele Teti** - [danieleteti.it](https://www.danieleteti.it)
+Apache License 2.0 - Use it freely in personal and commercial projects.
 
 ---
 
-*Keywords: Delphi logging, Pascal logger, async logging, thread-safe logging, cross-platform Delphi logging, Delphi syslog, Delphi HTTP logging, Delphi JSON logging, FireMonkey logging, VCL logging.*
+## Author
+
+**Daniele Teti**
+
+- Blog: [danieleteti.it](https://www.danieleteti.it)
+- LoggerPro Docs: [danieleteti.it/loggerpro](https://www.danieleteti.it/loggerpro/)
+- Twitter/X: [@danieleteti](https://twitter.com/danieleteti)
+
+---
+
+<p align="center">
+  <b>LoggerPro - Professional Logging for Professional Delphi Developers</b>
+</p>
