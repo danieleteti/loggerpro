@@ -54,6 +54,14 @@ type
     procedure TestLogExceptionWithStackTraceFormatter;
     [Test]
     procedure TestLogExceptionWithMessageAndTag;
+{$IF Defined(MSWINDOWS)}
+    [Test]
+    procedure TestWriteToWindowsEventLog;
+    [Test]
+    procedure TestWriteToWindowsEventLogWithSourceName;
+    [Test]
+    procedure TestWriteToWindowsEventLogWithLogLevel;
+{$ENDIF}
   end;
 
 implementation
@@ -64,7 +72,11 @@ uses
   LoggerPro.MemoryAppender,
   LoggerPro.CallbackAppender,
   LoggerPro.TimeRotatingFileAppender,
-  LoggerPro.HTTPAppender;
+  LoggerPro.HTTPAppender
+{$IF Defined(MSWINDOWS)}
+  , LoggerPro.WindowsEventLogAppender
+{$ENDIF}
+  ;
 
 { TLoggerProBuilderTest }
 
@@ -536,6 +548,50 @@ begin
     lEvent.Free;
   end;
 end;
+
+{$IF Defined(MSWINDOWS)}
+procedure TLoggerProBuilderTest.TestWriteToWindowsEventLog;
+var
+  lLog: ILogWriter;
+begin
+  // Test that logger can be created with Windows Event Log appender
+  // Note: Actually writing to Windows Event Log requires admin privileges,
+  // so we only test that the appender can be configured
+  lLog := LoggerProBuilder
+    .WriteToWindowsEventLog
+      .Done
+    .Build;
+
+  Assert.IsNotNull(lLog, 'Logger should be created with Windows Event Log appender');
+end;
+
+procedure TLoggerProBuilderTest.TestWriteToWindowsEventLogWithSourceName;
+var
+  lLog: ILogWriter;
+begin
+  lLog := LoggerProBuilder
+    .WriteToWindowsEventLog
+      .WithSourceName('LoggerProTest')
+      .Done
+    .Build;
+
+  Assert.IsNotNull(lLog, 'Logger should be created with custom source name');
+end;
+
+procedure TLoggerProBuilderTest.TestWriteToWindowsEventLogWithLogLevel;
+var
+  lLog: ILogWriter;
+begin
+  lLog := LoggerProBuilder
+    .WriteToWindowsEventLog
+      .WithSourceName('LoggerProTest')
+      .WithLogLevel(TLogType.Warning)
+      .Done
+    .Build;
+
+  Assert.IsNotNull(lLog, 'Logger should be created with log level');
+end;
+{$ENDIF}
 
 initialization
   TDUnitX.RegisterTestFixture(TLoggerProBuilderTest);

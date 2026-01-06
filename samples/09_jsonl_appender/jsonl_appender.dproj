@@ -7,7 +7,7 @@
         <TargetedPlatforms>32897</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
-        <ProjectVersion>20.2</ProjectVersion>
+        <ProjectVersion>20.3</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <ProjectName Condition="'$(ProjectName)'==''">jsonl_appender</ProjectName>
     </PropertyGroup>
@@ -129,9 +129,7 @@
         <DCCReference Include="..\..\LoggerPro.JSONLFileAppender.pas"/>
         <DCCReference Include="..\..\LoggerPro.FileAppender.pas"/>
         <DCCReference Include="..\..\LoggerPro.pas"/>
-        <DCCReference Include="..\..\LoggerPro.Builder.pas"/>
         <DCCReference Include="..\..\LoggerPro.Renderers.pas"/>
-        <DCCReference Include="..\..\ThreadSafeQueueU.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -276,6 +274,16 @@
                     </Platform>
                     <Platform Name="Android64">
                         <RemoteDir>res\values-v31</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                </DeployClass>
+                <DeployClass Name="AndroidSplashStylesV35">
+                    <Platform Name="Android">
+                        <RemoteDir>res\values-v35</RemoteDir>
+                        <Operation>1</Operation>
+                    </Platform>
+                    <Platform Name="Android64">
+                        <RemoteDir>res\values-v35</RemoteDir>
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>

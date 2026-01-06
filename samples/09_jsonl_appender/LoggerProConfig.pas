@@ -29,26 +29,20 @@ initialization
   DefaultLoggerProMainQueueSize := 5;
   DefaultLoggerProAppenderQueueSize := 5;
 
-  //  The TLoggerProFileAppender has its defaults defined as follows:
-  //  TLoggerProJSONLFileAppender = '{module}.{number}.{tag}.log';
-  //  DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
-  //  DEFAULT_MAX_FILE_SIZE_KB = 1000;
+  // ============================================================================
+  // LoggerPro 2.0 - Builder API (Recommended)
+  // ============================================================================
+  // The JSONL (JSON Lines) appender writes logs in a structured JSON format,
+  // one JSON object per line. This format is ideal for:
+  //   - Log aggregation tools (ELK stack, Splunk, Loki, etc.)
+  //   - Machine parsing and analysis
+  //   - Preserving structured context (WithProperty key-value pairs)
+  //
+  // The TLoggerProJSONLFileAppender has its defaults defined as follows:
+  //   DEFAULT_FILENAME_FORMAT = '{module}.{number}.{tag}.jsonl.log';
+  //   DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
+  //   DEFAULT_MAX_FILE_SIZE_KB = 1000;
 
-  // Creates logs in the ..\logs folder without PID in the filename
-  // BuildLogWriter is the classic way to create a log writer.
-  // The modern and recommended approach is to use LoggerProBuilder.
-  //_Log :=
-  //    BuildLogWriter(
-  //        [
-  //            TLoggerProJSONLFileAppender.Create(
-  //                10,
-  //                5,
-  //                '..\logs',
-  //                TLoggerProJSONLFileAppender.DEFAULT_FILENAME_FORMAT,
-  //                TEncoding.UTF8
-  //            )
-  //        ]
-  //    );
   _Log := LoggerProBuilder
     .WriteToJSONLFile
       .WithMaxBackupFiles(10)
@@ -56,5 +50,18 @@ initialization
       .WithLogsFolder('..\logs')
       .Done
     .Build;
+
+  // ============================================================================
+  // LoggerPro 1.x - Legacy API (Still supported but deprecated)
+  // ============================================================================
+  // _Log := BuildLogWriter([
+  //   TLoggerProJSONLFileAppender.Create(
+  //     10,  // max backup files
+  //     5,   // max file size KB
+  //     '..\logs',
+  //     TLoggerProJSONLFileAppender.DEFAULT_FILENAME_FORMAT,
+  //     TEncoding.UTF8
+  //   )
+  // ]);
 
 end.

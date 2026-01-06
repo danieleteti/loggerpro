@@ -88,7 +88,7 @@ begin
          // Example using WithProperty for structured context
          var lCtxLog := Log
            .WithProperty('source', 'timer')
-           .WithProperty('interval_ms', UDPClientTimer.Interval);
+           .WithProperty('interval_ms', Integer(UDPClientTimer.Interval));
          lCtxLog.Info('Message with context from timer', 'INFO');
        end;
   end;

@@ -24,13 +24,18 @@ end;
 
 initialization
 
+// ============================================================================
+// LoggerPro 2.0 - Builder API (Recommended)
+// ============================================================================
+//
 // The TLoggerProFileAppender has its defaults defined as follows:
 //   DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
 //   DEFAULT_MAX_FILE_SIZE_KB = 1000;
 //
 // You can override these defaults using the Builder pattern.
-// Here are some configuration examples:
 //
+// SIMPLE EXAMPLES:
+// ----------------
 // Creates log with default settings:
 //   _Log := LoggerProBuilder
 //     .WriteToFile.Done
@@ -44,6 +49,8 @@ initialization
 //       .Done
 //     .Build;
 //
+// ADVANCED EXAMPLE (this sample):
+// -------------------------------
 // Creates logs in the ..\ folder using the NoTag renderer (context is always included).
 // The FilteringFileAppender selects the 'TAG1' and 'TAG2' log messages into a separate file.
 
@@ -62,5 +69,14 @@ _Log := LoggerProBuilder
       end)
     .Done
   .Build;
+
+// ============================================================================
+// LoggerPro 1.x - Legacy API (Still supported but deprecated)
+// ============================================================================
+// The old BuildLogWriter function still works for backward compatibility.
+//
+// _Log := BuildLogWriter([
+//   TLoggerProFileAppender.Create(10, 5, '..', [], TLogItemRendererNoTag.Create)
+// ]);
 
 end.

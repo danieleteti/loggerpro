@@ -42,15 +42,6 @@
         <Projects Include="08_email_appender\email_appender.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="90_remote_logging_with_redis\REDISAppenderSample.dproj">
-            <Dependencies/>
-        </Projects>
-        <Projects Include="rest_logs_collector\RESTLogsCollector.dproj">
-            <Dependencies/>
-        </Projects>
-        <Projects Include="90_remote_logging_with_redis\redis_logs_viewer\RedisLogsViewer.dproj">
-            <Dependencies/>
-        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -176,41 +167,14 @@
     <Target Name="email_appender:Make">
         <MSBuild Projects="08_email_appender\email_appender.dproj" Targets="Make"/>
     </Target>
-    <Target Name="REDISAppenderSample">
-        <MSBuild Projects="90_remote_logging_with_redis\REDISAppenderSample.dproj"/>
-    </Target>
-    <Target Name="REDISAppenderSample:Clean">
-        <MSBuild Projects="90_remote_logging_with_redis\REDISAppenderSample.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="REDISAppenderSample:Make">
-        <MSBuild Projects="90_remote_logging_with_redis\REDISAppenderSample.dproj" Targets="Make"/>
-    </Target>
-    <Target Name="RESTLogsCollector">
-        <MSBuild Projects="rest_logs_collector\RESTLogsCollector.dproj"/>
-    </Target>
-    <Target Name="RESTLogsCollector:Clean">
-        <MSBuild Projects="rest_logs_collector\RESTLogsCollector.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="RESTLogsCollector:Make">
-        <MSBuild Projects="rest_logs_collector\RESTLogsCollector.dproj" Targets="Make"/>
-    </Target>
-    <Target Name="RedisLogsViewer">
-        <MSBuild Projects="90_remote_logging_with_redis\redis_logs_viewer\RedisLogsViewer.dproj"/>
-    </Target>
-    <Target Name="RedisLogsViewer:Clean">
-        <MSBuild Projects="90_remote_logging_with_redis\redis_logs_viewer\RedisLogsViewer.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="RedisLogsViewer:Make">
-        <MSBuild Projects="90_remote_logging_with_redis\redis_logs_viewer\RedisLogsViewer.dproj" Targets="Make"/>
-    </Target>
     <Target Name="Build">
-        <CallTarget Targets="global_logger;file_appender;simple_file_appender;logfmt_appender;console_appender;outputdebugstring_appender;multiple_appenders;multiple_loggers;jsonl_appender;custom_appender;vcl_appenders;udp_syslog;email_appender;REDISAppenderSample;RESTLogsCollector;RedisLogsViewer"/>
+        <CallTarget Targets="global_logger;file_appender;simple_file_appender;logfmt_appender;console_appender;outputdebugstring_appender;multiple_appenders;multiple_loggers;jsonl_appender;custom_appender;vcl_appenders;udp_syslog;email_appender"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="global_logger:Clean;file_appender:Clean;simple_file_appender:Clean;logfmt_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;multiple_appenders:Clean;multiple_loggers:Clean;jsonl_appender:Clean;custom_appender:Clean;vcl_appenders:Clean;udp_syslog:Clean;email_appender:Clean;REDISAppenderSample:Clean;RESTLogsCollector:Clean;RedisLogsViewer:Clean"/>
+        <CallTarget Targets="global_logger:Clean;file_appender:Clean;simple_file_appender:Clean;logfmt_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;multiple_appenders:Clean;multiple_loggers:Clean;jsonl_appender:Clean;custom_appender:Clean;vcl_appenders:Clean;udp_syslog:Clean;email_appender:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="global_logger:Make;file_appender:Make;simple_file_appender:Make;logfmt_appender:Make;console_appender:Make;outputdebugstring_appender:Make;multiple_appenders:Make;multiple_loggers:Make;jsonl_appender:Make;custom_appender:Make;vcl_appenders:Make;udp_syslog:Make;email_appender:Make;REDISAppenderSample:Make;RESTLogsCollector:Make;RedisLogsViewer:Make"/>
+        <CallTarget Targets="global_logger:Make;file_appender:Make;simple_file_appender:Make;logfmt_appender:Make;console_appender:Make;outputdebugstring_appender:Make;multiple_appenders:Make;multiple_loggers:Make;jsonl_appender:Make;custom_appender:Make;vcl_appenders:Make;udp_syslog:Make;email_appender:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

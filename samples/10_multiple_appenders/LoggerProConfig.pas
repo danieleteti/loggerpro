@@ -31,17 +31,29 @@ const
   LOG_LEVEL = TLogType.Warning;
 {$ENDIF}
 begin
-  // BuildLogWriter is the classic way to create a log writer.
-  // The modern and recommended approach is to use LoggerProBuilder.
-  //_Log := BuildLogWriter([TLoggerProFileAppender.Create,
-  //  TLoggerProConsoleAppender.Create,
-  //  TLoggerProOutputDebugStringAppender.Create], nil, LOG_LEVEL);
+  // ============================================================================
+  // LoggerPro 2.0 - Builder API (Recommended)
+  // ============================================================================
+  // This sample demonstrates:
+  //   - Multiple appenders (File, Console, OutputDebugString)
+  //   - Conditional log level based on DEBUG/RELEASE build
+  //   - WithDefaultLogLevel to set minimum level for all appenders
+  //
   _Log := LoggerProBuilder
     .WithDefaultLogLevel(LOG_LEVEL)
     .WriteToFile.Done
     .WriteToConsole.Done
     .WriteToOutputDebugString.Done
     .Build;
+
+  // ============================================================================
+  // LoggerPro 1.x - Legacy API (Still supported but deprecated)
+  // ============================================================================
+  // _Log := BuildLogWriter([
+  //   TLoggerProFileAppender.Create,
+  //   TLoggerProConsoleAppender.Create,
+  //   TLoggerProOutputDebugStringAppender.Create
+  // ], nil, LOG_LEVEL);
 end;
 
 initialization

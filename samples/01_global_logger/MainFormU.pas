@@ -40,6 +40,16 @@ uses
 
 {$R *.dfm}
 
+// =============================================================================
+// LoggerPro 2.0 - Global Logger Sample
+// =============================================================================
+// The GlobalLogger provides a ready-to-use logger instance with zero config.
+// Just use Log.Info(), Log.Debug(), etc. from anywhere in your application.
+//
+// For custom configuration, create your own logger using LoggerProBuilder
+// (see other samples like 160_console or 210_context_logging).
+// =============================================================================
+
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   FRunningThreads := TObjectList<TThread>.Create(True);
@@ -68,14 +78,25 @@ end;
 
 procedure TMainForm.Button1Click(Sender: TObject);
 begin
+  // Basic debug logging with tags
   Log.Debug('This is a debug message with TAG1', 'TAG1');
   Log.Debug('This is a debug message with TAG2', 'TAG2');
 end;
 
 procedure TMainForm.Button2Click(Sender: TObject);
 begin
+  // Basic info logging with tags
   Log.Info('This is a info message with TAG1', 'TAG1');
   Log.Info('This is a info message with TAG2', 'TAG2');
+
+  // ---------------------------------------------------------------------------
+  // LoggerPro 2.0: WithProperty for structured context
+  // ---------------------------------------------------------------------------
+  // Create a sub-logger with bound context properties
+  var UserLog := Log
+    .WithProperty('user_id', 42)
+    .WithProperty('action', 'button_click');
+  UserLog.Info('User performed action', 'USER');
 end;
 
 procedure TMainForm.Button3Click(Sender: TObject);
@@ -88,6 +109,19 @@ procedure TMainForm.Button4Click(Sender: TObject);
 begin
   Log.Error('This is an error message with TAG1', 'TAG1');
   Log.Error('This is an error message with TAG2', 'TAG2');
+
+  // ---------------------------------------------------------------------------
+  // LoggerPro 2.0: LogException for exception logging
+  // ---------------------------------------------------------------------------
+  try
+    raise Exception.Create('Simulated error for demonstration');
+  except
+    on E: Exception do
+    begin
+      // Log exception with context
+      Log.LogException(E, 'Error occurred in Button4Click', 'ERROR_DEMO');
+    end;
+  end;
 end;
 
 procedure TMainForm.Button5Click(Sender: TObject);
@@ -96,6 +130,11 @@ var
   lThreadProc: TProc;
   I: Integer;
 begin
+  // ---------------------------------------------------------------------------
+  // Multithreaded logging demonstration
+  // ---------------------------------------------------------------------------
+  // LoggerPro is fully thread-safe. Multiple threads can log simultaneously
+  // without any locking from the caller's side.
   lThreadProc := procedure
     var
       J: Integer;
