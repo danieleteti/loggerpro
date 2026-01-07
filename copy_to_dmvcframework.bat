@@ -28,6 +28,7 @@ echo.
 
 REM List of LoggerPro source files to copy
 set FILES=^
+    loggerprobuildconsts.inc  ^
     LoggerPro.pas ^
     LoggerPro.Builder.pas ^
     LoggerPro.CallbackAppender.pas ^
