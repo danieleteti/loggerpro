@@ -31,6 +31,8 @@ type
     Memo1: TMemo;
     ListView1: TListView;
     Button6: TButton;
+    tsStringlistRichEditAppender: TTabSheet;
+    RichEdit1: TRichEdit;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
@@ -51,8 +53,9 @@ var
 implementation
 
 uses
-  LoggerPro.VCLMemoAppender,
-  LoggerPro.VCLListViewAppender,
+  //LoggerPro.VCLMemoAppender,
+  //LoggerPro.VCLListViewAppender,
+  //LoggerPro.StringsAppender,
   LoggerPro.Builder;
 
 {$R *.dfm}
@@ -122,6 +125,7 @@ begin
   FLog := LoggerProBuilder
     .WriteToVCLListView(ListView1).Done
     .WriteToVCLMemo(Memo1).Done
+    .WriteToStrings(RichEdit1.Lines).Done
     .Build;
 end;
 

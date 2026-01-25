@@ -2,8 +2,8 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'LoggerPro SAMPLE'
-  ClientHeight = 535
-  ClientWidth = 834
+  ClientHeight = 989
+  ClientWidth = 1063
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,8 +13,8 @@ object MainForm: TMainForm
   Visible = True
   OnCreate = FormCreate
   DesignSize = (
-    834
-    535)
+    1063
+    989)
   TextHeight = 13
   object Button1: TButton
     Left = 8
@@ -64,9 +64,9 @@ object MainForm: TMainForm
   object PageControl1: TPageControl
     Left = 8
     Top = 134
-    Width = 818
-    Height = 393
-    ActivePage = tsListViewAppender
+    Width = 1047
+    Height = 847
+    ActivePage = tsStringlistRichEditAppender
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 5
     object tsListViewAppender: TTabSheet
@@ -74,8 +74,8 @@ object MainForm: TMainForm
       object ListView1: TListView
         Left = 0
         Top = 0
-        Width = 810
-        Height = 365
+        Width = 1039
+        Height = 819
         Align = alClient
         Columns = <
           item
@@ -97,6 +97,8 @@ object MainForm: TMainForm
         ParentFont = False
         TabOrder = 0
         ViewStyle = vsReport
+        ExplicitWidth = 800
+        ExplicitHeight = 347
       end
     end
     object tsMemoAppender: TTabSheet
@@ -105,8 +107,8 @@ object MainForm: TMainForm
       object Memo1: TMemo
         Left = 0
         Top = 0
-        Width = 810
-        Height = 365
+        Width = 1039
+        Height = 819
         Align = alClient
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -118,6 +120,28 @@ object MainForm: TMainForm
         ScrollBars = ssVertical
         TabOrder = 0
         WordWrap = False
+      end
+    end
+    object tsStringlistRichEditAppender: TTabSheet
+      Caption = 'Strings Richedit Appender DEMO'
+      ImageIndex = 2
+      object RichEdit1: TRichEdit
+        Left = 0
+        Top = 0
+        Width = 1039
+        Height = 819
+        Align = alClient
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Courier'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 0
+        ExplicitLeft = 424
+        ExplicitTop = 368
+        ExplicitWidth = 185
+        ExplicitHeight = 89
       end
     end
   end

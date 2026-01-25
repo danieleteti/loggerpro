@@ -159,6 +159,14 @@ type
     function WithLogLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
   end;
 
+  { StringList appender configurator }
+  IStringsAppenderConfigurator = interface(IAppenderConfigurator)
+    ['{2AE429F8-BACC-4F19-A925-3D6FC57A8939}']
+    function WithMaxLogLines(aMaxLogLines: Word): IStringsAppenderConfigurator;
+    function WithClearOnStartup(aValue: Boolean): IStringsAppenderConfigurator;
+    function WithLogLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IStringsAppenderConfigurator;
+  end;
 
 {$IF Defined(MSWINDOWS)}
   { VCL Memo appender configurator (requires VCL, Windows only) }
@@ -227,6 +235,7 @@ type
     function WriteToSimpleCallback: ISimpleCallbackAppenderConfigurator;
     function WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
     function WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
+    function WriteToStrings(aStrings: TObject): IStringsAppenderConfigurator;
 {$IF Defined(MSWINDOWS)}
     { VCL appenders - require VCL units (Windows only) }
     function WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
@@ -270,7 +279,8 @@ uses
   LoggerPro.MemoryAppender,
   LoggerPro.OutputDebugStringAppender,
   LoggerPro.UDPSyslogAppender,
-  LoggerPro.DBAppender.FireDAC
+  LoggerPro.DBAppender.FireDAC,
+  LoggerPro.StringsAppender
 {$IF Defined(MSWINDOWS)}
   , LoggerPro.VCLMemoAppender
   , LoggerPro.VCLListBoxAppender
@@ -476,6 +486,21 @@ type
     function Done: ILoggerProBuilder;
   end;
 
+  { StringList appender configurator }
+  TStringsAppenderConfigurator = class(TBaseAppenderConfigurator, IStringsAppenderConfigurator)
+  private
+    FStrings: TStrings;
+    FMaxLogLines: Word;
+    FClearOnStartup: Boolean;
+  public
+    constructor Create(aBuilder: TLoggerProBuilder; aStrings: TStrings);
+    function WithMaxLogLines(aMaxLogLines: Word): IStringsAppenderConfigurator;
+    function WithClearOnStartup(aValue: Boolean): IStringsAppenderConfigurator;
+    function WithLogLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IStringsAppenderConfigurator;
+    function Done: ILoggerProBuilder;
+  end;
+
 
 {$IF Defined(MSWINDOWS)}
   { VCL Memo appender configurator }
@@ -585,6 +610,7 @@ type
     function WriteToSimpleCallback: ISimpleCallbackAppenderConfigurator;
     function WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
     function WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
+    function WriteToStrings(aStrings: TObject):IStringsAppenderConfigurator;
 {$IF Defined(MSWINDOWS)}
     // VCL appenders (Windows only)
     function WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
@@ -727,6 +753,14 @@ end;
 function TLoggerProBuilder.WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
 begin
   Result := TUDPSyslogAppenderConfigurator.Create(Self);
+end;
+
+function TLoggerProBuilder.WriteToStrings(aStrings: TObject):
+    IStringsAppenderConfigurator;
+begin
+  if not (aStrings is TStrings) then
+    raise ELoggerPro.Create('WriteToStrings requires a TStrings instance');
+  Result := TStringsAppenderConfigurator.Create(Self, TStrings(aStrings));
 end;
 
 {$IF Defined(MSWINDOWS)}
@@ -1426,6 +1460,52 @@ begin
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
 end;
+
+{ TStringsAppenderConfigurator }
+
+constructor TStringsAppenderConfigurator.Create(aBuilder: TLoggerProBuilder; aStrings: TStrings);
+begin
+  inherited Create(aBuilder);
+  FStrings := aStrings;
+  FMaxLogLines := 100;
+  FClearOnStartup := False;
+end;
+
+function TStringsAppenderConfigurator.WithMaxLogLines(aMaxLogLines: Word): IStringsAppenderConfigurator;
+begin
+  FMaxLogLines := aMaxLogLines;
+  Result := Self;
+end;
+
+function TStringsAppenderConfigurator.WithClearOnStartup(aValue: Boolean): IStringsAppenderConfigurator;
+begin
+  FClearOnStartup := aValue;
+  Result := Self;
+end;
+
+function TStringsAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
+begin
+  FLogLevel := aLogLevel;
+  FLogLevelSet := True;
+  Result := Self;
+end;
+
+function TStringsAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IStringsAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
+function TStringsAppenderConfigurator.Done: ILoggerProBuilder;
+var
+  lAppender: ILogAppender;
+begin
+  lAppender := TStringsLogAppender.Create(FStrings, FMaxLogLines, FClearOnStartup, GetRenderer);
+  ApplyLogLevel(lAppender);
+  FBuilder.InternalAddAppender(lAppender);
+  Result := FBuilder;
+end;
+
 
 {$IF Defined(MSWINDOWS)}
 
