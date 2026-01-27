@@ -1809,8 +1809,12 @@ begin
     else
       lValueStr := lParam.Value.ToString.QuotedString('"');
     end;
-    Result := Result + ' ' + lParam.Key + '=' + lValueStr;
+    if I = 0 then
+      Result := lParam.Key + '=' + lValueStr
+    else
+      Result := Result + ', ' + lParam.Key + '=' + lValueStr;
   end;
+  Result := ' {' + Result + '}';
 end;
 
 constructor TLogWriterWithContext.Create(const AInner: ILogWriter; const AContext: LogParams);
