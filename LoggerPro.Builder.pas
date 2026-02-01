@@ -45,6 +45,7 @@ type
   IAppenderConfigurator = interface
     ['{A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}']
     function Done: ILoggerProBuilder;
+    function WithMasking: IMaskingAppenderConfigurator;
   end;
 
   { Console appender configurator }
@@ -211,6 +212,12 @@ type
     function WithFilter(aFilter: TLogItemFilterFunc): IFilteredAppenderConfigurator;
   end;
 
+  { Masking appender configurator - wraps another appender with masking functionality }
+  IMaskingAppenderConfigurator = interface(IAppenderConfigurator)
+    ['{E9F0A1B2-C3D4-2F3A-6C7D-8E9F0A1B2C3D}']
+    function WithLogLevel(aLogLevel: TLogType): IMaskingAppenderConfigurator;
+  end;
+
   { Main builder interface }
   ILoggerProBuilder = interface
     ['{1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D}']
@@ -270,7 +277,8 @@ uses
   LoggerPro.MemoryAppender,
   LoggerPro.OutputDebugStringAppender,
   LoggerPro.UDPSyslogAppender,
-  LoggerPro.DBAppender.FireDAC
+  LoggerPro.DBAppender.FireDAC,
+  LoggerPro.MaskingAppender;
 {$IF Defined(MSWINDOWS)}
   , LoggerPro.VCLMemoAppender
   , LoggerPro.VCLListBoxAppender
@@ -295,6 +303,7 @@ type
     FRenderer: ILogItemRenderer;
     procedure ApplyLogLevel(aAppender: ILogAppender);
     function GetRenderer: ILogItemRenderer;
+    function CreateAppender: ILogAppender; virtual; abstract;
   public
     constructor Create(aBuilder: TLoggerProBuilder);
   end;
@@ -305,6 +314,7 @@ type
     function WithLogLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
     function WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator;
     function Done: ILoggerProBuilder;
+    function CreateAppender: ILogAppender; override;
   end;
 
   { Simple console appender configurator }
@@ -312,6 +322,7 @@ type
   public
     function WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
     function Done: ILoggerProBuilder;
+    function CreateAppender: ILogAppender; override;
   end;
 
   { File appender configurator }
@@ -332,6 +343,7 @@ type
     function WithEncoding(aEncoding: TEncoding): IFileAppenderConfigurator;
     function WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator;
     function Done: ILoggerProBuilder;
+    function CreateAppender: ILogAppender; override;
   end;
 
   { JSONL file appender configurator }
@@ -451,6 +463,7 @@ type
     function WithLogLevel(aLogLevel: TLogType): IOutputDebugStringAppenderConfigurator;
     function WithRenderer(aRenderer: ILogItemRenderer): IOutputDebugStringAppenderConfigurator;
     function Done: ILoggerProBuilder;
+    function CreateAppender: ILogAppender; override;
   end;
 
   { UDP Syslog appender configurator }
@@ -558,6 +571,16 @@ type
     function Done: ILoggerProBuilder;
   end;
 
+  { Masking appender configurator }
+  TMaskingAppenderConfigurator = class(TBaseAppenderConfigurator, IMaskingAppenderConfigurator)
+  private
+    FInnerAppender: ILogAppender;
+  public
+    constructor Create(aBuilder: TLoggerProBuilder; aAppender: ILogAppender);
+    function WithLogLevel(aLogLevel: TLogType): IMaskingAppenderConfigurator;
+    function Done: ILoggerProBuilder;
+  end;
+
   { Builder implementation - hidden from interface }
   TLoggerProBuilder = class(TInterfacedObject, ILoggerProBuilder)
   private
@@ -635,6 +658,14 @@ begin
     Result := FRenderer
   else
     Result := FBuilder.GetDefaultRenderer;
+end;
+
+function TBaseAppenderConfigurator.WithMasking: IMaskingAppenderConfigurator;
+var
+  LAppender: ILogAppender;
+begin
+  LAppender := CreateAppender;
+  Result := TMaskingAppenderConfigurator.Create(FBuilder, LAppender);
 end;
 
 { TLoggerProBuilder }
@@ -865,6 +896,12 @@ begin
   Result := FBuilder;
 end;
 
+function TConsoleAppenderConfigurator.CreateAppender: ILogAppender;
+begin
+  Result := TLoggerProConsoleAppender.Create(GetRenderer);
+  ApplyLogLevel(Result);
+end;
+
 { TSimpleConsoleAppenderConfigurator }
 
 function TSimpleConsoleAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
@@ -882,6 +919,12 @@ begin
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
+end;
+
+function TSimpleConsoleAppenderConfigurator.CreateAppender: ILogAppender;
+begin
+  Result := TLoggerProSimpleConsoleAppender.Create;
+  ApplyLogLevel(Result);
 end;
 
 { TFileAppenderConfigurator }
@@ -958,6 +1001,24 @@ begin
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
+end;
+
+function TFileAppenderConfigurator.CreateAppender: ILogAppender;
+var
+  lFileNameFormat: string;
+begin
+  if FFileBaseName.IsEmpty then
+    lFileNameFormat := TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT
+  else
+    lFileNameFormat := FFileBaseName + '.{number}.{tag}.log';
+  Result := TLoggerProFileAppender.Create(
+    FMaxBackupFiles,
+    FMaxFileSizeInKB,
+    FLogsFolder,
+    lFileNameFormat,
+    GetRenderer,
+    FEncoding);
+  ApplyLogLevel(Result);
 end;
 
 { TJSONLFileAppenderConfigurator }
@@ -1354,6 +1415,12 @@ begin
   Result := FBuilder;
 end;
 
+function TOutputDebugStringAppenderConfigurator.CreateAppender: ILogAppender;
+begin
+  Result := TLoggerProOutputDebugStringAppender.Create(GetRenderer);
+  ApplyLogLevel(Result);
+end;
+
 { TUDPSyslogAppenderConfigurator }
 
 constructor TUDPSyslogAppenderConfigurator.Create(aBuilder: TLoggerProBuilder);
@@ -1656,6 +1723,31 @@ begin
   lFilteredAppender := TLoggerProFilter.Build(FInnerAppender, FFilter);
   ApplyLogLevel(lFilteredAppender);
   FBuilder.InternalAddAppender(lFilteredAppender);
+  Result := FBuilder;
+end;
+
+{ TMaskingAppenderConfigurator }
+
+constructor TMaskingAppenderConfigurator.Create(aBuilder: TLoggerProBuilder; aAppender: ILogAppender);
+begin
+  inherited Create(aBuilder);
+  FInnerAppender := aAppender;
+end;
+
+function TMaskingAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IMaskingAppenderConfigurator;
+begin
+  FLogLevel := aLogLevel;
+  FLogLevelSet := True;
+  Result := Self;
+end;
+
+function TMaskingAppenderConfigurator.Done: ILoggerProBuilder;
+var
+  lMaskingAppender: ILogAppender;
+begin
+  lMaskingAppender := TLoggerProMaskingAppender.Create(FInnerAppender);
+  ApplyLogLevel(lMaskingAppender);
+  FBuilder.InternalAddAppender(lMaskingAppender);
   Result := FBuilder;
 end;
 
