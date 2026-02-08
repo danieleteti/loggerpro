@@ -112,6 +112,9 @@ type
     function WithPort(aPort: Integer): IElasticSearchAppenderConfigurator;
     function WithIndex(const aIndex: string): IElasticSearchAppenderConfigurator;
     function WithTimeout(aTimeoutSeconds: Integer): IElasticSearchAppenderConfigurator;
+    function WithBasicAuth(const aUsername, aPassword: string): IElasticSearchAppenderConfigurator;
+    function WithAPIKey(const aAPIKey: string): IElasticSearchAppenderConfigurator;
+    function WithBearerToken(const aToken: string): IElasticSearchAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IElasticSearchAppenderConfigurator;
   end;
 
@@ -399,6 +402,13 @@ type
     FIndex: string;
     FTimeoutSeconds: Integer;
     FUseHostPortIndex: Boolean;
+    FUseBasicAuth: Boolean;
+    FBasicAuthUsername: string;
+    FBasicAuthPassword: string;
+    FUseAPIKey: Boolean;
+    FAPIKey: string;
+    FUseBearerToken: Boolean;
+    FBearerToken: string;
   public
     constructor Create(aBuilder: TLoggerProBuilder);
     function WithURL(const aURL: string): IElasticSearchAppenderConfigurator;
@@ -406,6 +416,9 @@ type
     function WithPort(aPort: Integer): IElasticSearchAppenderConfigurator;
     function WithIndex(const aIndex: string): IElasticSearchAppenderConfigurator;
     function WithTimeout(aTimeoutSeconds: Integer): IElasticSearchAppenderConfigurator;
+    function WithBasicAuth(const aUsername, aPassword: string): IElasticSearchAppenderConfigurator;
+    function WithAPIKey(const aAPIKey: string): IElasticSearchAppenderConfigurator;
+    function WithBearerToken(const aToken: string): IElasticSearchAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IElasticSearchAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
@@ -1208,6 +1221,9 @@ begin
   FIndex := 'logs';
   FTimeoutSeconds := TLoggerProElasticSearchAppender.DEFAULT_TIMEOUT_SECONDS;
   FUseHostPortIndex := False;
+  FUseBasicAuth := False;
+  FUseAPIKey := False;
+  FUseBearerToken := False;
 end;
 
 function TElasticSearchAppenderConfigurator.WithURL(const aURL: string): IElasticSearchAppenderConfigurator;
@@ -1244,6 +1260,34 @@ begin
   Result := Self;
 end;
 
+function TElasticSearchAppenderConfigurator.WithBasicAuth(const aUsername, aPassword: string): IElasticSearchAppenderConfigurator;
+begin
+  FUseBasicAuth := True;
+  FBasicAuthUsername := aUsername;
+  FBasicAuthPassword := aPassword;
+  FUseAPIKey := False;
+  FUseBearerToken := False;
+  Result := Self;
+end;
+
+function TElasticSearchAppenderConfigurator.WithAPIKey(const aAPIKey: string): IElasticSearchAppenderConfigurator;
+begin
+  FUseAPIKey := True;
+  FAPIKey := aAPIKey;
+  FUseBasicAuth := False;
+  FUseBearerToken := False;
+  Result := Self;
+end;
+
+function TElasticSearchAppenderConfigurator.WithBearerToken(const aToken: string): IElasticSearchAppenderConfigurator;
+begin
+  FUseBearerToken := True;
+  FBearerToken := aToken;
+  FUseBasicAuth := False;
+  FUseAPIKey := False;
+  Result := Self;
+end;
+
 function TElasticSearchAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IElasticSearchAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
@@ -1254,6 +1298,7 @@ end;
 function TElasticSearchAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
+  lESAppender: TLoggerProElasticSearchAppender;
 begin
   if FUseHostPortIndex then
     lAppender := TLoggerProElasticSearchAppender.Create(FHost, FPort, FIndex, FTimeoutSeconds)
@@ -1261,6 +1306,15 @@ begin
     lAppender := TLoggerProElasticSearchAppender.Create(FURL, FTimeoutSeconds)
   else
     raise ELoggerPro.Create('ElasticSearch appender requires either a URL or Host/Port/Index configuration.');
+
+  // Configure authentication if provided
+  lESAppender := lAppender as TLoggerProElasticSearchAppender;
+  if FUseBasicAuth then
+    lESAppender.SetBasicAuth(FBasicAuthUsername, FBasicAuthPassword)
+  else if FUseAPIKey then
+    lESAppender.SetAPIKey(FAPIKey)
+  else if FUseBearerToken then
+    lESAppender.SetBearerToken(FBearerToken);
 
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);

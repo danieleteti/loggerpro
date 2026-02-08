@@ -127,6 +127,38 @@ Log := LoggerProBuilder
   .Build;
 ```
 
+### ElasticSearch with Authentication
+
+Send logs to ElasticSearch with authentication support:
+
+```delphi
+// Basic Authentication
+Log := LoggerProBuilder
+  .WriteToElasticSearch
+    .WithURL('https://elastic.example.com:9200/logs/_doc')
+    .WithBasicAuth('username', 'password')
+    .Done
+  .Build;
+
+// API Key Authentication
+Log := LoggerProBuilder
+  .WriteToElasticSearch
+    .WithHost('https://elastic.example.com')
+    .WithPort(9200)
+    .WithIndex('app-logs')
+    .WithAPIKey('your-api-key-here')
+    .Done
+  .Build;
+
+// Bearer Token Authentication
+Log := LoggerProBuilder
+  .WriteToElasticSearch
+    .WithURL('https://elastic.example.com:9200/logs/_doc')
+    .WithBearerToken('your-jwt-token')
+    .Done
+  .Build;
+```
+
 ### Getting Current Log File Name
 
 Get the active log file name from file appenders (useful for uploading, emailing, etc.):
