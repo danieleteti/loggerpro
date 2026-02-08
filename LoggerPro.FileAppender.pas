@@ -121,12 +121,15 @@ type
   TLoggerProFileAppender = class(TLoggerProFileAppenderBase)
   private
     fWritersDictionary: TObjectDictionary<string, TStreamWriter>;
+    fFileNamesDictionary: TDictionary<string, string>;
     procedure AddWriter(const aLogTag: string; var aWriter: TStreamWriter; var aLogFileName: string);
     procedure RotateLog(const aLogTag: string; aWriter: TStreamWriter);
   public
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); overload; override;
+    function GetCurrentLogFileName(const aLogTag: string): string;
+    function GetAllCurrentLogFileNames: TArray<string>;
   end;
 
   { @abstract(File appender with multiple tags)
@@ -139,6 +142,7 @@ type
   TLoggerProSimpleFileAppender = class(TLoggerProFileAppenderBase)
   private
     fFileWriter: TStreamWriter;
+    fCurrentLogFileName: string;
     procedure RotateLog;
   protected
     procedure CheckLogFileNameFormat(const LogFileNameFormat: String); override;
@@ -148,6 +152,7 @@ type
     procedure Setup; override;
     procedure TearDown; override;
     procedure WriteLog(const aLogItem: TLogItem); overload; override;
+    function GetCurrentLogFileName: string;
     constructor Create(
       aMaxBackupFileCount: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_BACKUP_FILE_COUNT;
       aMaxFileSizeInKiloByte: Integer = TLoggerProFileAppenderBase.DEFAULT_MAX_FILE_SIZE_KB;
@@ -459,6 +464,7 @@ begin
   aLogFileName := GetLogFileName(aLogTag, 0);
   aWriter := CreateWriter(aLogFileName);
   fWritersDictionary.Add(aLogTag, aWriter);
+  fFileNamesDictionary.AddOrSetValue(aLogTag, aLogFileName);
 end;
 
 procedure TLoggerProFileAppenderBase.EmitEndRotateLogItem(aWriter: TStreamWriter);
@@ -490,6 +496,7 @@ procedure TLoggerProFileAppender.Setup;
 begin
   inherited;
   fWritersDictionary := TObjectDictionary<string, TStreamWriter>.Create([doOwnsValues]);
+  fFileNamesDictionary := TDictionary<string, string>.Create;
 end;
 
 procedure TLoggerProFileAppender.TearDown;
@@ -501,6 +508,7 @@ begin
     lWriter.Flush;
   end;
   fWritersDictionary.Free;
+  fFileNamesDictionary.Free;
   inherited;
 end;
 
@@ -520,6 +528,17 @@ begin
   begin
     RotateLog(aLogItem.LogTag, lWriter);
   end;
+end;
+
+function TLoggerProFileAppender.GetCurrentLogFileName(const aLogTag: string): string;
+begin
+  if not fFileNamesDictionary.TryGetValue(aLogTag, Result) then
+    Result := '';
+end;
+
+function TLoggerProFileAppender.GetAllCurrentLogFileNames: TArray<string>;
+begin
+  Result := fFileNamesDictionary.Values.ToArray;
 end;
 
 { TLoggerProSimpleFileAppender }
@@ -561,14 +580,16 @@ begin
   fFileWriter.Free;
   RotateFile('', lLogFileName);
   // re-create the writer
-  fFileWriter := CreateWriter(GetLogFileName('', 0));
+  fCurrentLogFileName := GetLogFileName('', 0);
+  fFileWriter := CreateWriter(fCurrentLogFileName);
   EmitStartRotateLogItem(fFileWriter);
 end;
 
 procedure TLoggerProSimpleFileAppender.Setup;
 begin
   inherited;
-  fFileWriter := CreateWriter(GetLogFileName('', 0));
+  fCurrentLogFileName := GetLogFileName('', 0);
+  fFileWriter := CreateWriter(fCurrentLogFileName);
 end;
 
 procedure TLoggerProSimpleFileAppender.TearDown;
@@ -585,6 +606,11 @@ begin
   begin
     RotateLog;
   end;
+end;
+
+function TLoggerProSimpleFileAppender.GetCurrentLogFileName: string;
+begin
+  Result := fCurrentLogFileName;
 end;
 
 { TLoggerProFileByFolderAppender }

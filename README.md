@@ -127,6 +127,49 @@ Log := LoggerProBuilder
   .Build;
 ```
 
+### Getting Current Log File Name
+
+Get the active log file name from file appenders (useful for uploading, emailing, etc.):
+
+```delphi
+uses LoggerPro.FileAppender;
+
+var
+  lAppender: TLoggerProSimpleFileAppender;
+  lFileName: string;
+begin
+  lAppender := TLoggerProSimpleFileAppender.Create;
+  Log := BuildLogWriter([lAppender]);
+
+  Log.Info('Message');
+
+  // Get current log file name
+  lFileName := lAppender.GetCurrentLogFileName;
+  WriteLn('Logging to: ', lFileName);
+
+  // Now you can upload it, email it, etc.
+  UploadLogFile(lFileName);
+end;
+```
+
+For `TLoggerProFileAppender` (separate files per tag):
+
+```delphi
+var
+  lAppender: TLoggerProFileAppender;
+  lFileName: string;
+  lAllFiles: TArray<string>;
+begin
+  lAppender := TLoggerProFileAppender.Create;
+
+  // Get file for specific tag
+  lFileName := lAppender.GetCurrentLogFileName('ORDERS');
+
+  // Get all current log files
+  lAllFiles := lAppender.GetAllCurrentLogFileNames;
+end;
+```
+
 ---
 
 ## Full Documentation
