@@ -26,7 +26,8 @@ uses
   LoggerPro.HTTPAppender in '..\LoggerPro.HTTPAppender.pas',
   LoggerPro.Builder in '..\LoggerPro.Builder.pas',
   BuilderTestU in 'BuilderTestU.pas',
-  ThreadSafetyTestU in 'ThreadSafetyTestU.pas';
+  ThreadSafetyTestU in 'ThreadSafetyTestU.pas',
+  CriticalIssuesTestU in 'CriticalIssuesTestU.pas';
 
 var
   runner : ITestRunner;

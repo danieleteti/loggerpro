@@ -1041,8 +1041,10 @@ procedure TCustomLogWriter.Log(const aType: TLogType; const aMessage, aTag: stri
 var
   lLogItem: TLogItem;
 begin
-  Assert(not FShuttingDown, 'Cannot log: logger is shutting down');
+  // Check FShuttingDown - if shutdown completed, thread is gone, can't log
+  Assert(not FShuttingDown, 'Cannot log: logger has been shut down');
   if FShuttingDown then Exit;
+
   if FEnabled and (aType >= FLogLevel) then
   begin
     lLogItem := TLogItem.Create(aType, aMessage, aTag, aContext);
@@ -1061,12 +1063,14 @@ end;
 
 procedure TCustomLogWriter.EnqueueLogItem(const aLogItem: TLogItem);
 begin
-  Assert(not FShuttingDown, 'Cannot log: logger is shutting down');
+  // Check FShuttingDown - if shutdown completed, thread is gone, can't log
+  Assert(not FShuttingDown, 'Cannot log: logger has been shut down');
   if FShuttingDown then
   begin
     aLogItem.Free;
     Exit;
   end;
+
   if FEnabled and (aLogItem.LogType >= FLogLevel) then
   begin
     if not FLoggerThread.LogWriterQueue.Enqueue(aLogItem) then
@@ -1122,8 +1126,8 @@ begin
   if FShuttingDown then
     Exit;  // Already shut down, idempotent
 
-  FShuttingDown := True;
-  Disable;
+  // Don't disable or set FShuttingDown yet - allow messages to be queued while we wait
+  // The thread will process all queued messages before terminating
 
   if FLoggerThread <> nil then
   begin
@@ -1131,6 +1135,10 @@ begin
     FLoggerThread.LogWriterQueue.SetEvent;  // Wake up thread if blocked
     FLoggerThread.WaitFor;
   end;
+
+  // Now mark as shut down - thread is gone, no more logging allowed
+  FShuttingDown := True;
+  Disable;
 end;
 
 function TCustomLogWriter.FormatExceptionMessage(const E: Exception; const aMessage: string): string;
@@ -1409,6 +1417,10 @@ begin
           end;
         wrTimeout, wrAbandoned, wrError:
           begin
+            // If we're terminating and there are items in queue, wake up immediately
+            // to process them instead of waiting for next timeout
+            if Terminated and (FQueue.QueueSize > 0) then
+              FQueue.SetEvent;
             // Continue loop; will exit when Terminated and queue is empty
           end;
         wrIOCompletion:

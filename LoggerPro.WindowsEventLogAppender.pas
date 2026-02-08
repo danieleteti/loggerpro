@@ -27,7 +27,7 @@
 
 unit LoggerPro.WindowsEventLogAppender;
 
-{$IFNDEF MSWINDOWS}
+{$IF NOT Defined(MSWINDOWS)}
 {$MESSAGE FATAL 'This unit only works with Windows'}
 {$ENDIF}
 
