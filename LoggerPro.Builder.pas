@@ -156,6 +156,7 @@ type
     function WithApplication(const aApplication: string): IUDPSyslogAppenderConfigurator;
     function WithVersion(const aVersion: string): IUDPSyslogAppenderConfigurator;
     function WithProcID(const aProcID: string): IUDPSyslogAppenderConfigurator;
+    function WithUseLocalTime(aUseLocalTime: Boolean): IUDPSyslogAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
   end;
 
@@ -427,6 +428,7 @@ type
     FCallback: TLogItemCallback;
     FSynchronizeToMainThread: Boolean;
   public
+    constructor Create(aBuilder: TLoggerProBuilder);
     function WithCallback(aCallback: TLogItemCallback): ICallbackAppenderConfigurator;
     function WithSynchronizeToMainThread(aValue: Boolean): ICallbackAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): ICallbackAppenderConfigurator;
@@ -463,6 +465,7 @@ type
     FApplication: string;
     FVersion: string;
     FProcID: string;
+    FUseLocalTime: Boolean;
   public
     constructor Create(aBuilder: TLoggerProBuilder);
     function WithHost(const aHost: string): IUDPSyslogAppenderConfigurator;
@@ -472,6 +475,7 @@ type
     function WithApplication(const aApplication: string): IUDPSyslogAppenderConfigurator;
     function WithVersion(const aVersion: string): IUDPSyslogAppenderConfigurator;
     function WithProcID(const aProcID: string): IUDPSyslogAppenderConfigurator;
+    function WithUseLocalTime(aUseLocalTime: Boolean): IUDPSyslogAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
@@ -568,6 +572,7 @@ type
     FDefaultRenderer: ILogItemRenderer;
     FDefaultTag: string;
     FStackTraceFormatter: TStackTraceFormatter;
+    FPendingConfiguratorName: string;
   public
     constructor Create;
     destructor Destroy; override;
@@ -611,6 +616,8 @@ type
     // Used by configurators
     procedure InternalAddAppender(aAppender: ILogAppender);
     function GetDefaultRenderer: ILogItemRenderer;
+    procedure SetPendingConfigurator(const aName: string);
+    procedure ClearPendingConfigurator;
   end;
 
 { TBaseAppenderConfigurator }
@@ -661,6 +668,17 @@ end;
 procedure TLoggerProBuilder.InternalAddAppender(aAppender: ILogAppender);
 begin
   FAppenders.Add(aAppender);
+  ClearPendingConfigurator;
+end;
+
+procedure TLoggerProBuilder.SetPendingConfigurator(const aName: string);
+begin
+  FPendingConfiguratorName := aName;
+end;
+
+procedure TLoggerProBuilder.ClearPendingConfigurator;
+begin
+  FPendingConfiguratorName := '';
 end;
 
 function TLoggerProBuilder.WriteToAppender(aAppender: ILogAppender): ILoggerProBuilder;
@@ -671,61 +689,73 @@ end;
 
 function TLoggerProBuilder.WriteToConsole: IConsoleAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToConsole');
   Result := TConsoleAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToSimpleConsole: ISimpleConsoleAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToSimpleConsole');
   Result := TSimpleConsoleAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToFile: IFileAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToFile');
   Result := TFileAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToJSONLFile: IJSONLFileAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToJSONLFile');
   Result := TJSONLFileAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToTimeRotatingFile: ITimeRotatingFileAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToTimeRotatingFile');
   Result := TTimeRotatingFileAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToHTTP: IHTTPAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToHTTP');
   Result := THTTPAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToElasticSearch: IElasticSearchAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToElasticSearch');
   Result := TElasticSearchAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToMemory: IMemoryAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToMemory');
   Result := TMemoryAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToCallback: ICallbackAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToCallback');
   Result := TCallbackAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToSimpleCallback: ISimpleCallbackAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToSimpleCallback');
   Result := TSimpleCallbackAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToOutputDebugString');
   Result := TOutputDebugStringAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToUDPSyslog');
   Result := TUDPSyslogAppenderConfigurator.Create(Self);
 end;
 
@@ -734,6 +764,7 @@ function TLoggerProBuilder.WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfi
 begin
   if not (aMemo is TMemo) then
     raise ELoggerPro.Create('WriteToVCLMemo requires a TMemo instance');
+  SetPendingConfigurator('WriteToVCLMemo');
   Result := TVCLMemoAppenderConfigurator.Create(Self, TMemo(aMemo));
 end;
 
@@ -741,6 +772,7 @@ function TLoggerProBuilder.WriteToVCLListBox(aListBox: TObject): IVCLListBoxAppe
 begin
   if not (aListBox is TListBox) then
     raise ELoggerPro.Create('WriteToVCLListBox requires a TListBox instance');
+  SetPendingConfigurator('WriteToVCLListBox');
   Result := TVCLListBoxAppenderConfigurator.Create(Self, TListBox(aListBox));
 end;
 
@@ -748,11 +780,13 @@ function TLoggerProBuilder.WriteToVCLListView(aListView: TObject): IVCLListViewA
 begin
   if not (aListView is TListView) then
     raise ELoggerPro.Create('WriteToVCLListView requires a TListView instance');
+  SetPendingConfigurator('WriteToVCLListView');
   Result := TVCLListViewAppenderConfigurator.Create(Self, TListView(aListView));
 end;
 
 function TLoggerProBuilder.WriteToWindowsEventLog: IWindowsEventLogAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToWindowsEventLog');
   Result := TWindowsEventLogAppenderConfigurator.Create(Self);
 end;
 
@@ -760,6 +794,7 @@ function TLoggerProBuilder.WriteToWindowsEventLogForService(aService: TObject): 
 begin
   if not (aService is TService) then
     raise ELoggerPro.Create('WriteToWindowsEventLogForService requires a TService instance');
+  SetPendingConfigurator('WriteToWindowsEventLogForService');
   Result := TWindowsEventLogAppenderConfigurator.Create(Self, TService(aService));
 end;
 
@@ -767,11 +802,13 @@ end;
 
 function TLoggerProBuilder.WriteToFireDAC: IFireDACAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToFireDAC');
   Result := TFireDACAppenderConfigurator.Create(Self);
 end;
 
 function TLoggerProBuilder.WriteToFilteredAppender(aAppender: ILogAppender): IFilteredAppenderConfigurator;
 begin
+  SetPendingConfigurator('WriteToFilteredAppender');
   Result := TFilteredAppenderConfigurator.Create(Self, aAppender);
 end;
 
@@ -817,6 +854,10 @@ var
   lLogWriter: TCustomLogWriter;
   I: Integer;
 begin
+  if not FPendingConfiguratorName.IsEmpty then
+    raise ELoggerPro.Create('Appender configurator "' + FPendingConfiguratorName +
+      '" was not finalized. Call .Done before calling .Build');
+
   if FAppenders.Count = 0 then
     raise ELoggerPro.Create('No appenders configured. Add at least one appender before calling Build.');
 
@@ -1284,6 +1325,12 @@ begin
   Result := Self;
 end;
 
+constructor TCallbackAppenderConfigurator.Create(aBuilder: TLoggerProBuilder);
+begin
+  inherited;
+  FSynchronizeToMainThread := False;
+end;
+
 function TCallbackAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1366,6 +1413,7 @@ begin
   FApplication := '';
   FVersion := '1.0';
   FProcID := '';
+  FUseLocalTime := False;
 end;
 
 function TUDPSyslogAppenderConfigurator.WithHost(const aHost: string): IUDPSyslogAppenderConfigurator;
@@ -1410,6 +1458,12 @@ begin
   Result := Self;
 end;
 
+function TUDPSyslogAppenderConfigurator.WithUseLocalTime(aUseLocalTime: Boolean): IUDPSyslogAppenderConfigurator;
+begin
+  FUseLocalTime := aUseLocalTime;
+  Result := Self;
+end;
+
 function TUDPSyslogAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
@@ -1421,7 +1475,7 @@ function TUDPSyslogAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
 begin
-  lAppender := TLoggerProUDPSyslogAppender.Create(FHost, FPort, FHostName, FUserName, FApplication, FVersion, FProcID, False);
+  lAppender := TLoggerProUDPSyslogAppender.Create(FHost, FPort, FHostName, FUserName, FApplication, FVersion, FProcID, False, False, FUseLocalTime);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;

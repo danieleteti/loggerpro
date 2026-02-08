@@ -70,6 +70,63 @@ Log.Info('Order completed', 'ORDERS', [
 ]);
 ```
 
+### Disabling Logging at Runtime
+
+**Option 1: Set Minimum Level (Simple)**
+
+```delphi
+// Disable Debug and Info, keep Warnings and above
+Log := LoggerProBuilder
+  .WithMinimumLevel(TLogType.Warning)
+  .WriteToFile.Done
+  .Build;
+
+// Change at runtime
+(Log as TCustomLogWriter).MinimumLevel := TLogType.Fatal; // Disable almost everything
+```
+
+**Option 2: Filtering Provider (Advanced)**
+
+```delphi
+uses LoggerPro.Proxy;
+
+var
+  lAppender: ILogAppender;
+  lEnabled: Boolean;
+
+lEnabled := True;
+
+lAppender := TLoggerProFileAppender.Create(5, 1000);
+
+// Wrap with runtime filter
+lAppender := TLoggerProFilter.Build(
+  lAppender,
+  function(const aLogItem: TLogItem): Boolean
+  begin
+    Result := lEnabled; // Toggle at runtime
+  end);
+
+Log := BuildLogWriter([lAppender]);
+
+// Later: disable all logging
+lEnabled := False;
+```
+
+### UDP Syslog Appender
+
+Send logs to remote syslog servers (RFC 5424):
+
+```delphi
+Log := LoggerProBuilder
+  .WriteToUDPSyslog
+    .WithHost('syslog.example.com')
+    .WithPort(514)
+    .WithApplication('MyApp')
+    .WithUseLocalTime(True)  // Use local time instead of UTC
+    .Done
+  .Build;
+```
+
 ---
 
 ## Full Documentation
