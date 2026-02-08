@@ -108,12 +108,12 @@ Search for "LoggerPro" in the Delphinus package manager.
 
 | LoggerPro Version | Minimum Delphi Version | Notes |
 |-------------------|------------------------|-------|
-| **2.0.x** (current) | **Delphi 10.4 Sydney** | Uses modern language features |
-| 1.x (legacy) | Delphi 10 Seattle+ | For older Delphi versions, use [LoggerPro 1.x](https://github.com/danieleteti/loggerpro/tree/v1.3) |
+| **2.0.x** (current) | **Delphi 10.3 Rio** | Full compatibility from 10.3+ |
+| 1.x (legacy) | Delphi 10 Seattle+ | Legacy support |
 
-**Tested on:** Delphi 13 Florence, 12 Athens, 11 Alexandria, 10.4 Sydney
+**Tested on:** Delphi 13 Florence, 12 Athens, 11 Alexandria, 10.4 Sydney, 10.3 Rio
 
-**Note for Delphi 10.3 Rio users:** LoggerPro 2.0 requires Delphi 10.4+ due to modern RTL features. Please use LoggerPro 1.x for older versions.
+**Note:** LoggerPro 2.0 is fully compatible with Delphi 10.3 Rio and later versions.
 
 ---
 

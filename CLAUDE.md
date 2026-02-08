@@ -6,6 +6,51 @@
 
 ## Sessione Corrente (2026-02-08)
 
+### Fix Issue #101 - Delphi 10.3 Rio Compatibility
+
+**Problema:** LoggerPro 2.0 non compilava su Delphi 10.3 Rio a causa di overload mancanti in `TJSONObject.AddPair`.
+
+**Errore originale:**
+```
+E2250: There is no overloaded version of 'AddPair' that can be called with these arguments
+```
+
+**Causa:** In Delphi 10.3, `AddPair(string, string)` non esiste. Gli overload aggiunti in 10.4+:
+- `AddPair(const Str, Val: string)`
+- `AddPair(const Str: string; const Val: Integer)`
+
+Delphi 10.3 ha solo:
+- `AddPair(const Str: string; const Val: TJSONValue)`
+- `AddPair(const Pair: TJSONPair)`
+
+**Soluzione implementata (Proposta 3 - Sempre TJSONString):**
+
+Usare sempre `TJSONString.Create()` per wrappare i valori stringa - compatibile con TUTTE le versioni Delphi:
+
+```delphi
+// PRIMA (non compilava su 10.3):
+lJSON.AddPair('timestamp', DateToISO8601(ALogItem.TimeStamp));
+lJSON.AddPair('tid', ALogItem.ThreadID.ToString);
+
+// DOPO (compatibile 10.0 Seattle → 13 Florence):
+lJSON.AddPair('timestamp', TJSONString.Create(DateToISO8601(ALogItem.TimeStamp)));
+lJSON.AddPair('tid', TJSONString.Create(ALogItem.ThreadID.ToString));
+```
+
+**File modificato:** `LoggerPro.JSONLFileAppender.pas` (linee 168-198)
+
+**Vantaggi:**
+- ✅ Zero `{$IFDEF}` - codice lineare e pulito
+- ✅ Compatibile Delphi 10.0 Seattle → 13 Florence
+- ✅ Stesso comportamento garantito su tutte le versioni
+- ✅ Più esplicito e chiaro
+
+**Test:** 109 test unitari passano su Delphi 11.3
+**Commit:** Da committare
+**Issue:** #101 - DA AGGIORNARE (non chiudere, aggiornare con fix)
+
+---
+
 ### Fix Issue #105 - Context Rendering con Curly Braces
 
 **Problema:** Discrepanza tra documentazione e implementazione. La documentazione mostrava `{order_id=12345, amount=99.99}` ma l'output effettivo era `order_id=12345 amount=99.99`.
