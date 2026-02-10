@@ -22,12 +22,14 @@ type
     Button4: TButton;
     Button5: TButton;
     Button6: TButton;
+    Button7: TButton;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
     procedure Button6Click(Sender: TObject);
+    procedure Button7Click(Sender: TObject);
   private
   { Private declarations }
   public
@@ -107,6 +109,17 @@ procedure TMainForm.Button6Click(Sender: TObject);
 begin
   Log.Fatal('This is an fatal message with TAG1', 'TAG1');
   Log.Fatal('This is an fatal message with TAG2', 'TAG2');
+end;
+
+procedure TMainForm.Button7Click(Sender: TObject);
+begin
+  Log.Debug('User login attempt with phone: 13812345678', 'MASKING_TEST');
+  Log.Info('User registration with phone: 15987654321', 'MASKING_TEST');
+  Log.Warn('Password reset request for user with phone: 18600001111', 'MASKING_TEST');
+  Log.Error('Login failed: username=admin&password=secret123', 'MASKING_TEST');
+  Log.Fatal('Database connection failed: password=dbpass456', 'MASKING_TEST');
+  Log.Debug('Multiple phones: 13812345678 and 15987654321', 'MASKING_TEST');
+  Log.Info('User data: phone=18600001111&password=mysecret', 'MASKING_TEST');
 end;
 
 end.
