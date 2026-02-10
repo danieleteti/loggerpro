@@ -13,6 +13,7 @@ uses
   LoggerPro.FileAppender,
   LoggerPro.ConsoleAppender,
   LoggerPro.OutputDebugStringAppender,
+  LoggerPro.MaskingAppender,
   LoggerPro.Builder;
 
 var
@@ -38,12 +39,19 @@ begin
   //   - Multiple appenders (File, Console, OutputDebugString)
   //   - Conditional log level based on DEBUG/RELEASE build
   //   - WithDefaultLogLevel to set minimum level for all appenders
+  //   - 使用 TLoggerProMaskingAppender 装饰器进行脱敏处理
   //
   _Log := LoggerProBuilder
     .WithDefaultLogLevel(LOG_LEVEL)
-    .WriteToFile.Done
-    .WriteToConsole.Done
-    .WriteToOutputDebugString.Done
+    .WriteToFile
+      .WithMasking // 添加脱敏装饰器
+      .Done
+    .WriteToConsole
+      .WithMasking // 添加脱敏装饰器
+      .Done
+    .WriteToOutputDebugString
+      .WithMasking // 添加脱敏装饰器
+      .Done
     .Build;
 
   // ============================================================================
