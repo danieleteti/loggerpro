@@ -13,6 +13,7 @@ uses
   LoggerPro.FileAppender,
   LoggerPro.ConsoleAppender,
   LoggerPro.OutputDebugStringAppender,
+  LoggerPro.MaskingAppender,
   LoggerPro.Builder;
 
 var
@@ -31,29 +32,12 @@ const
   LOG_LEVEL = TLogType.Warning;
 {$ENDIF}
 begin
-  // ============================================================================
-  // LoggerPro 2.0 - Builder API (Recommended)
-  // ============================================================================
-  // This sample demonstrates:
-  //   - Multiple appenders (File, Console, OutputDebugString)
-  //   - Conditional log level based on DEBUG/RELEASE build
-  //   - WithDefaultLogLevel to set minimum level for all appenders
-  //
   _Log := LoggerProBuilder
     .WithDefaultLogLevel(LOG_LEVEL)
-    .WriteToFile.Done
-    .WriteToConsole.Done
-    .WriteToOutputDebugString.Done
+    .AddAppender(TLoggerProMaskingAppender.Create(TLoggerProFileAppender.Create))
+    .AddAppender(TLoggerProMaskingAppender.Create(TLoggerProConsoleAppender.Create))
+    .AddAppender(TLoggerProMaskingAppender.Create(TLoggerProOutputDebugStringAppender.Create))
     .Build;
-
-  // ============================================================================
-  // LoggerPro 1.x - Legacy API (Still supported but deprecated)
-  // ============================================================================
-  // _Log := BuildLogWriter([
-  //   TLoggerProFileAppender.Create,
-  //   TLoggerProConsoleAppender.Create,
-  //   TLoggerProOutputDebugStringAppender.Create
-  // ], nil, LOG_LEVEL);
 end;
 
 initialization
