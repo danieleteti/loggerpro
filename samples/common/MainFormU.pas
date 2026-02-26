@@ -22,12 +22,14 @@ type
     Button4: TButton;
     Button5: TButton;
     Button6: TButton;
+    btnTestMasking: TButton;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
     procedure Button6Click(Sender: TObject);
+    procedure btnTestMaskingClick(Sender: TObject);
   private
   { Private declarations }
   public
@@ -107,6 +109,17 @@ procedure TMainForm.Button6Click(Sender: TObject);
 begin
   Log.Fatal('This is an fatal message with TAG1', 'TAG1');
   Log.Fatal('This is an fatal message with TAG2', 'TAG2');
+end;
+
+procedure TMainForm.btnTestMaskingClick(Sender: TObject);
+begin
+  Log.Info('=== MaskingAppender Test ===', 'MASKING');
+  Log.Info('Phone number test: 13812345678, 15987654321, 18600001111', 'MASKING');
+  Log.Info('Password test: password=MySecret123, PASSWORD=admin123', 'MASKING');
+  Log.Info('Mixed test: User 13912345678 logged in with password=testpass', 'MASKING');
+  Log.Info('URL params: http://api.example.com?password=secret123&phone=13688889999', 'MASKING');
+  Log.Info('No sensitive data: This message has nothing to mask', 'MASKING');
+  Log.Info('=== Test Complete ===', 'MASKING');
 end;
 
 end.
