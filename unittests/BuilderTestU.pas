@@ -88,6 +88,10 @@ type
     procedure TestWriteToStringsWithMaxLines;
     [Test]
     procedure TestWriteToStringsClearOnStartup;
+    [Test]
+    procedure TestBuildWithConsoleUTF8Output;
+    [Test]
+    procedure TestBuildWithSimpleConsoleUTF8Output;
 {$IF Defined(MSWINDOWS)}
     [Test]
     procedure TestWriteToWindowsEventLog;
@@ -1166,6 +1170,28 @@ begin
     lLog := nil;
     lStrings.Free;
   end;
+end;
+
+procedure TLoggerProBuilderTest.TestBuildWithConsoleUTF8Output;
+var
+  lLog: ILogWriter;
+begin
+  lLog := LoggerProBuilder
+    .WriteToConsole.WithUTF8Output.Done
+    .Build;
+
+  Assert.IsNotNull(lLog, 'Logger should be created with UTF8 console appender');
+end;
+
+procedure TLoggerProBuilderTest.TestBuildWithSimpleConsoleUTF8Output;
+var
+  lLog: ILogWriter;
+begin
+  lLog := LoggerProBuilder
+    .WriteToSimpleConsole.WithUTF8Output.Done
+    .Build;
+
+  Assert.IsNotNull(lLog, 'Logger should be created with UTF8 simple console appender');
 end;
 
 {$IF Defined(MSWINDOWS)}
