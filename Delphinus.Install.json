@@ -1,29 +1,25 @@
 {
   "search_paths": [{
     "paths": ".",
-    "platforms": "Win32;Win64"
+    "platforms": "Win32;Win64;Android;Android64;iOSDevice64;iOSSimARM64;Linux64;OSX64;OSXARM64"
   },
   {
     "paths": "contrib",
-    "platforms": "Win32;Win64"
+    "platforms": "Win32;Win64;Android;Android64;iOSDevice64;iOSSimARM64;Linux64;OSX64;OSXARM64"
   }],
   "browsing_paths": [{
     "paths": ".",
-    "platforms": "Win32;Win64"
+    "platforms": "Win32;Win64;Android;Android64;iOSDevice64;iOSSimARM64;Linux64;OSX64;OSXARM64"
   },
   {
     "paths": "contrib",
-    "platforms": "Win32;Win64"
+    "platforms": "Win32;Win64;Android;Android64;iOSDevice64;iOSSimARM64;Linux64;OSX64;OSXARM64"
   }],
   "source_folders": [{
     "folder": "."
   },
   {
     "folder": "contrib",
-    "recursive": true
-  },
-  {
-    "folder": "samples",
     "recursive": true
   }]
 }
