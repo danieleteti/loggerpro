@@ -8,11 +8,9 @@ uses
   System.SysUtils,
   System.IOUtils,
   LoggerPro,
-  LoggerPro.TimeRotatingFileAppender,
   LoggerPro.Builder;
 
 var
-  lTimeRotatingAppender: TLoggerProTimeRotatingFileAppender;
   lLog: ILogWriter;
   lLogsFolder: string;
   lFiles: TArray<string>;
@@ -28,21 +26,14 @@ begin
     WriteLn('Log folder: ' + lLogsFolder);
     WriteLn;
 
-    // Create time rotating appender with daily rotation
-    // Keeps max 7 backup files
-    lTimeRotatingAppender := TLoggerProTimeRotatingFileAppender.Create(
-      TTimeRotationInterval.Daily,  // Rotate daily
-      7,                            // Keep 7 days of logs
-      lLogsFolder,                  // Custom logs folder
-      'myapp'                       // Base file name
-    );
-
-    // Create log writer
-    // BuildLogWriter is the classic way to create a log writer.
-    // The modern and recommended approach is to use LoggerProBuilder.
-    //lLog := BuildLogWriter([lTimeRotatingAppender]);
+    // Create log writer with time rotating appender using fluent builder
     lLog := LoggerProBuilder
-      .WriteToAppender(lTimeRotatingAppender)
+      .WriteToTimeRotatingFile
+        .WithInterval(TTimeRotationInterval.Daily)
+        .WithMaxBackupFiles(7)
+        .WithLogsFolder(lLogsFolder)
+        .WithFileBaseName('myapp')
+        .Done
       .Build;
 
     // Log some messages

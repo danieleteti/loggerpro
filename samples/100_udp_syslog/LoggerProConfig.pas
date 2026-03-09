@@ -3,33 +3,26 @@ unit LoggerProConfig;
 interface
 
 uses
-  LoggerPro, LoggerPro.UDPSyslogAppender, LoggerPro.Builder;
+  LoggerPro, LoggerPro.Builder;
 
 var
   Log: ILogWriter;
-  Appender: TLoggerProUDPSyslogAppender;
 
 implementation
 
 initialization
 
-Appender := TLoggerProUDPSyslogAppender.Create(
-    '127.0.0.1'
-    , 5114 //UDPClientPort.Value
-    , 'COMPUTER'
-    , 'USER'
-    , 'EXE'
-    , '0.0.1'
-    , ''
-    , True
-    , False
-  );
-
-// BuildLogWriter is the classic way to create a log writer.
-// The modern and recommended approach is to use LoggerProBuilder.
-//Log := BuildLogWriter([Appender]);
 Log := LoggerProBuilder
-  .WriteToAppender(Appender)
+  .WriteToUDPSyslog
+    .WithHost('127.0.0.1')
+    .WithPort(5114)
+    .WithHostName('COMPUTER')
+    .WithUserName('USER')
+    .WithApplication('EXE')
+    .WithVersion('0.0.1')
+    .WithProcID('-')           // RFC 5424: '-' means "not applicable"
+    .WithUseLocalTime(False)   // False = UTC (recommended per RFC 5424)
+    .Done
   .Build;
 
 end.

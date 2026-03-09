@@ -7,12 +7,9 @@ program http_appender;
 uses
   System.SysUtils,
   LoggerPro,
-  LoggerPro.HTTPAppender,
-  LoggerPro.ConsoleAppender,
   LoggerPro.Builder;
 
 var
-  lHTTPAppender: TLoggerProHTTPAppender;
   lLog: ILogWriter;
 
 begin
@@ -24,25 +21,15 @@ begin
     WriteLn('Configure the URL below to point to your log collector.');
     WriteLn;
 
-    // Create HTTP appender
-    // Point this to your log collector endpoint (e.g., Logstash, custom webhook)
-    // For testing, you can use services like https://webhook.site
-    lHTTPAppender := TLoggerProHTTPAppender.Create(
-      'https://httpbin.org/post',     // Test endpoint that echoes back
-      THTTPContentType.JSON,          // Send as JSON
-      5                               // 5 second timeout
-    );
-
-    // Add custom headers if needed (e.g., API key)
-    lHTTPAppender.AddHeader('X-API-Key', 'your-api-key-here');
-    lHTTPAppender.AddHeader('X-Application', 'LoggerProSample');
-
-    // Create log writer with both appenders
-    // BuildLogWriter is the classic way to create a log writer.
-    // The modern and recommended approach is to use LoggerProBuilder.
-    //lLog := BuildLogWriter([lHTTPAppender, lConsoleAppender]);
+    // Create log writer with HTTP appender using fluent builder
     lLog := LoggerProBuilder
-      .WriteToAppender(lHTTPAppender)
+      .WriteToHTTP
+        .WithURL('https://httpbin.org/post')
+        .WithContentType(THTTPContentType.JSON)
+        .WithTimeout(5)
+        .WithHeader('X-API-Key', 'your-api-key-here')
+        .WithHeader('X-Application', 'LoggerProSample')
+        .Done
       .WriteToSimpleConsole.Done
       .Build;
 

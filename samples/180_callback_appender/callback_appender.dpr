@@ -7,14 +7,11 @@ program callback_appender;
 uses
   System.SysUtils,
   LoggerPro,
-  LoggerPro.CallbackAppender,
   LoggerPro.Builder;
 
 var
-  lCallbackAppender: TLoggerProCallbackAppender;
   lLog: ILogWriter;
   lErrorCount: Integer;
-  I: Integer;
 
 begin
   try
@@ -24,33 +21,26 @@ begin
 
     lErrorCount := 0;
 
-    // Create callback appender with a simple message callback
-    // This callback counts errors and displays formatted messages
-    lCallbackAppender := TLoggerProCallbackAppender.Create(
-      procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
-      begin
-        // Count errors
-        if aLogItem.LogType >= TLogType.Error then
-          Inc(lErrorCount);
-
-        // Display with custom prefix based on log type
-        case aLogItem.LogType of
-          TLogType.Debug:   WriteLn('[D] ' + aFormattedMessage);
-          TLogType.Info:    WriteLn('[I] ' + aFormattedMessage);
-          TLogType.Warning: WriteLn('[W] ' + aFormattedMessage);
-          TLogType.Error:   WriteLn('[E] >>> ' + aFormattedMessage + ' <<<');
-          TLogType.Fatal:   WriteLn('[F] !!! ' + aFormattedMessage + ' !!!');
-        end;
-      end,
-      False // Not synchronized to main thread (we're in console app)
-    );
-
-    // Create log writer
-    // BuildLogWriter is the classic way to create a log writer.
-    // The modern and recommended approach is to use LoggerProBuilder.
-    //lLog := BuildLogWriter([lCallbackAppender]);
+    // Create log writer with callback appender using fluent builder
     lLog := LoggerProBuilder
-      .WriteToAppender(lCallbackAppender)
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            // Count errors
+            if aLogItem.LogType >= TLogType.Error then
+              Inc(lErrorCount);
+
+            // Display with custom prefix based on log type
+            case aLogItem.LogType of
+              TLogType.Debug:   WriteLn('[D] ' + aFormattedMessage);
+              TLogType.Info:    WriteLn('[I] ' + aFormattedMessage);
+              TLogType.Warning: WriteLn('[W] ' + aFormattedMessage);
+              TLogType.Error:   WriteLn('[E] >>> ' + aFormattedMessage + ' <<<');
+              TLogType.Fatal:   WriteLn('[F] !!! ' + aFormattedMessage + ' !!!');
+            end;
+          end)
+        .Done
       .Build;
 
     // Log some messages
