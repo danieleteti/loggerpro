@@ -222,13 +222,40 @@ Add the LoggerPro source folder to your Delphi Library Path.
 
 ### BOSS
 
-Install with [BOSS](https://github.com/HashLoad/boss), the Delphi package manager:
+[BOSS](https://github.com/HashLoad/boss) is an open-source package manager for Delphi and Lazarus.
+
+**Step 1 — Install BOSS**
+
+Download the latest release from [github.com/HashLoad/boss/releases](https://github.com/HashLoad/boss/releases) and add the executable to your system PATH.
+
+**Step 2 — Initialize your project** (skip if you already have a `boss.json`)
+
+Open a terminal in your project folder and run:
+
+```bash
+boss init
+```
+
+**Step 3 — Install LoggerPro**
 
 ```bash
 boss install github.com/danieleteti/loggerpro
 ```
 
-BOSS automatically adds the source folder to your project's search path. No further configuration needed.
+BOSS downloads LoggerPro into the `modules/` folder and automatically updates your project's search path. No manual Library Path configuration needed.
+
+**Step 4 — Use it**
+
+```delphi
+uses
+  LoggerPro.GlobalLogger;
+
+begin
+  Log.Info('Hello from LoggerPro!');
+end.
+```
+
+> **Note:** commit `boss.json` and `boss-lock.json` to version control. Add the `modules/` folder to `.gitignore`.
 
 ### Delphinus
 
