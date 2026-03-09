@@ -62,7 +62,8 @@ contains
   LoggerPro.VCLListBoxAppender in '..\..\LoggerPro.VCLListBoxAppender.pas',
   LoggerPro.VCLListViewAppender in '..\..\LoggerPro.VCLListViewAppender.pas',
   LoggerPro.VCLMemoAppender in '..\..\LoggerPro.VCLMemoAppender.pas',
-  LoggerPro.WindowsEventLogAppender in '..\..\LoggerPro.WindowsEventLogAppender.pas';
+  LoggerPro.WindowsEventLogAppender in '..\..\LoggerPro.WindowsEventLogAppender.pas',
+  LoggerPro.StringsAppender in '..\..\LoggerPro.StringsAppender.pas';
 
 end.
 
