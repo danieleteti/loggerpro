@@ -7,9 +7,11 @@
 <h3 align="center">The Modern, Async, Pluggable Logging Framework for Delphi</h3>
 
 <p align="center">
+  <a href="https://github.com/danieleteti/loggerpro/releases/tag/v2.1.0"><img src="https://img.shields.io/badge/version-2.1.0-brightgreen.svg" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
-  <a href="https://www.embarcadero.com/products/delphi"><img src="https://img.shields.io/badge/Delphi-10%20to%2013-orange.svg" alt="Delphi"></a>
+  <a href="https://www.embarcadero.com/products/delphi"><img src="https://img.shields.io/badge/Delphi-10.3%20to%2013-orange.svg" alt="Delphi"></a>
   <a href="https://www.danieleteti.it/loggerpro/"><img src="https://img.shields.io/badge/docs-danieleteti.it-green.svg" alt="Documentation"></a>
+  <a href="https://github.com/HashLoad/boss"><img src="https://img.shields.io/badge/boss-install-purple.svg" alt="BOSS"></a>
 </p>
 
 ---

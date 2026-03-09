@@ -24,9 +24,6 @@
         <Projects Include="10_multiple_appenders\multiple_appenders.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="20_multiple_loggers\multiple_loggers.dproj">
-            <Dependencies/>
-        </Projects>
         <Projects Include="09_jsonl_appender\jsonl_appender.dproj">
             <Dependencies/>
         </Projects>
@@ -113,15 +110,6 @@
     <Target Name="multiple_appenders:Make">
         <MSBuild Projects="10_multiple_appenders\multiple_appenders.dproj" Targets="Make"/>
     </Target>
-    <Target Name="multiple_loggers">
-        <MSBuild Projects="20_multiple_loggers\multiple_loggers.dproj"/>
-    </Target>
-    <Target Name="multiple_loggers:Clean">
-        <MSBuild Projects="20_multiple_loggers\multiple_loggers.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="multiple_loggers:Make">
-        <MSBuild Projects="20_multiple_loggers\multiple_loggers.dproj" Targets="Make"/>
-    </Target>
     <Target Name="jsonl_appender">
         <MSBuild Projects="09_jsonl_appender\jsonl_appender.dproj"/>
     </Target>
@@ -168,7 +156,7 @@
         <MSBuild Projects="08_email_appender\email_appender.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="global_logger;file_appender;simple_file_appender;logfmt_appender;console_appender;outputdebugstring_appender;multiple_appenders;multiple_loggers;jsonl_appender;custom_appender;vcl_appenders;udp_syslog;email_appender"/>
+        <CallTarget Targets="global_logger;file_appender;simple_file_appender;logfmt_appender;console_appender;outputdebugstring_appender;multiple_appenders;jsonl_appender;custom_appender;vcl_appenders;udp_syslog;email_appender"/>
     </Target>
     <Target Name="Clean">
         <CallTarget Targets="global_logger:Clean;file_appender:Clean;simple_file_appender:Clean;logfmt_appender:Clean;console_appender:Clean;outputdebugstring_appender:Clean;multiple_appenders:Clean;multiple_loggers:Clean;jsonl_appender:Clean;custom_appender:Clean;vcl_appenders:Clean;udp_syslog:Clean;email_appender:Clean"/>
