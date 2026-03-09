@@ -216,13 +216,23 @@ For complete documentation, tutorials, advanced examples, and best practices:
 
 ## Installation
 
-### Manual
+### BOSS
 
-Add the LoggerPro source folder to your Delphi Library Path.
+Install with [BOSS](https://github.com/HashLoad/boss), the Delphi package manager:
+
+```bash
+boss install github.com/danieleteti/loggerpro
+```
+
+BOSS automatically adds the source folder to your project's search path. No further configuration needed.
 
 ### Delphinus
 
 Search for "LoggerPro" in the Delphinus package manager.
+
+### Manual
+
+Add the LoggerPro source folder to your Delphi Library Path.
 
 ---
 
