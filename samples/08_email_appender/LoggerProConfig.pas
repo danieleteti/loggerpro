@@ -38,14 +38,14 @@ begin
     begin
       Result.IOHandler := TIdSSLIOHandlerSocketOpenSSL.Create(Result);
     end;
-    Result.Host := 'smtp.example.com';
+    Result.Host := 'smtp.gmail.com';
     Result.Port := 25;
     Result.UseTLS := TIdUseTLS.utUseImplicitTLS;
     Result.AuthType := satDefault;
-    Result.Username := 'user@example.com';
+    Result.Username := 'daniele.teti@gmail.com';
     if not TFile.Exists('config.txt') then
-      raise Exception.Create('Create a "config.txt" file containing the SMTP password');
-    Result.Password := TFile.ReadAllText('config.txt');
+      raise Exception.Create('Create a "config.txt" file containing the password');
+    Result.Password := TFile.ReadAllText('config.txt'); // '<yourpassword>';
   except
     Result.Free;
     raise;
@@ -68,7 +68,7 @@ const
 var
   lEmailAppender: ILogAppender;
 begin
-  lEmailAppender := TLoggerProEMailAppender.Create(GetSMTP, 'MyApp Logs<noreply@example.com>', 'admin@example.com');
+  lEmailAppender := TLoggerProEMailAppender.Create(GetSMTP, 'LoggerPro<daniele.teti@gmail.com>', 'd.teti@bittime.it');
   lEmailAppender.SetLogLevel(TLogType.Error);
   // BuildLogWriter is the classic way to create a log writer.
   // The modern and recommended approach is to use LoggerProBuilder.
