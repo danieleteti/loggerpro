@@ -49,7 +49,6 @@ set FILES=^
     LoggerPro.Renderers.pas ^
     LoggerPro.TimeRotatingFileAppender.pas ^
     LoggerPro.UDPSyslogAppender.pas ^
-    LoggerPro.Utils.pas ^
     LoggerPro.VCLListBoxAppender.pas ^
     LoggerPro.VCLListViewAppender.pas ^
     LoggerPro.VCLMemoAppender.pas ^

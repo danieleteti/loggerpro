@@ -141,7 +141,6 @@
         <DCCReference Include="..\..\LoggerPro.Renderers.pas"/>
         <DCCReference Include="..\..\LoggerPro.TimeRotatingFileAppender.pas"/>
         <DCCReference Include="..\..\LoggerPro.UDPSyslogAppender.pas"/>
-        <DCCReference Include="..\..\LoggerPro.Utils.pas"/>
         <DCCReference Include="..\..\ThreadSafeQueueU.pas"/>
         <DCCReference Include="..\..\LoggerPro.Builder.pas"/>
         <DCCReference Include="..\..\LoggerPro.DBAppender.FireDAC.pas"/>
