@@ -31,6 +31,7 @@ interface
 uses
   LoggerPro,
   LoggerPro.CallbackAppender,
+  LoggerPro.FileAppender,
   LoggerPro.TimeRotatingFileAppender,
   LoggerPro.HTTPAppender,
   LoggerPro.Proxy,
@@ -67,9 +68,13 @@ type
     function WithFileBaseName(const aFileBaseName: string): IFileAppenderConfigurator;
     function WithMaxBackupFiles(aMaxBackupFiles: Integer): IFileAppenderConfigurator;
     function WithMaxFileSizeInKB(aMaxFileSizeInKB: Integer): IFileAppenderConfigurator;
+    function WithInterval(aInterval: TTimeRotationInterval): IFileAppenderConfigurator;
+    function WithFileFormat(const aFileFormat: string): IFileAppenderConfigurator;
+    function WithMaxRetainedFiles(aMaxFiles: Integer): IFileAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IFileAppenderConfigurator;
     function WithEncoding(aEncoding: TEncoding): IFileAppenderConfigurator;
     function WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator;
+    function WithOnAfterRotate(aCallback: TFileRotateCallback): IFileAppenderConfigurator;
   end;
 
   { JSONL file appender configurator }
@@ -140,6 +145,21 @@ type
     function WithCallback(aCallback: TLogMessageCallback): ISimpleCallbackAppenderConfigurator;
     function WithSynchronizeToMainThread(aValue: Boolean): ISimpleCallbackAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): ISimpleCallbackAppenderConfigurator;
+  end;
+
+  { Strings appender configurator (cross-platform, works with any TStrings).
+    Default: MaxLogLines = 100, ClearOnStartup = False.
+    The TStrings instance is NOT owned by the appender. The caller is
+    responsible for its lifetime and must ensure it outlives the ILogWriter. }
+  IStringsAppenderConfigurator = interface(IAppenderConfigurator)
+    ['{A3B4C5D6-E7F8-9A0B-1C2D-3E4F5A6B7C8D}']
+    { Sets the maximum number of lines retained. Oldest lines are removed first.
+      Must be > 0. Default: 100. }
+    function WithMaxLogLines(aMaxLogLines: Word): IStringsAppenderConfigurator;
+    { If True, the TStrings instance is cleared when the logger starts. Default: False. }
+    function WithClearOnStartup(aValue: Boolean): IStringsAppenderConfigurator;
+    function WithLogLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IStringsAppenderConfigurator;
   end;
 
   { OutputDebugString appender configurator }
@@ -231,6 +251,8 @@ type
     function WriteToSimpleCallback: ISimpleCallbackAppenderConfigurator;
     function WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
     function WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
+    { Strings appender - logs to any TStrings instance (cross-platform) }
+    function WriteToStrings(aStrings: TStrings): IStringsAppenderConfigurator;
 {$IF Defined(MSWINDOWS)}
     { VCL appenders - require VCL units (Windows only) }
     function WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
@@ -268,12 +290,12 @@ implementation
 
 uses
   LoggerPro.ConsoleAppender,
-  LoggerPro.FileAppender,
   LoggerPro.JSONLFileAppender,
   LoggerPro.ElasticSearchAppender,
   LoggerPro.MemoryAppender,
   LoggerPro.OutputDebugStringAppender,
   LoggerPro.UDPSyslogAppender,
+  LoggerPro.StringsAppender,
   LoggerPro.DBAppender.FireDAC
 {$IF Defined(MSWINDOWS)}
   , LoggerPro.VCLMemoAppender
@@ -326,15 +348,23 @@ type
     FMaxBackupFiles: Integer;
     FMaxFileSizeInKB: Integer;
     FEncoding: TEncoding;
+    FRotationInterval: TTimeRotationInterval;
+    FMaxRetainedFiles: Integer;
+    FFileFormat: string;
+    FOnAfterRotate: TFileRotateCallback;
   public
     constructor Create(aBuilder: TLoggerProBuilder);
     function WithLogsFolder(const aLogsFolder: string): IFileAppenderConfigurator;
     function WithFileBaseName(const aFileBaseName: string): IFileAppenderConfigurator;
     function WithMaxBackupFiles(aMaxBackupFiles: Integer): IFileAppenderConfigurator;
     function WithMaxFileSizeInKB(aMaxFileSizeInKB: Integer): IFileAppenderConfigurator;
+    function WithInterval(aInterval: TTimeRotationInterval): IFileAppenderConfigurator;
+    function WithFileFormat(const aFileFormat: string): IFileAppenderConfigurator;
+    function WithMaxRetainedFiles(aMaxFiles: Integer): IFileAppenderConfigurator;
     function WithLogLevel(aLogLevel: TLogType): IFileAppenderConfigurator;
     function WithEncoding(aEncoding: TEncoding): IFileAppenderConfigurator;
     function WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator;
+    function WithOnAfterRotate(aCallback: TFileRotateCallback): IFileAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -493,6 +523,20 @@ type
     function Done: ILoggerProBuilder;
   end;
 
+  { Strings appender configurator }
+  TStringsAppenderConfigurator = class(TBaseAppenderConfigurator, IStringsAppenderConfigurator)
+  private
+    FStrings: TStrings;
+    FMaxLogLines: Word;
+    FClearOnStartup: Boolean;
+  public
+    constructor Create(aBuilder: TLoggerProBuilder; aStrings: TStrings);
+    function WithMaxLogLines(aMaxLogLines: Word): IStringsAppenderConfigurator;
+    function WithClearOnStartup(aValue: Boolean): IStringsAppenderConfigurator;
+    function WithLogLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IStringsAppenderConfigurator;
+    function Done: ILoggerProBuilder;
+  end;
 
 {$IF Defined(MSWINDOWS)}
   { VCL Memo appender configurator }
@@ -603,6 +647,7 @@ type
     function WriteToSimpleCallback: ISimpleCallbackAppenderConfigurator;
     function WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
     function WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
+    function WriteToStrings(aStrings: TStrings): IStringsAppenderConfigurator;
 {$IF Defined(MSWINDOWS)}
     // VCL appenders (Windows only)
     function WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
@@ -770,6 +815,12 @@ function TLoggerProBuilder.WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
 begin
   SetPendingConfigurator('WriteToUDPSyslog');
   Result := TUDPSyslogAppenderConfigurator.Create(Self);
+end;
+
+function TLoggerProBuilder.WriteToStrings(aStrings: TStrings): IStringsAppenderConfigurator;
+begin
+  SetPendingConfigurator('WriteToStrings');
+  Result := TStringsAppenderConfigurator.Create(Self, aStrings);
 end;
 
 {$IF Defined(MSWINDOWS)}
@@ -948,6 +999,9 @@ begin
   FMaxBackupFiles := TLoggerProFileAppender.DEFAULT_MAX_BACKUP_FILE_COUNT;
   FMaxFileSizeInKB := TLoggerProFileAppender.DEFAULT_MAX_FILE_SIZE_KB;
   FEncoding := nil;
+  FRotationInterval := TTimeRotationInterval.None;
+  FMaxRetainedFiles := 0;
+  FFileFormat := '';
 end;
 
 function TFileAppenderConfigurator.WithLogsFolder(const aLogsFolder: string): IFileAppenderConfigurator;
@@ -987,9 +1041,33 @@ begin
   Result := Self;
 end;
 
+function TFileAppenderConfigurator.WithInterval(aInterval: TTimeRotationInterval): IFileAppenderConfigurator;
+begin
+  FRotationInterval := aInterval;
+  Result := Self;
+end;
+
+function TFileAppenderConfigurator.WithFileFormat(const aFileFormat: string): IFileAppenderConfigurator;
+begin
+  FFileFormat := aFileFormat;
+  Result := Self;
+end;
+
+function TFileAppenderConfigurator.WithMaxRetainedFiles(aMaxFiles: Integer): IFileAppenderConfigurator;
+begin
+  FMaxRetainedFiles := aMaxFiles;
+  Result := Self;
+end;
+
 function TFileAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator;
 begin
   FRenderer := aRenderer;
+  Result := Self;
+end;
+
+function TFileAppenderConfigurator.WithOnAfterRotate(aCallback: TFileRotateCallback): IFileAppenderConfigurator;
+begin
+  FOnAfterRotate := aCallback;
   Result := Self;
 end;
 
@@ -997,18 +1075,47 @@ function TFileAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
   lFileNameFormat: string;
+  lBaseName: string;
 begin
-  if FFileBaseName.IsEmpty then
-    lFileNameFormat := TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT
+  // Determine the file name format
+  if not FFileFormat.IsEmpty then
+  begin
+    // User-provided explicit format
+    lFileNameFormat := FFileFormat;
+  end
+  else if FRotationInterval <> TTimeRotationInterval.None then
+  begin
+    // Auto-generate format with {date} placeholder
+    if FFileBaseName.IsEmpty then
+      lBaseName := '{module}'
+    else
+      lBaseName := FFileBaseName;
+
+    if FMaxFileSizeInKB > 0 then
+      lFileNameFormat := lBaseName + '.{date}.{number}.{tag}.log'
+    else
+      lFileNameFormat := lBaseName + '.{date}.{tag}.log';
+  end
   else
-    lFileNameFormat := FFileBaseName + '.{number}.{tag}.log';
+  begin
+    // Original behavior (no time rotation)
+    if FFileBaseName.IsEmpty then
+      lFileNameFormat := TLoggerProFileAppenderBase.DEFAULT_FILENAME_FORMAT
+    else
+      lFileNameFormat := FFileBaseName + '.{number}.{tag}.log';
+  end;
+
   lAppender := TLoggerProFileAppender.Create(
     FMaxBackupFiles,
     FMaxFileSizeInKB,
     FLogsFolder,
     lFileNameFormat,
     GetRenderer,
-    FEncoding);
+    FEncoding,
+    FRotationInterval,
+    FMaxRetainedFiles);
+  if Assigned(FOnAfterRotate) then
+    (lAppender as TLoggerProFileAppender).OnAfterRotate := FOnAfterRotate;
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
@@ -1530,6 +1637,53 @@ var
   lAppender: ILogAppender;
 begin
   lAppender := TLoggerProUDPSyslogAppender.Create(FHost, FPort, FHostName, FUserName, FApplication, FVersion, FProcID, False, False, FUseLocalTime);
+  ApplyLogLevel(lAppender);
+  FBuilder.InternalAddAppender(lAppender);
+  Result := FBuilder;
+end;
+
+{ TStringsAppenderConfigurator }
+
+constructor TStringsAppenderConfigurator.Create(aBuilder: TLoggerProBuilder; aStrings: TStrings);
+begin
+  inherited Create(aBuilder);
+  FStrings := aStrings;
+  FMaxLogLines := TStringsLogAppender.DEFAULT_MAX_LOG_LINES;
+  FClearOnStartup := False;
+end;
+
+function TStringsAppenderConfigurator.WithMaxLogLines(aMaxLogLines: Word): IStringsAppenderConfigurator;
+begin
+  if aMaxLogLines = 0 then
+    raise ELoggerPro.Create('MaxLogLines must be greater than zero');
+  FMaxLogLines := aMaxLogLines;
+  Result := Self;
+end;
+
+function TStringsAppenderConfigurator.WithClearOnStartup(aValue: Boolean): IStringsAppenderConfigurator;
+begin
+  FClearOnStartup := aValue;
+  Result := Self;
+end;
+
+function TStringsAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
+begin
+  FLogLevel := aLogLevel;
+  FLogLevelSet := True;
+  Result := Self;
+end;
+
+function TStringsAppenderConfigurator.WithRenderer(aRenderer: ILogItemRenderer): IStringsAppenderConfigurator;
+begin
+  FRenderer := aRenderer;
+  Result := Self;
+end;
+
+function TStringsAppenderConfigurator.Done: ILoggerProBuilder;
+var
+  lAppender: ILogAppender;
+begin
+  lAppender := TStringsLogAppender.Create(FStrings, FMaxLogLines, FClearOnStartup, GetRenderer);
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;

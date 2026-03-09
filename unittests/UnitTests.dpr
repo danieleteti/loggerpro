@@ -25,9 +25,11 @@ uses
   LoggerPro.TimeRotatingFileAppender in '..\LoggerPro.TimeRotatingFileAppender.pas',
   LoggerPro.HTTPAppender in '..\LoggerPro.HTTPAppender.pas',
   LoggerPro.Builder in '..\LoggerPro.Builder.pas',
+  LoggerPro.StringsAppender in '..\LoggerPro.StringsAppender.pas',
   BuilderTestU in 'BuilderTestU.pas',
   ThreadSafetyTestU in 'ThreadSafetyTestU.pas',
-  CriticalIssuesTestU in 'CriticalIssuesTestU.pas';
+  CriticalIssuesTestU in 'CriticalIssuesTestU.pas',
+  TestSyslogServerU in 'TestSyslogServerU.pas';
 
 var
   runner : ITestRunner;
