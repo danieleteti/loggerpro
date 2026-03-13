@@ -1,0 +1,4 @@
+services:
+  utf8-console:
+    build: .
+    container_name: loggerpro-utf8-demo
