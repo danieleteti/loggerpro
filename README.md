@@ -114,6 +114,51 @@ Log := BuildLogWriter([lAppender]);
 lEnabled := False;
 ```
 
+### UTF-8 Console Output (Docker / Windows)
+
+By default, Delphi's `Writeln` converts to the system locale encoding, which mangles non-ASCII characters in Docker containers (POSIX/C locale) and on Windows consoles (CP 437/1252). Enable `WithUTF8Output` to write UTF-8 bytes directly to stdout:
+
+```delphi
+Log := LoggerProBuilder
+  .WriteToConsole
+    .WithUTF8Output
+    .Done
+  .Build;
+
+// Also available for the simple (no-color) console appender
+Log := LoggerProBuilder
+  .WriteToSimpleConsole
+    .WithUTF8Output
+    .Done
+  .Build;
+```
+
+This is especially useful when running Delphi applications in **Docker containers** or when logging Unicode text (CJK, Cyrillic, emoji, etc.) on Windows.
+
+### DLL Usage
+
+LoggerPro works correctly inside DLLs loaded via `LoadLibrary` or P/Invoke. The logger thread initialization automatically detects the DLL context and avoids the Windows Loader Lock deadlock.
+
+```delphi
+library MyPlugin;
+
+uses
+  LoggerPro, LoggerPro.Builder;
+
+var
+  GLog: ILogWriter;
+
+begin
+  // Safe to initialize during DLL_PROCESS_ATTACH
+  GLog := LoggerProBuilder
+    .WriteToFile.Done
+    .Build;
+  GLog.Info('DLL loaded successfully');
+end.
+```
+
+> **Note:** Call `Shutdown` before the DLL is unloaded if you need to ensure all queued messages are flushed.
+
 ### UDP Syslog Appender
 
 Send logs to remote syslog servers (RFC 5424):
