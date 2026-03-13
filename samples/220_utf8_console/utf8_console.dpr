@@ -6,6 +6,7 @@ program utf8_console;
 
 uses
   System.SysUtils,
+  System.RTTI,
   LoggerPro,
   LoggerProConfig in 'LoggerProConfig.pas';
 

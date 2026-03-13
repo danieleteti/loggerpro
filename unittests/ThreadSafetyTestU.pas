@@ -25,6 +25,29 @@ type
 
     [Test]
     procedure TestRapidCreateDestroy;
+
+    // Issue #109 - DLL initialization deadlock (Windows Loader Lock)
+    //
+    // NOTE: The actual deadlock (System.IsLibrary = True branch) can only be
+    // reproduced in a DLL loaded via P/Invoke: the Loader Lock held during
+    // DllMain/DLL_THREAD_ATTACH prevents the logger thread from starting,
+    // deadlocking the spin-wait. That scenario cannot be exercised from an EXE
+    // test runner.
+    //
+    // What we CAN test is the invariant the fix relies on:
+    //   "FQueue is created in TLoggerThread.Create (before Start), so log items
+    //    enqueued before Execute() begins are never lost."
+    // If this contract breaks, the DLL fix would be unsafe regardless.
+
+    [Test]
+    // Logs N messages with zero intentional delay after Build() and verifies
+    // all messages are received after Shutdown (queue fully drained).
+    procedure TestNoMessageLossWhenLoggingImmediatelyAfterBuild;
+
+    [Test]
+    // Many threads all start logging before the logger thread could possibly
+    // have processed anything. Verifies zero message loss after Shutdown.
+    procedure TestNoMessageLossWithConcurrentImmediateLogging;
   end;
 
 implementation
@@ -175,6 +198,71 @@ begin
   end;
 
   Assert.Pass('Rapid create/destroy cycles completed without issues');
+end;
+
+procedure TThreadSafetyTest.TestNoMessageLossWhenLoggingImmediatelyAfterBuild;
+const
+  MESSAGE_COUNT = 200;
+var
+  lLog: ILogWriter;
+  lAppender: TLoggerProMemoryRingBufferAppender;
+  I: Integer;
+begin
+  // Build with a buffer large enough to hold every message
+  lAppender := TLoggerProMemoryRingBufferAppender.Create(MESSAGE_COUNT + 10);
+  lLog := LoggerProBuilder
+    .WriteToAppender(lAppender)
+    .Build;
+
+  // Log immediately — no Sleep, no yield.
+  // The logger thread may not have called Execute() yet when the first
+  // Enqueue happens. The queue must already be allocated (PR #109 invariant).
+  for I := 1 to MESSAGE_COUNT do
+    lLog.Info('ImmediateMsg %d', [I], 'PR109');
+
+  // Shutdown flushes the queue completely before returning.
+  lLog.Shutdown;
+  lLog := nil;
+
+  Assert.AreEqual(MESSAGE_COUNT, lAppender.Count,
+    Format('Expected %d messages, got %d — messages lost before thread started',
+      [MESSAGE_COUNT, lAppender.Count]));
+end;
+
+procedure TThreadSafetyTest.TestNoMessageLossWithConcurrentImmediateLogging;
+const
+  THREAD_COUNT  = 8;
+  MSGS_PER_THREAD = 50;
+  TOTAL_MSGS    = THREAD_COUNT * MSGS_PER_THREAD;
+var
+  lLog: ILogWriter;
+  lAppender: TLoggerProMemoryRingBufferAppender;
+  lThreads: array[0..THREAD_COUNT - 1] of TLoggingThread;
+  I: Integer;
+begin
+  lAppender := TLoggerProMemoryRingBufferAppender.Create(TOTAL_MSGS + 10);
+  lLog := LoggerProBuilder
+    .WriteToAppender(lAppender)
+    .Build;
+
+  // All threads start logging at once — before Execute() has had time to
+  // dequeue anything. This mirrors the DLL scenario where Initialize returns
+  // without spin-waiting and callers begin logging immediately.
+  for I := 0 to THREAD_COUNT - 1 do
+    lThreads[I] := TLoggingThread.Create(lLog, MSGS_PER_THREAD);
+
+  for I := 0 to THREAD_COUNT - 1 do
+  begin
+    lThreads[I].WaitFor;
+    lThreads[I].Free;
+  end;
+
+  lLog.Shutdown;
+  lLog := nil;
+
+  Assert.AreEqual(TOTAL_MSGS, lAppender.Count,
+    Format('Expected %d messages, got %d — concurrent early-enqueue lost messages',
+      [TOTAL_MSGS, lAppender.Count]));
 end;
 
 initialization

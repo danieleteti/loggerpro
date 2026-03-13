@@ -29,7 +29,8 @@ uses
   BuilderTestU in 'BuilderTestU.pas',
   ThreadSafetyTestU in 'ThreadSafetyTestU.pas',
   CriticalIssuesTestU in 'CriticalIssuesTestU.pas',
-  TestSyslogServerU in 'TestSyslogServerU.pas';
+  TestSyslogServerU in 'TestSyslogServerU.pas',
+  DLLInitTestU in 'DLLInitTestU.pas';
 
 var
   runner : ITestRunner;
