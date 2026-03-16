@@ -65,4 +65,13 @@ object MainForm: TMainForm
     TabOrder = 5
     OnClick = Button6Click
   end
+  object Button7: TButton
+    Left = 294
+    Top = 71
+    Width = 280
+    Height = 57
+    Caption = 'Test Masking (Phone & Password)'
+    TabOrder = 6
+    OnClick = Button7Click
+  end
 end
