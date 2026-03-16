@@ -65,4 +65,13 @@ object MainForm: TMainForm
     TabOrder = 5
     OnClick = Button6Click
   end
+  object btnTestMasking: TButton
+    Left = 294
+    Top = 71
+    Width = 280
+    Height = 57
+    Caption = 'Test MaskingAppender'
+    TabOrder = 6
+    OnClick = btnTestMaskingClick
+  end
 end
