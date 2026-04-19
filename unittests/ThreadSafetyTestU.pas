@@ -48,6 +48,16 @@ type
     // Many threads all start logging before the logger thread could possibly
     // have processed anything. Verifies zero message loss after Shutdown.
     procedure TestNoMessageLossWithConcurrentImmediateLogging;
+
+    [Test]
+    // Regression: an appender whose WriteLog raises must not spin-loop its
+    // worker thread on Shutdown. Pre-fix, the adapter bounced between
+    // WaitAfterFail and ToRestart without sleep while Terminated was set,
+    // and Shutdown's WaitFor would hang indefinitely. The appender code
+    // now swallows callback exceptions (user code must not poison the
+    // appender) and the appender-thread state machine caps shutdown-time
+    // restart attempts. This test must complete within a few seconds.
+    procedure TestShutdownCompletesWhenAppenderAlwaysRaises;
   end;
 
 implementation
@@ -263,6 +273,52 @@ begin
   Assert.AreEqual(TOTAL_MSGS, lAppender.Count,
     Format('Expected %d messages, got %d — concurrent early-enqueue lost messages',
       [TOTAL_MSGS, lAppender.Count]));
+end;
+
+procedure TThreadSafetyTest.TestShutdownCompletesWhenAppenderAlwaysRaises;
+const
+  // Pre-fix, Shutdown would hang forever on the spin loop. A generous
+  // wall-clock cap lets the test fail loudly instead of hanging the
+  // runner if the regression ever returns.
+  SHUTDOWN_TIMEOUT_SECONDS = 10;
+var
+  lLog: ILogWriter;
+  lCallbacks: Integer;
+  lStart: TDateTime;
+  lElapsedSeconds: Double;
+begin
+  lCallbacks := 0;
+
+  lLog := LoggerProBuilder
+    .WriteToCallback
+      .WithCallback(
+        procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+        begin
+          AtomicIncrement(Integer(lCallbacks));
+          // Every callback raises. Pre-fix this put the appender in a
+          // permanent "Failing" state and the adapter thread span on
+          // Terminated. Post-fix WriteLog swallows the exception and the
+          // appender stays Running.
+          raise Exception.Create('Regression #spin-loop: callback always raises');
+        end)
+      .Done
+    .Build;
+
+  lLog.Info('first');
+  lLog.Info('second');
+  lLog.Info('third');
+
+  lStart := Now;
+  lLog.Shutdown;
+  lLog := nil;
+  lElapsedSeconds := (Now - lStart) * SecsPerDay;
+
+  Assert.IsTrue(lElapsedSeconds < SHUTDOWN_TIMEOUT_SECONDS,
+    Format('Shutdown took %.2f s - the callback-exception spin-loop regression is back',
+      [lElapsedSeconds]));
+
+  Assert.IsTrue(lCallbacks >= 1,
+    'Callback should have been invoked at least once before the raise');
 end;
 
 initialization

@@ -1,5 +1,7 @@
 unit LoggerProTestU;
 
+{$WARN SYMBOL_DEPRECATED OFF}  // tests cover the legacy BuildLogWriter on purpose
+
 interface
 
 uses

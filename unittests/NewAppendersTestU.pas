@@ -1,5 +1,7 @@
 unit NewAppendersTestU;
 
+{$WARN SYMBOL_DEPRECATED OFF}  // tests cover the legacy BuildLogWriter on purpose
+
 interface
 
 uses
@@ -110,7 +112,7 @@ type
   end;
 
   [TestFixture]
-  THTTPAppenderTest = class
+  TWebhookAppenderTest = class
   public
     [Test]
     procedure TestLogItemToJSON;
@@ -154,7 +156,7 @@ uses
   LoggerPro.MemoryAppender,
   LoggerPro.CallbackAppender,
   LoggerPro.TimeRotatingFileAppender,
-  LoggerPro.HTTPAppender,
+  LoggerPro.WebhookAppender,
   System.DateUtils,
   System.JSON;
 
@@ -740,7 +742,7 @@ begin
   lEvent := TEvent.Create(nil, True, False, '');
   try
     lAppender := TLoggerProCallbackAppender.Create(
-      procedure(const aFormattedMessage: string)
+      procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
       begin
         lReceivedMessage := aFormattedMessage;
         lEvent.SetEvent;
@@ -1240,29 +1242,29 @@ begin
   end;
 end;
 
-{ THTTPAppenderTest }
+{ TWebhookAppenderTest }
 
 type
   // Helper class to access protected method
-  THTTPAppenderTestHelper = class(TLoggerProHTTPAppender)
+  TWebhookAppenderTestHelper = class(TLoggerProWebhookAppender)
   public
     function TestCreateData(const aLogItem: TLogItem; out aContentType: string): TStream;
   end;
 
-function THTTPAppenderTestHelper.TestCreateData(const aLogItem: TLogItem; out aContentType: string): TStream;
+function TWebhookAppenderTestHelper.TestCreateData(const aLogItem: TLogItem; out aContentType: string): TStream;
 begin
   Result := CreateData(aLogItem, aContentType);
 end;
 
-procedure THTTPAppenderTest.TestLogItemToJSON;
+procedure TWebhookAppenderTest.TestLogItemToJSON;
 var
-  lAppender: THTTPAppenderTestHelper;
+  lAppender: TWebhookAppenderTestHelper;
   lLogItem: TLogItem;
   lStream: TStream;
   lContentType: string;
   lJSON: TJSONObject;
 begin
-  lAppender := THTTPAppenderTestHelper.Create('http://localhost/logs', THTTPContentType.JSON);
+  lAppender := TWebhookAppenderTestHelper.Create('http://localhost/logs', TWebhookContentType.JSON);
   try
     lAppender.Setup;
 
@@ -1296,11 +1298,11 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestBuildURLWithAppendTagAndLevel;
+procedure TWebhookAppenderTest.TestBuildURLWithAppendTagAndLevel;
 var
-  lAppender: TLoggerProHTTPAppender;
+  lAppender: TLoggerProWebhookAppender;
 begin
-  lAppender := TLoggerProHTTPAppender.Create('http://localhost/api/logs');
+  lAppender := TLoggerProWebhookAppender.Create('http://localhost/api/logs');
   try
     lAppender.AppendTagAndLevelToURL := True;
 
@@ -1311,11 +1313,11 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestBuildURLWithoutAppendTagAndLevel;
+procedure TWebhookAppenderTest.TestBuildURLWithoutAppendTagAndLevel;
 var
-  lAppender: TLoggerProHTTPAppender;
+  lAppender: TLoggerProWebhookAppender;
 begin
-  lAppender := TLoggerProHTTPAppender.Create('http://localhost/api/logs');
+  lAppender := TLoggerProWebhookAppender.Create('http://localhost/api/logs');
   try
     Assert.IsFalse(lAppender.AppendTagAndLevelToURL, 'Default should be False');
   finally
@@ -1323,11 +1325,11 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestCustomHeaders;
+procedure TWebhookAppenderTest.TestCustomHeaders;
 var
-  lAppender: TLoggerProHTTPAppender;
+  lAppender: TLoggerProWebhookAppender;
 begin
-  lAppender := TLoggerProHTTPAppender.Create('http://localhost/api/logs');
+  lAppender := TLoggerProWebhookAppender.Create('http://localhost/api/logs');
   try
     // Just verify headers can be added without exception
     lAppender.AddHeader('Authorization', 'Bearer token123');
@@ -1341,15 +1343,15 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestPlainTextContentType;
+procedure TWebhookAppenderTest.TestPlainTextContentType;
 var
-  lAppender: THTTPAppenderTestHelper;
+  lAppender: TWebhookAppenderTestHelper;
   lLogItem: TLogItem;
   lStream: TStream;
   lContentType: string;
   lContent: string;
 begin
-  lAppender := THTTPAppenderTestHelper.Create('http://localhost/logs', THTTPContentType.PlainText);
+  lAppender := TWebhookAppenderTestHelper.Create('http://localhost/logs', TWebhookContentType.PlainText);
   try
     lAppender.Setup;
 
@@ -1377,16 +1379,16 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestSpecialCharactersInMessage;
+procedure TWebhookAppenderTest.TestSpecialCharactersInMessage;
 var
-  lAppender: THTTPAppenderTestHelper;
+  lAppender: TWebhookAppenderTestHelper;
   lLogItem: TLogItem;
   lStream: TStream;
   lContentType: string;
   lJSON: TJSONObject;
   lSpecialMsg: string;
 begin
-  lAppender := THTTPAppenderTestHelper.Create('http://localhost/logs', THTTPContentType.JSON);
+  lAppender := TWebhookAppenderTestHelper.Create('http://localhost/logs', TWebhookContentType.JSON);
   try
     lAppender.Setup;
 
@@ -1419,16 +1421,16 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestUnicodeInMessage;
+procedure TWebhookAppenderTest.TestUnicodeInMessage;
 var
-  lAppender: THTTPAppenderTestHelper;
+  lAppender: TWebhookAppenderTestHelper;
   lLogItem: TLogItem;
   lStream: TStream;
   lContentType: string;
   lJSON: TJSONObject;
   lUnicodeMsg: string;
 begin
-  lAppender := THTTPAppenderTestHelper.Create('http://localhost/logs', THTTPContentType.JSON);
+  lAppender := TWebhookAppenderTestHelper.Create('http://localhost/logs', TWebhookContentType.JSON);
   try
     lAppender.Setup;
 
@@ -1459,16 +1461,16 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestVeryLongMessage;
+procedure TWebhookAppenderTest.TestVeryLongMessage;
 var
-  lAppender: THTTPAppenderTestHelper;
+  lAppender: TWebhookAppenderTestHelper;
   lLogItem: TLogItem;
   lStream: TStream;
   lContentType: string;
   lJSON: TJSONObject;
   lLongMsg: string;
 begin
-  lAppender := THTTPAppenderTestHelper.Create('http://localhost/logs', THTTPContentType.JSON);
+  lAppender := TWebhookAppenderTestHelper.Create('http://localhost/logs', TWebhookContentType.JSON);
   try
     lAppender.Setup;
 
@@ -1500,17 +1502,17 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestEmptyExtendedInfo;
+procedure TWebhookAppenderTest.TestEmptyExtendedInfo;
 var
-  lAppender: THTTPAppenderTestHelper;
+  lAppender: TWebhookAppenderTestHelper;
   lLogItem: TLogItem;
   lStream: TStream;
   lContentType: string;
   lJSON: TJSONObject;
 begin
   // Create with empty extended info set
-  lAppender := THTTPAppenderTestHelper.Create('http://localhost/logs', THTTPContentType.JSON,
-    TLoggerProHTTPAppender.DEFAULT_TIMEOUT_SECONDS, []);
+  lAppender := TWebhookAppenderTestHelper.Create('http://localhost/logs', TWebhookContentType.JSON,
+    TLoggerProWebhookAppender.DEFAULT_TIMEOUT_SECONDS, []);
   try
     lAppender.Setup;
 
@@ -1544,17 +1546,17 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestAllExtendedInfo;
+procedure TWebhookAppenderTest.TestAllExtendedInfo;
 var
-  lAppender: THTTPAppenderTestHelper;
+  lAppender: TWebhookAppenderTestHelper;
   lLogItem: TLogItem;
   lStream: TStream;
   lContentType: string;
   lJSON: TJSONObject;
 begin
   // Create with all extended info
-  lAppender := THTTPAppenderTestHelper.Create('http://localhost/logs', THTTPContentType.JSON,
-    TLoggerProHTTPAppender.DEFAULT_TIMEOUT_SECONDS,
+  lAppender := TWebhookAppenderTestHelper.Create('http://localhost/logs', TWebhookContentType.JSON,
+    TLoggerProWebhookAppender.DEFAULT_TIMEOUT_SECONDS,
     [TLogExtendedInfo.EIUserName, TLogExtendedInfo.EIComputerName,
      TLogExtendedInfo.EIProcessName, TLogExtendedInfo.EIProcessID]);
   try
@@ -1590,11 +1592,11 @@ begin
   end;
 end;
 
-procedure THTTPAppenderTest.TestOverwriteHeader;
+procedure TWebhookAppenderTest.TestOverwriteHeader;
 var
-  lAppender: TLoggerProHTTPAppender;
+  lAppender: TLoggerProWebhookAppender;
 begin
-  lAppender := TLoggerProHTTPAppender.Create('http://localhost/api/logs');
+  lAppender := TLoggerProWebhookAppender.Create('http://localhost/api/logs');
   try
     // Add same header multiple times - should overwrite
     lAppender.AddHeader('Authorization', 'Bearer old_token');
@@ -1677,7 +1679,7 @@ initialization
   TDUnitX.RegisterTestFixture(TMemoryAppenderTest);
   TDUnitX.RegisterTestFixture(TCallbackAppenderTest);
   TDUnitX.RegisterTestFixture(TTimeRotatingFileAppenderTest);
-  TDUnitX.RegisterTestFixture(THTTPAppenderTest);
+  TDUnitX.RegisterTestFixture(TWebhookAppenderTest);
   TDUnitX.RegisterTestFixture(TAppenderEnableDisableTest);
 
 end.

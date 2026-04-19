@@ -23,14 +23,23 @@ uses
   LoggerPro.MemoryAppender in '..\LoggerPro.MemoryAppender.pas',
   LoggerPro.CallbackAppender in '..\LoggerPro.CallbackAppender.pas',
   LoggerPro.TimeRotatingFileAppender in '..\LoggerPro.TimeRotatingFileAppender.pas',
-  LoggerPro.HTTPAppender in '..\LoggerPro.HTTPAppender.pas',
+  LoggerPro.WebhookAppender in '..\LoggerPro.WebhookAppender.pas',
   LoggerPro.Builder in '..\LoggerPro.Builder.pas',
   LoggerPro.StringsAppender in '..\LoggerPro.StringsAppender.pas',
   BuilderTestU in 'BuilderTestU.pas',
   ThreadSafetyTestU in 'ThreadSafetyTestU.pas',
   CriticalIssuesTestU in 'CriticalIssuesTestU.pas',
   TestSyslogServerU in 'TestSyslogServerU.pas',
-  DLLInitTestU in 'DLLInitTestU.pas';
+  DLLInitTestU in 'DLLInitTestU.pas',
+  LoggerPro.FileBySourceAppender in '..\LoggerPro.FileBySourceAppender.pas',
+  LoggerPro.HTMLFileAppender in '..\LoggerPro.HTMLFileAppender.pas',
+  LoggerPro.Config in '..\LoggerPro.Config.pas',
+  LoggerPro.ExeWatchAppender in '..\LoggerPro.ExeWatchAppender.pas',
+  ConfigTestU in 'ConfigTestU.pas',
+  FileBySourceTestU in 'FileBySourceTestU.pas',
+  LoggerPro.Renderers in '..\LoggerPro.Renderers.pas',
+  LogFmtRendererTestU in 'LogFmtRendererTestU.pas',
+  LifecycleRaceTestU in 'LifecycleRaceTestU.pas';
 
 var
   runner : ITestRunner;

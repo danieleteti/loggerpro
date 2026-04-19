@@ -1,5 +1,10 @@
 unit BuilderTestU;
 
+// Tests exercise the deprecated BuildLogWriter directly to keep the
+// legacy factory covered. Silence the deprecation noise here - the
+// deprecation is intentional for users, not for us.
+{$WARN SYMBOL_DEPRECATED OFF}
+
 interface
 
 uses
@@ -25,7 +30,7 @@ type
     [Test]
     procedure TestWriteToFileWithAllOptions;
     [Test]
-    procedure TestWriteToHTTPWithHeaders;
+    procedure TestWriteToWebhookWithHeaders;
     [Test]
     procedure TestWriteToMemory;
     [Test]
@@ -110,7 +115,7 @@ uses
   LoggerPro.MemoryAppender,
   LoggerPro.CallbackAppender,
   LoggerPro.TimeRotatingFileAppender,
-  LoggerPro.HTTPAppender,
+  LoggerPro.WebhookAppender,
   LoggerPro.UDPSyslogAppender,
   LoggerPro.ElasticSearchAppender,
   LoggerPro.StringsAppender,
@@ -122,6 +127,29 @@ uses
   , LoggerPro.WindowsEventLogAppender
 {$ENDIF}
   ;
+
+procedure WaitForMsg10InStrings(lStrings: TStrings);
+var
+  lDeadline: TDateTime;
+  K: Integer;
+  lSaw10: Boolean;
+begin
+  lSaw10 := False;
+  lDeadline := Now + EncodeTime(0, 0, 5, 0);
+  while (not lSaw10) and (Now < lDeadline) do
+  begin
+    CheckSynchronize(20);
+    for K := 0 to lStrings.Count - 1 do
+      if lStrings[K].Contains('msg 10') then
+      begin
+        lSaw10 := True;
+        Break;
+      end;
+  end;
+  if not lSaw10 then
+    raise Exception.Create('Timeout waiting for msg 10 to reach lStrings');
+  while CheckSynchronize(10) do;
+end;
 
 { TLoggerProBuilderTest }
 
@@ -188,14 +216,14 @@ begin
   Assert.IsNotNull(lLog, 'Logger should be created with configured file appender');
 end;
 
-procedure TLoggerProBuilderTest.TestWriteToHTTPWithHeaders;
+procedure TLoggerProBuilderTest.TestWriteToWebhookWithHeaders;
 var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .WriteToHTTP
+    .WriteToWebhook
       .WithURL('http://localhost:8080/logs')
-      .WithContentType(THTTPContentType.JSON)
+      .WithContentType(TWebhookContentType.JSON)
       .WithTimeout(10)
       .WithRetryCount(5)
       .WithHeader('Authorization', 'Bearer token123')
@@ -1130,9 +1158,10 @@ begin
       lLog.Info('msg ' + I.ToString, 'TEST');
 
     Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Last callback should be invoked');
-    // Drain TThread.Queue closures: poll until all 10 messages have been processed
-    while (lStrings.Count < 5) and (CheckSynchronize(50)) do;
-    CheckSynchronize(50);
+    // Each appender has its own thread - the strings appender may still be
+    // queueing TThread.Queue closures after the callback signals. Poll the
+    // main-thread queue until 'msg 10' actually lands in lStrings, or timeout.
+    WaitForMsg10InStrings(lStrings);
     Assert.AreEqual(5, lStrings.Count, 'Should have at most 5 lines (MaxLogLines)');
     // The last 5 messages should be retained (msg 6..10)
     Assert.Contains(lStrings[lStrings.Count - 1], 'msg 10', 'Last line should be message 10');

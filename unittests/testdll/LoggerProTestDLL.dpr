@@ -63,7 +63,12 @@ begin
   // -----------------------------------------------------------------------
   try
     GAppender := TLoggerProMemoryRingBufferAppender.Create(100);
+    // Intentional use of BuildLogWriter here: this DLL exists to
+    // reproduce the Issue #109 init path, which historically ran
+    // through BuildLogWriter. Silence the deprecation warning.
+    {$WARN SYMBOL_DEPRECATED OFF}
     GLog := BuildLogWriter([GAppender]);
+    {$WARN SYMBOL_DEPRECATED ON}
     GLog.Info('DLL initialized - Loader Lock deadlock regression test', 'DLL_INIT');
     GLog.Info('PR #109 IsLibrary guard is working correctly', 'DLL_INIT');
   except
