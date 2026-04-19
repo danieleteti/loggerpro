@@ -1,0 +1,28 @@
+{
+  "configVersion": 1,
+  "minimumLevel": "Debug",
+  "defaultTag": "app",
+  "appenders": [
+    {
+      "type": "Console",
+      "colorScheme": "Midnight",
+      "logLevel": "Debug"
+    },
+    {
+      "type": "File",
+      "logsFolder": "logs",
+      "fileBaseName": "app",
+      "logLevel": "Info"
+    },
+    {
+      "type": "File",
+      "logsFolder": "logs_errors",
+      "fileBaseName": "errors",
+      "logLevel": "Error"
+    },
+    {
+      "type": "OutputDebugString",
+      "logLevel": "Debug"
+    }
+  ]
+}

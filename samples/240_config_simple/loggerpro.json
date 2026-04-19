@@ -1,0 +1,10 @@
+{
+  "configVersion": 1,
+  "minimumLevel": "Debug",
+  "appenders": [
+    {
+      "type": "Console",
+      "colors": true
+    }
+  ]
+}

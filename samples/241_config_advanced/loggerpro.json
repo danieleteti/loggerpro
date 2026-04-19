@@ -1,0 +1,52 @@
+{
+  "configVersion": 1,
+  "minimumLevel": "Debug",
+  "defaultLogLevel": "Info",
+  "defaultTag": "myapp",
+  "appenders": [
+    {
+      "type": "Console",
+      "logLevel": "Debug",
+      "colors": true,
+      "colorScheme": "Midnight",
+      "prefix": "SAMPLE",
+      "utf8Output": true
+    },
+    {
+      "type": "File",
+      "logLevel": "Info",
+      "logsFolder": "logs",
+      "fileBaseName": "advanced",
+      "maxBackupFiles": 5,
+      "maxFileSizeInKB": 2000,
+      "maxRetainedFiles": 30,
+      "interval": "Daily"
+    },
+    {
+      "type": "HTMLFile",
+      "logLevel": "Info",
+      "logsFolder": "logs",
+      "fileBaseName": "advanced",
+      "title": "Advanced Sample - LoggerPro",
+      "maxBackupFiles": 3,
+      "maxFileSizeInKB": 500
+    },
+    {
+      "type": "JSONLFile",
+      "logLevel": "Debug",
+      "logsFolder": "logs",
+      "fileBaseName": "advanced",
+      "maxBackupFiles": 5,
+      "maxFileSizeInKB": 2000
+    },
+    {
+      "type": "Memory",
+      "logLevel": "Warning",
+      "maxSize": 500
+    },
+    {
+      "type": "OutputDebugString",
+      "logLevel": "Debug"
+    }
+  ]
+}

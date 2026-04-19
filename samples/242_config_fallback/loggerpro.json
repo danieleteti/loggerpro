@@ -1,0 +1,16 @@
+{
+  "configVersion": 1,
+  "minimumLevel": "Debug",
+  "appenders": [
+    {
+      "type": "Console",
+      "colors": true,
+      "colorScheme": "Nord"
+    },
+    {
+      "type": "File",
+      "logsFolder": "logs",
+      "fileBaseName": "fallback"
+    }
+  ]
+}

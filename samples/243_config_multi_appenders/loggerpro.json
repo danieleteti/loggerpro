@@ -1,0 +1,21 @@
+{
+  "configVersion": 1,
+  "minimumLevel": "Debug",
+  "defaultTag": "multi",
+  "appenders": [
+    {
+      "type": "Console",
+      "colorScheme": "Midnight"
+    },
+    {
+      "type": "File",
+      "logsFolder": "logs",
+      "fileBaseName": "multi",
+      "maxBackupFiles": 5,
+      "maxFileSizeInKB": 1000
+    },
+    {
+      "type": "OutputDebugString"
+    }
+  ]
+}
