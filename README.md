@@ -9,352 +9,77 @@
 <p align="center">
   <a href="https://github.com/danieleteti/loggerpro/releases/tag/v2.1.0"><img src="https://img.shields.io/badge/version-2.1.0-brightgreen.svg" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
-  <a href="https://www.embarcadero.com/products/delphi"><img src="https://img.shields.io/badge/Delphi-10.3%20to%2013-orange.svg" alt="Delphi"></a>
-  <a href="https://www.danieleteti.it/loggerpro/"><img src="https://img.shields.io/badge/docs-danieleteti.it-green.svg" alt="Documentation"></a>
-  <a href="https://github.com/HashLoad/boss"><img src="https://img.shields.io/badge/boss-install-purple.svg" alt="BOSS"></a>
+  <a href="https://www.embarcadero.com/products/delphi"><img src="https://img.shields.io/badge/Delphi-10.2%20to%2013-orange.svg" alt="Delphi"></a>
+  <a href="https://www.danieleteti.it/loggerpro/"><img src="https://img.shields.io/badge/docs-danieleteti.it%2Floggerpro-green.svg" alt="Documentation"></a>
 </p>
 
 ---
 
-## Why Developers Love LoggerPro
-
-**LoggerPro** is the most complete and battle-tested logging framework for Delphi. Used in thousands of production applications worldwide, it provides everything you need for professional-grade logging.
-
-### Key Features
-
-- **Async by Design** - Non-blocking logging with zero impact on application performance
-- **20+ Built-in Appenders** - File, Console, HTTP, Syslog, ElasticSearch, Database, Email, and many more
-- **Cross-Platform** - Windows, Linux, macOS, Android, iOS - write once, log everywhere
-- **Thread-Safe** - Built from the ground up for multi-threaded applications
-- **Fluent Builder API** - Clean, readable, Serilog-style configuration
-- **Structured Logging** - First-class support for key-value context in log messages
-- **Production Ready** - Stable, maintained, and continuously improved since 2010
-
----
-
-## Quick Taste
-
-```delphi
-uses
-  LoggerPro.GlobalLogger;
-
-begin
-  Log.Info('Application started');
-  Log.Debug('Processing item %d', [42], 'WORKER');
-  Log.Error('Connection failed', 'DATABASE');
-end.
-```
-
-One line of `uses`, and you're logging to rotating files. It's that simple.
-
-### Builder API (v2.0)
-
-```delphi
-Log := LoggerProBuilder
-  .WithDefaultTag('MYAPP')
-  .WriteToFile
-    .WithLogsFolder('logs')
-    .Done
-  .WriteToConsole.Done
-  .WriteToHTTP
-    .WithURL('https://logs.example.com/api')
-    .Done
-  .Build;
-```
-
-### Structured Context Logging
-
-```delphi
-Log.Info('Order completed', 'ORDERS', [
-  LogParam.I('order_id', 12345),
-  LogParam.S('customer', 'John Doe'),
-  LogParam.F('total', 299.99)
-]);
-```
-
-### Disabling Logging at Runtime
-
-**Option 1: Set Minimum Level (Simple)**
-
-```delphi
-// Disable Debug and Info, keep Warnings and above
-Log := LoggerProBuilder
-  .WithMinimumLevel(TLogType.Warning)
-  .WriteToFile.Done
-  .Build;
-
-// Change at runtime
-(Log as TCustomLogWriter).MinimumLevel := TLogType.Fatal; // Disable almost everything
-```
-
-**Option 2: Filtering Provider (Advanced)**
-
-```delphi
-uses LoggerPro.Proxy;
-
-var
-  lAppender: ILogAppender;
-  lEnabled: Boolean;
-
-lEnabled := True;
-
-lAppender := TLoggerProFileAppender.Create(5, 1000);
-
-// Wrap with runtime filter
-lAppender := TLoggerProFilter.Build(
-  lAppender,
-  function(const aLogItem: TLogItem): Boolean
-  begin
-    Result := lEnabled; // Toggle at runtime
-  end);
-
-Log := BuildLogWriter([lAppender]);
-
-// Later: disable all logging
-lEnabled := False;
-```
-
-### UTF-8 Console Output (Docker / Windows)
-
-By default, Delphi's `Writeln` converts to the system locale encoding, which mangles non-ASCII characters in Docker containers (POSIX/C locale) and on Windows consoles (CP 437/1252). Enable `WithUTF8Output` to write UTF-8 bytes directly to stdout:
-
-```delphi
-Log := LoggerProBuilder
-  .WriteToConsole
-    .WithUTF8Output
-    .Done
-  .Build;
-
-// Also available for the simple (no-color) console appender
-Log := LoggerProBuilder
-  .WriteToSimpleConsole
-    .WithUTF8Output
-    .Done
-  .Build;
-```
-
-This is especially useful when running Delphi applications in **Docker containers** or when logging Unicode text (CJK, Cyrillic, emoji, etc.) on Windows.
-
-### DLL Usage
-
-LoggerPro works correctly inside DLLs loaded via `LoadLibrary` or P/Invoke. The logger thread initialization automatically detects the DLL context and avoids the Windows Loader Lock deadlock.
-
-```delphi
-library MyPlugin;
-
-uses
-  LoggerPro, LoggerPro.Builder;
-
-var
-  GLog: ILogWriter;
-
-begin
-  // Safe to initialize during DLL_PROCESS_ATTACH
-  GLog := LoggerProBuilder
-    .WriteToFile.Done
-    .Build;
-  GLog.Info('DLL loaded successfully');
-end.
-```
-
-> **Note:** Call `Shutdown` before the DLL is unloaded if you need to ensure all queued messages are flushed.
-
-### UDP Syslog Appender
-
-Send logs to remote syslog servers (RFC 5424):
-
-```delphi
-Log := LoggerProBuilder
-  .WriteToUDPSyslog
-    .WithHost('syslog.example.com')
-    .WithPort(514)
-    .WithApplication('MyApp')
-    .WithUseLocalTime(True)  // Use local time instead of UTC
-    .Done
-  .Build;
-```
-
-### ElasticSearch with Authentication
-
-Send logs to ElasticSearch with authentication support:
-
-```delphi
-// Basic Authentication
-Log := LoggerProBuilder
-  .WriteToElasticSearch
-    .WithURL('https://elastic.example.com:9200/logs/_doc')
-    .WithBasicAuth('username', 'password')
-    .Done
-  .Build;
-
-// API Key Authentication
-Log := LoggerProBuilder
-  .WriteToElasticSearch
-    .WithHost('https://elastic.example.com')
-    .WithPort(9200)
-    .WithIndex('app-logs')
-    .WithAPIKey('your-api-key-here')
-    .Done
-  .Build;
-
-// Bearer Token Authentication
-Log := LoggerProBuilder
-  .WriteToElasticSearch
-    .WithURL('https://elastic.example.com:9200/logs/_doc')
-    .WithBearerToken('your-jwt-token')
-    .Done
-  .Build;
-```
-
-### Getting Current Log File Name
-
-Get the active log file name from file appenders (useful for uploading, emailing, etc.):
-
-```delphi
-uses LoggerPro.FileAppender;
-
-var
-  lAppender: TLoggerProSimpleFileAppender;
-  lFileName: string;
-begin
-  lAppender := TLoggerProSimpleFileAppender.Create;
-  Log := BuildLogWriter([lAppender]);
-
-  Log.Info('Message');
-
-  // Get current log file name
-  lFileName := lAppender.GetCurrentLogFileName;
-  WriteLn('Logging to: ', lFileName);
-
-  // Now you can upload it, email it, etc.
-  UploadLogFile(lFileName);
-end;
-```
-
-For `TLoggerProFileAppender` (separate files per tag):
-
-```delphi
-var
-  lAppender: TLoggerProFileAppender;
-  lFileName: string;
-  lAllFiles: TArray<string>;
-begin
-  lAppender := TLoggerProFileAppender.Create;
-
-  // Get file for specific tag
-  lFileName := lAppender.GetCurrentLogFileName('ORDERS');
-
-  // Get all current log files
-  lAllFiles := lAppender.GetAllCurrentLogFileNames;
-end;
-```
-
----
-
-## Full Documentation
-
-For complete documentation, tutorials, advanced examples, and best practices:
-
 <h2 align="center">
+  📖 The official guide — install, API reference, tutorials, code samples, FAQ:<br><br>
   <a href="https://www.danieleteti.it/loggerpro/">https://www.danieleteti.it/loggerpro/</a>
 </h2>
 
----
-
-## Installation
-
-### Manual
-
-Add the LoggerPro source folder to your Delphi Library Path.
-
-### BOSS
-
-[BOSS](https://github.com/HashLoad/boss) is an open-source package manager for Delphi and Lazarus.
-
-**Step 1 — Install BOSS**
-
-Download the latest release from [github.com/HashLoad/boss/releases](https://github.com/HashLoad/boss/releases) and add the executable to your system PATH.
-
-**Step 2 — Initialize your project** (skip if you already have a `boss.json`)
-
-Open a terminal in your project folder and run:
-
-```bash
-boss init
-```
-
-**Step 3 — Install LoggerPro**
-
-```bash
-boss install github.com/danieleteti/loggerpro
-```
-
-BOSS downloads LoggerPro into the `modules/` folder and automatically updates your project's search path. No manual Library Path configuration needed.
-
-**Step 4 — Use it**
-
-```delphi
-uses
-  LoggerPro.GlobalLogger;
-
-begin
-  Log.Info('Hello from LoggerPro!');
-end.
-```
-
-> **Note:** commit `boss.json` and `boss-lock.json` to version control. Add the `modules/` folder to `.gitignore`.
-
-### Delphinus
-
-Search for "LoggerPro" in the Delphinus package manager.
+<p align="center">
+  Available in
+  <a href="https://www.danieleteti.it/loggerpro/">🇬🇧 English</a> ·
+  <a href="https://www.danieleteti.it/loggerpro-it/">🇮🇹 Italiano</a> ·
+  <a href="https://www.danieleteti.it/loggerpro-es/">🇪🇸 Español</a> ·
+  <a href="https://www.danieleteti.it/loggerpro-de/">🇩🇪 Deutsch</a>
+</p>
 
 ---
 
-## Supported Platforms
+## What is LoggerPro
 
-| Platform | Status |
-|----------|--------|
-| Windows (32/64-bit) | Full Support |
-| Linux | Full Support |
-| macOS | Full Support |
-| Android | Full Support |
-| iOS | Full Support |
+Async, pluggable, production-proven logging framework for Delphi. Used in
+thousands of applications worldwide since 2010.
 
-### Delphi Version Requirements
+- **Async by design** - non-blocking, zero impact on your app's hot path
+- **20+ built-in appenders** - File, Console, HTTP, ExeWatch cloud observability, Grafana Loki via LogFmt, ElasticSearch, UDP Syslog, Windows Event Log, Database, ...
+- **Fluent Builder API** - Serilog-style configuration
+- **JSON configuration** - reshape the logger at deploy time without rebuilding
+- **Structured logging** - first-class `LogParam` context
+- **Cross-platform** - Windows, Linux, macOS, Android, iOS
+- **Thread-safe**, **DLL-safe**, Apache 2.0
 
-| LoggerPro Version | Minimum Delphi Version | Notes |
-|-------------------|------------------------|-------|
-| **2.0.x** (current) | **Delphi 10.3 Rio** | Full compatibility from 10.3+ |
-| 1.x (legacy) | Delphi 10 Seattle+ | Legacy support |
+## What's New in 2.1
 
-**Tested on:** Delphi 13 Florence, 12 Athens, 11 Alexandria, 10.4 Sydney, 10.3 Rio
-
-**Note:** LoggerPro 2.0 is fully compatible with Delphi 10.3 Rio and later versions.
+- 🆕 **JSON configuration** - reshape your logger at deploy time without rebuilding
+- 🆕 **HTML live log viewer** - self-contained `.html` with filters, search, export, live tailing
+- 🆕 **ExeWatch integration** - first-class cloud observability via [ExeWatch](https://exewatch.com)
+- 🆕 **Pluggable appenders** - optional backends self-register, just add the `uses` clause
+- 🆕 **LogFmt renderer** - spec-compliant `key=value` output for Loki, humanlog, ripgrep
+- 🆕 **FileBySource appender** - per-tenant subfolders with day+size rotation
+- 🆕 **Runtime log level** - change the global gate on the fly via `ILogWriter.MinimumLevel`
+- 🆕 **UTF-8 console output** - correct Unicode in Docker and Windows consoles
+- 🆕 **DLL-safe init** - fixes the Windows Loader Lock deadlock
+- 🆕 **ElasticSearch auth** - Basic / API Key / Bearer Token
+- 🆕 **UDP Syslog local time** option
+- 🆕 **`GetCurrentLogFileName` API** on file appenders
 
 ---
 
-## Sample Projects
+## 👉 Everything else — install, full API, every code sample, LogFmt querying, Docker/DLL guidance, Windows Service integration, JSON config schema, FAQ — lives in the official guide:
 
-The `samples/` folder contains **25+ working examples** covering every appender and use case. The best way to learn LoggerPro is by exploring these samples.
+## [www.danieleteti.it/loggerpro](https://www.danieleteti.it/loggerpro/)
 
 ---
 
 ## License
 
-Apache License 2.0 - Use it freely in personal and commercial projects.
-
----
+Apache License 2.0 - free for personal and commercial use.
 
 ## Author
 
 **Daniele Teti**
 
-- Blog: [danieleteti.it](https://www.danieleteti.it)
-- LoggerPro Docs: [danieleteti.it/loggerpro](https://www.danieleteti.it/loggerpro/)
+- Blog & docs: [danieleteti.it](https://www.danieleteti.it) · [danieleteti.it/loggerpro](https://www.danieleteti.it/loggerpro/)
 - Twitter/X: [@danieleteti](https://twitter.com/danieleteti)
 
 ---
 
 <p align="center">
-  <b>LoggerPro - Professional Logging for Professional Delphi Developers</b>
+  <b>LoggerPro - Professional Logging for Professional Delphi Developers</b><br>
+  <a href="https://www.danieleteti.it/loggerpro/">📖 Full documentation →</a>
 </p>
