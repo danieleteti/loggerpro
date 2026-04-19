@@ -1,0 +1,19 @@
+{
+  "configVersion": 1,
+  "minimumLevel": "Debug",
+  "defaultTag": "DEMO",
+  "appenders": [
+    {
+      "type": "Console",
+      "colors": true,
+      "colorScheme": "Midnight"
+    },
+    {
+      "type": "ExeWatch",
+      "apiKey": "ew_win_DEMO_XXXX_REPLACE_ME",
+      "customerId": "SampleCustomer",
+      "appVersion": "1.0.0",
+      "anonymizeDeviceId": false
+    }
+  ]
+}
