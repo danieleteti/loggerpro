@@ -1,0 +1,157 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HTML Demo - LoggerPro</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif; background: #1a1a1a; color: #ddd; font-size: 13px; }
+  header { background: #0d1117; color: #fff; padding: 14px 20px; }
+  header h1 { margin: 0 0 8px 0; font-size: 18px; font-weight: 600; }
+  header .meta { font-size: 11px; color: #8b949e; }
+  header .meta a { color: #58a6ff; text-decoration: none; }
+  header .meta a:hover { text-decoration: underline; }
+  .app-bar { position: sticky; top: 0; z-index: 10; background: #0d1117; border-bottom: 2px solid #30363d; }
+  #filters { background: #21262d; padding: 10px 20px; border-top: 1px solid #30363d; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  #filters label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
+  #filters input[type="text"] { flex: 1; min-width: 200px; background: #0d1117; color: #ddd; border: 1px solid #30363d; border-radius: 4px; padding: 6px 10px; font-family: inherit; font-size: 12px; }
+  #filters .count { margin-left: auto; color: #8b949e; font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace; font-size: 12px; table-layout: fixed; }
+  col.c-ts  { width: 180px; }
+  col.c-lvl { width:  80px; }
+  col.c-tid { width:  70px; }
+  col.c-tag { width: 120px; }
+  thead th { background: #2a2f37; color: #c9d1d9; text-align: left; padding: 6px 10px; border-bottom: 1px solid #30363d; font-weight: 600; }
+  tbody tr { border-bottom: 1px solid #262b33; }
+  tbody tr:hover { background: #1f242c; }
+  tbody td { padding: 5px 10px; vertical-align: top; }
+  td.msg { white-space: pre-wrap; overflow-wrap: break-word; }
+  td.ts { color: #8b949e; white-space: nowrap; }
+  td.tid { color: #8b949e; text-align: right; white-space: nowrap; }
+  td.tag { color: #d2a8ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  td.lvl { font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+  tr.L-DEBUG   td.lvl { color: #8b949e; }
+  tr.L-INFO    td.lvl { color: #7ee787; }
+  tr.L-WARNING td.lvl { color: #d29922; }
+  tr.L-ERROR   td.lvl { color: #f85149; }
+  tr.L-FATAL   td.lvl { color: #ff9ae0; }
+  tr.L-WARNING:not(.ctx-row) { background: rgba(210, 153, 34, 0.08); }
+  tr.L-ERROR:not(.ctx-row)   { background: rgba(248, 81, 73, 0.10); }
+  tr.L-FATAL:not(.ctx-row)   { background: rgba(255, 154, 224, 0.10); }
+  tr.ctx-row > td { border-top: none; padding: 0 10px 6px 28px; font-size: 11px; color: #58a6ff; white-space: pre-wrap; overflow-wrap: break-word; }
+  tr.ctx-row > td b { color: #7ee787; font-weight: normal; }
+  tr.ctx-row > td::before { content: "\21B3"; margin-right: 6px; color: #484f58; }
+  tr.hidden { display: none; }
+  .btn { background: #30363d; color: #c9d1d9; border: 1px solid #484f58; border-radius: 4px; padding: 5px 10px; font: inherit; font-size: 11px; cursor: pointer; }
+  .btn:hover { background: #3e464f; }
+  .live-badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; vertical-align: middle; }
+  .live-badge.live { background: #d29922; color: #000; animation: lp-pulse 2s infinite; }
+  .live-badge.finalized { background: #30363d; color: #8b949e; border: 1px solid #484f58; }
+  @keyframes lp-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+</style>
+<script defer>
+(() => {
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  const isClosed = !!document.getElementById("filecompleted");
+  if (!isClosed) setTimeout(() => location.replace(location.href), 3000);
+  const onReady = () => {
+    const q = document.getElementById("q");
+    const rows = document.getElementById("rows");
+    const count = document.getElementById("count");
+    const lvls = document.querySelectorAll(".f-lvl");
+    const badge = document.getElementById("live-badge");
+    if (!isClosed) {
+      const scrollToBottom = () => window.scrollTo(0, document.documentElement.scrollHeight);
+      if (document.readyState === "complete") requestAnimationFrame(scrollToBottom);
+      else window.addEventListener("load", () => requestAnimationFrame(scrollToBottom), { once: true });
+    }
+    if (badge) {
+      if (isClosed) { badge.textContent = "FINALIZED"; badge.className = "live-badge finalized"; }
+      else { badge.textContent = "LIVE"; badge.className = "live-badge live"; }
+    }
+    const apply = () => {
+      const active = Array.from(lvls).filter(c => c.checked).map(c => c.value);
+      const needle = (q.value || "").toLowerCase();
+      let shown = 0, total = 0;
+      rows.querySelectorAll("tr:not(.ctx-row)").forEach(tr => {
+        total++;
+        const lvl = tr.dataset.lvl || "";
+        const ctx = tr.nextElementSibling;
+        let ok = active.includes(lvl);
+        if (ok && needle) {
+          let txt = tr.textContent;
+          if (ctx && ctx.classList.contains("ctx-row")) txt += " " + ctx.textContent;
+          ok = txt.toLowerCase().includes(needle);
+        }
+        tr.classList.toggle("hidden", !ok);
+        if (ctx && ctx.classList.contains("ctx-row")) ctx.classList.toggle("hidden", !ok);
+        if (ok) shown++;
+      });
+      count.textContent = shown + " / " + total;
+    };
+    q.addEventListener("input", apply);
+    lvls.forEach(c => c.addEventListener("change", apply));
+    const collectVisible = () => {
+      const out = [];
+      rows.querySelectorAll("tr:not(.ctx-row):not(.hidden)").forEach(tr => {
+        const cells = tr.querySelectorAll("td");
+        const next = tr.nextElementSibling;
+        const ctxTxt = (next && next.classList.contains("ctx-row")) ? next.textContent.trim() : "";
+        out.push({ timestamp: cells[0].textContent, level: cells[1].textContent, thread: cells[2].textContent, tag: cells[3].textContent, message: cells[4].textContent, context: ctxTxt });
+      });
+      return out;
+    };
+    const download = (data, mime, ext) => {
+      const blob = new Blob([data], {type: mime});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      a.href = url; a.download = "loggerpro-" + stamp + "." + ext;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
+    };
+    const csvEscape = s => { s = String(s == null ? "" : s); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+    const jBtn = document.getElementById("exp-json");
+    if (jBtn) jBtn.addEventListener("click", () => { download(JSON.stringify(collectVisible(), null, 2), "application/json", "json"); });
+    const cBtn = document.getElementById("exp-csv");
+    if (cBtn) cBtn.addEventListener("click", () => {
+      const data = collectVisible();
+      const header = ["timestamp","level","thread","tag","message","context"];
+      const lines = [header.join(",")];
+      data.forEach(r => lines.push(header.map(h => csvEscape(r[h])).join(",")));
+      download(lines.join("\r\n"), "text/csv;charset=utf-8", "csv");
+    });
+    apply();
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", onReady); else onReady();
+})();
+</script>
+</head>
+<body>
+<div class="app-bar">
+<header>
+  <h1>HTML Demo - LoggerPro<span id="live-badge" class="live-badge"></span></h1>
+  <div class="meta">Generated by <a href="https://www.danieleteti.it/loggerpro/" target="_blank" rel="noopener">LoggerPro</a> &middot; Opened 2026-04-19 18:30:21</div>
+</header>
+<div id="filters">
+  <label><input type="checkbox" class="f-lvl" value="DEBUG"   checked> Debug</label>
+  <label><input type="checkbox" class="f-lvl" value="INFO"    checked> Info</label>
+  <label><input type="checkbox" class="f-lvl" value="WARNING" checked> Warning</label>
+  <label><input type="checkbox" class="f-lvl" value="ERROR"   checked> Error</label>
+  <label><input type="checkbox" class="f-lvl" value="FATAL"   checked> Fatal</label>
+  <input type="text" id="q" placeholder="Search text or tag...">
+  <button class="btn" id="exp-csv" title="Download visible rows as CSV">CSV</button>
+  <button class="btn" id="exp-json" title="Download visible rows as JSON">JSON</button>
+  <span class="count" id="count">0 / 0</span>
+</div>
+</div>
+<table>
+<colgroup><col class="c-ts"><col class="c-lvl"><col class="c-tid"><col class="c-tag"><col></colgroup>
+<thead><tr><th>Timestamp</th><th>Level</th><th>TID</th><th>Tag</th><th>Message</th></tr></thead>
+<tbody id="rows">
+<tr class="L-DEBUG" data-lvl="DEBUG"><td class="ts">2026-04-19 18:30:21.544</td><td class="lvl">DEBUG</td><td class="tid">30448</td><td class="tag">BOOT</td><td class="msg">Boot sequence starting</td></tr>
+<tr class="L-INFO" data-lvl="INFO"><td class="ts">2026-04-19 18:30:21.544</td><td class="lvl">INFO</td><td class="tid">30448</td><td class="tag">HTTP</td><td class="msg">Application started on port 8080</td></tr>
+<tr class="L-INFO" data-lvl="INFO"><td class="ts">2026-04-19 18:30:21.544</td><td class="lvl">INFO</td><td class="tid">30448</td><td class="tag">HTTP</td><td class="msg">Listening for connections</td></tr>
+<tr class="L-WARNING" data-lvl="WARNING"><td class="ts">2026-04-19 18:30:21.544</td><td class="lvl">WARNING</td><td class="tid">30448</td><td class="tag">CACHE</td><td class="msg">Cache hit ratio below 80%</td></tr>
+<tr class="L-WARNING" data-lvl="WARNING"><td class="ts">2026-04-19 18:30:21.544</td><td class="lvl">WARNING</td><td class="tid">30448</td><td class="tag">CONFIG</td><td class="msg">Config file version is old; auto-migrating</td></tr>
