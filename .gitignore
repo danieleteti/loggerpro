@@ -75,3 +75,6 @@ unittests/Win32/CI/dunitx-results.xml
 **/__recovery/*
 *.delphilsp.json
 nul
+/unittests/Win32/**/*.html
+*.dcu
+*daniele*
