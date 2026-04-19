@@ -56,9 +56,6 @@ TLoggerProElasticSearchAppender(_RESTAppender).OnSendError :=
     end;
   end;
 
-// BuildLogWriter is the classic way to create a log writer.
-// The modern and recommended approach is to use LoggerProBuilder.
-//_Log := BuildLogWriter([_RESTAppender, TLoggerProFileAppender.Create], _Events);
 _Log := LoggerProBuilder
   .WriteToAppender(_RESTAppender)
   .WriteToFile.Done

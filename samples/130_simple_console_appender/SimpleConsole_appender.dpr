@@ -16,15 +16,9 @@ var
   lTasks: array of ITask;
   lLog: ILogWriter;
 begin
-  // BuildLogWriter is the classic way to create a log writer.
-  // The modern and recommended approach is to use LoggerProBuilder.
-  //lLog := BuildLogWriter([TLoggerProSimpleConsoleAppender.Create]);
   lLog := LoggerProBuilder
     .WriteToSimpleConsole.Done
     .Build;
-
-  //Use the following line to enable LogFmt log format
-  //lLog := BuildLogWriter([TLoggerProSimpleConsoleLogFmtAppender.Create]);
 
   // Example using WithProperty for structured context
   var lCtxLog := lLog

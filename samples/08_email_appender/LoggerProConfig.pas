@@ -70,11 +70,6 @@ var
 begin
   lEmailAppender := TLoggerProEMailAppender.Create(GetSMTP, 'MyApp Logs<noreply@example.com>', 'admin@example.com');
   lEmailAppender.SetLogLevel(TLogType.Error);
-  // BuildLogWriter is the classic way to create a log writer.
-  // The modern and recommended approach is to use LoggerProBuilder.
-  //_Log := BuildLogWriter([TLoggerProFileAppender.Create,
-  //  lEmailAppender,
-  //  TLoggerProOutputDebugStringAppender.Create], nil, LOG_LEVEL);
   _Log := LoggerProBuilder
     .WithDefaultLogLevel(LOG_LEVEL)
     .WriteToFile.Done

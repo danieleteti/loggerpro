@@ -29,9 +29,6 @@ initialization
   DefaultLoggerProMainQueueSize := 5;
   DefaultLoggerProAppenderQueueSize := 5;
 
-  // ============================================================================
-  // LoggerPro 2.0 - Builder API (Recommended)
-  // ============================================================================
   // The JSONL (JSON Lines) appender writes logs in a structured JSON format,
   // one JSON object per line. This format is ideal for:
   //   - Log aggregation tools (ELK stack, Splunk, Loki, etc.)
@@ -50,18 +47,5 @@ initialization
       .WithLogsFolder('..\logs')
       .Done
     .Build;
-
-  // ============================================================================
-  // LoggerPro 1.x - Legacy API (Still supported but deprecated)
-  // ============================================================================
-  // _Log := BuildLogWriter([
-  //   TLoggerProJSONLFileAppender.Create(
-  //     10,  // max backup files
-  //     5,   // max file size KB
-  //     '..\logs',
-  //     TLoggerProJSONLFileAppender.DEFAULT_FILENAME_FORMAT,
-  //     TEncoding.UTF8
-  //   )
-  // ]);
 
 end.

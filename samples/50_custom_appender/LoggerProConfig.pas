@@ -51,11 +51,6 @@ end;
 
 initialization
 
-// BuildLogWriter is the classic way to create a log writer.
-// The modern and recommended approach is to use LoggerProBuilder.
-//_Log := BuildLogWriter([
-//  TLoggerProConsoleAppender.Create,
-//  TMyCustomAppender.Create])
 _Log := LoggerProBuilder
   .WriteToConsole.Done
   .WriteToAppender(TMyCustomAppender.Create)

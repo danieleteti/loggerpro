@@ -116,9 +116,6 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   // Let's create the local loggers for this form
-  // BuildLogWriter is the classic way to create a log writer.
-  // The modern and recommended approach is to use LoggerProBuilder.
-  //FLog := BuildLogWriter([TVCLListViewAppender.Create(ListView1), TVCLMemoLogAppender.Create(Memo1)])
   FLog := LoggerProBuilder
     .WriteToVCLListView(ListView1).Done
     .WriteToVCLMemo(Memo1).Done

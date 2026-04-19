@@ -29,11 +29,6 @@ initialization
 
 LoggerPro.Renderers.gDefaultLogItemRenderer := TLogItemRendererNoTag; //optional
 
-// BuildLogWriter is the classic way to create a log writer.
-// The modern and recommended approach is to use LoggerProBuilder.
-//_Log := BuildLogWriter([
-//  TLoggerProConsoleLogFmtAppender.Create,
-//  TLoggerProLogFmtFileAppender.Create]);
 _Log := LoggerProBuilder
   .WriteToAppender(TLoggerProConsoleLogFmtAppender.Create)
   .WriteToAppender(TLoggerProLogFmtFileAppender.Create)

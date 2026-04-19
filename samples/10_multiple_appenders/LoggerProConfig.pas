@@ -31,9 +31,6 @@ const
   LOG_LEVEL = TLogType.Warning;
 {$ENDIF}
 begin
-  // ============================================================================
-  // LoggerPro 2.0 - Builder API (Recommended)
-  // ============================================================================
   // This sample demonstrates:
   //   - Multiple appenders (File, Console, OutputDebugString)
   //   - Conditional log level based on DEBUG/RELEASE build
@@ -45,15 +42,6 @@ begin
     .WriteToConsole.Done
     .WriteToOutputDebugString.Done
     .Build;
-
-  // ============================================================================
-  // LoggerPro 1.x - Legacy API (Still supported but deprecated)
-  // ============================================================================
-  // _Log := BuildLogWriter([
-  //   TLoggerProFileAppender.Create,
-  //   TLoggerProConsoleAppender.Create,
-  //   TLoggerProOutputDebugStringAppender.Create
-  // ], nil, LOG_LEVEL);
 end;
 
 initialization

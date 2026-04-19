@@ -10,9 +10,6 @@ function Log: ILogWriter;
 implementation
 
 uses
-  LoggerPro.FileAppender,
-  LoggerPro.ConsoleAppender,
-  LoggerPro.OutputDebugStringAppender,
   LoggerPro.Builder;
 
 var
@@ -24,21 +21,9 @@ begin
 end;
 
 procedure SetupLogger;
-var
-  lFileAppender, lErrorsFileAppender, lOutputDebugStringAppender: ILogAppender;
 begin
-  lFileAppender := TLoggerProFileAppender.Create(5, 1000, 'logs');
-  lFileAppender.SetLogLevel(TLogType.Info);
-
-  lErrorsFileAppender := TLoggerProFileAppender.Create(5, 1000, 'logs_errors');
-  lErrorsFileAppender.SetLogLevel(TLogType.Error);
-
-  lOutputDebugStringAppender := TLoggerProOutputDebugStringAppender.Create;
-  // default TLogType.Debug
-
-  // BuildLogWriter is the classic way to create a log writer.
-  // The modern and recommended approach is to use LoggerProBuilder.
-  //_Log := BuildLogWriter([lFileAppender, lErrorsFileAppender, lOutputDebugStringAppender]);
+  // Two file appenders writing to different folders, each with its own
+  // minimum log level, plus an OutputDebugString appender.
   _Log := LoggerProBuilder
     .WriteToFile
       .WithLogsFolder('logs')

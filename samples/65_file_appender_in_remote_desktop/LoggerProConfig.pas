@@ -43,44 +43,16 @@ end;
 
 initialization
 
-{ The TLoggerProFileAppender has its defaults defined as follows:
-  DEFAULT_LOG_FORMAT = '%0:s [TID %1:-8d][%2:-10s] %3:s [%4:s]';
-  DEFAULT_MAX_BACKUP_FILE_COUNT = 5;
-  DEFAULT_MAX_FILE_SIZE_KB = 1000;
-
-  You can override these dafaults passing parameters to the constructor.
-  Here's some configuration examples:
-  @longcode(#
-  // Creates log in the same exe folder without PID in the filename
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-  [TFileAppenderOption.LogsInTheSameFolder])]);
-
-  // Creates log in the AppData/Roaming with PID in the filename
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-  [TFileAppenderOption.IncludePID])]);
-
-  // Creates log in the same folder with PID in the filename
-  _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-  [TFileAppenderOption.IncludePID])]);
-  #)
-}
-
-// Creates log in the ..\..\ folder without PID in the filename
-// BuildLogWriter is the classic way to create a log writer.
-// The modern and recommended approach is to use LoggerProBuilder.
-//_Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5, '.\logs', [], GetFileNameFormat())]);
+// Remote-desktop / terminal-services scenario: every session writes
+// to its own file so sessions don't clobber each other. The file name
+// encodes the client machine (or a PID fallback) via GetFileNameFormat.
 _Log := LoggerProBuilder
-  .WriteToAppender(TLoggerProFileAppender.Create(10, 5, '.\logs', GetFileNameFormat()))
+  .WriteToFile
+    .WithMaxBackupFiles(10)
+    .WithMaxFileSizeInKB(5)
+    .WithLogsFolder('.\logs')
+    .WithFileFormat(GetFileNameFormat)
+    .Done
   .Build;
-// Create logs in the exe' same folder
-// _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5)]);
-
-// Creates log in the AppData/Roaming with PID in the filename
-// _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-// [TFileAppenderOption.IncludePID])]);
-
-// Creates log in the same folder with PID in the filename
-// _Log := BuildLogWriter([TLoggerProFileAppender.Create(10, 5,
-// [TFileAppenderOption.IncludePID])]);
 
 end.
