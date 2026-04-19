@@ -30,17 +30,22 @@ REM List of LoggerPro source files to copy
 set FILES=^
     loggerprobuildconsts.inc  ^
     LoggerPro.pas ^
+    LoggerPro.AnsiColors.pas ^
     LoggerPro.Builder.pas ^
     LoggerPro.CallbackAppender.pas ^
+    LoggerPro.Config.pas ^
     LoggerPro.ConsoleAppender.pas ^
     LoggerPro.DBAppender.pas ^
     LoggerPro.DBAppender.ADO.pas ^
     LoggerPro.DBAppender.FireDAC.pas ^
     LoggerPro.ElasticSearchAppender.pas ^
     LoggerPro.EMailAppender.pas ^
+    LoggerPro.ExeWatchAppender.pas ^
     LoggerPro.FileAppender.pas ^
+    LoggerPro.FileBySourceAppender.pas ^
     LoggerPro.GlobalLogger.pas ^
-    LoggerPro.HTTPAppender.pas ^
+    LoggerPro.HTMLFileAppender.pas ^
+    LoggerPro.WebhookAppender.pas ^
     LoggerPro.JSONLFileAppender.pas ^
     LoggerPro.MemoryAppender.pas ^
     LoggerPro.NSQAppender.pas ^
