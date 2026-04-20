@@ -26,7 +26,7 @@ initialization
 _Log := LoggerProBuilder
   .WriteToConsole
     .WithUTF8Output
-    .WithLogLevel(TLogType.Debug)
+    .WithMinimumLevel(TLogType.Debug)
     .Done
   .Build;
 

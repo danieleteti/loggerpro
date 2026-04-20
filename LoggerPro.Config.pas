@@ -141,7 +141,7 @@ type
     /// parsing rules instead of hand-rolling their own.</summary>
     class function ParseLogLevel(const aValue: string): TLogType; static;
 
-    /// <summary>Read a string-valued <c>"logLevel"</c> field off a JSON
+    /// <summary>Read a string-valued <c>"minimumLevel"</c> field off a JSON
     /// object and parse it. Returns False if the field is missing; raises
     /// <c>ELoggerProConfigError</c> if present but not a recognised
     /// level. See <c>ParseLogLevel</c>.</summary>
@@ -164,7 +164,8 @@ uses
   LoggerPro.UDPSyslogAppender,
   LoggerPro.OutputDebugStringAppender,
   LoggerPro.MemoryAppender,
-  LoggerPro.FileBySourceAppender;
+  LoggerPro.FileBySourceAppender,
+  LoggerPro.RendererRegistry;
 
 type
   TAppenderTypeInfo = record
@@ -174,7 +175,7 @@ type
 
 const
   ROOT_FIELDS: array [0 .. 4] of string = (
-    'configVersion', 'minimumLevel', 'defaultLogLevel', 'defaultTag', 'appenders');
+    'configVersion', 'minimumLevel', 'defaultMinimumLevel', 'defaultTag', 'appenders');
 
 var
   gFactories: TDictionary<string, TAppenderTypeInfo> = nil;
@@ -378,10 +379,28 @@ var
   lColorsEnabled: Boolean;
   lSchemeName: string;
   lHasSchemeField: Boolean;
+  lRendererName: string;
+  lRenderer: ILogItemRenderer;
 begin
   lCfg := aBuilder.WriteToConsole;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
+
+  // Optional "renderer" field: resolved against the process-wide renderer
+  // registry. When set, the named renderer replaces the Console appender's
+  // built-in rendering pipeline - color/scheme/prefix fields below are still
+  // applied on top but the chosen renderer is what formats each TLogItem.
+  // Unknown names raise: silent fallback would mask typos in config files.
+  if TryGetString(aConfig, 'renderer', lRendererName) and (lRendererName <> '') then
+  begin
+    if not TryCreateRenderer(lRendererName, lRenderer) then
+      raise ELoggerProConfigError.CreateFmt(
+        'Unknown renderer "%s". Registered renderers: %s. ' +
+        'Register custom renderers with LoggerPro.RendererRegistry.RegisterRenderer ' +
+        'from a unit that is reachable from the program''s uses clause.',
+        [lRendererName, JoinStrings(RegisteredRendererNames, ', ')]);
+    lCfg := lCfg.WithRenderer(lRenderer);
+  end;
 
   // Resolve the color story. Rules:
   //   - colors ON by default (the "Midnight" scheme); the renderer
@@ -448,8 +467,8 @@ var
   lBool: Boolean;
 begin
   lCfg := aBuilder.WriteToSimpleConsole;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetBool(aConfig, 'utf8Output', lBool) and lBool then
     lCfg := lCfg.WithUTF8Output;
   lCfg.Done;
@@ -463,8 +482,8 @@ var
   lInt: Integer;
 begin
   lCfg := aBuilder.WriteToFile;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetString(aConfig, 'logsFolder', lStr) then
     lCfg := lCfg.WithLogsFolder(lStr);
   if TryGetString(aConfig, 'fileBaseName', lStr) then
@@ -490,8 +509,8 @@ var
   lInt: Integer;
 begin
   lCfg := aBuilder.WriteToJSONLFile;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetString(aConfig, 'logsFolder', lStr) then
     lCfg := lCfg.WithLogsFolder(lStr);
   if TryGetString(aConfig, 'fileBaseName', lStr) then
@@ -511,8 +530,8 @@ var
   lInt: Integer;
 begin
   lCfg := aBuilder.WriteToTimeRotatingFile;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetString(aConfig, 'logsFolder', lStr) then
     lCfg := lCfg.WithLogsFolder(lStr);
   if TryGetString(aConfig, 'fileBaseName', lStr) then
@@ -532,8 +551,8 @@ var
   lInt: Integer;
 begin
   lCfg := aBuilder.WriteToFileBySource;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetString(aConfig, 'logsFolder', lStr) then
     lCfg := lCfg.WithLogsFolder(lStr);
   if TryGetString(aConfig, 'defaultSource', lStr) then
@@ -553,8 +572,8 @@ var
   lInt: Integer;
 begin
   lCfg := aBuilder.WriteToHTMLFile;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetString(aConfig, 'logsFolder', lStr) then
     lCfg := lCfg.WithLogsFolder(lStr);
   if TryGetString(aConfig, 'fileBaseName', lStr) then
@@ -585,8 +604,8 @@ var
   lHasKey: Boolean;
 begin
   lCfg := aBuilder.WriteToWebhook;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetString(aConfig, 'url', lStr) then
     lCfg := lCfg.WithURL(lStr);
   if TryGetString(aConfig, 'contentType', lStr) then
@@ -624,8 +643,8 @@ var
   lBool: Boolean;
 begin
   lCfg := aBuilder.WriteToUDPSyslog;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetString(aConfig, 'host', lStr) then
     lCfg := lCfg.WithHost(lStr);
   if TryGetInt(aConfig, 'port', lInt) then
@@ -651,8 +670,8 @@ var
   lLogLevel: TLogType;
 begin
   lCfg := aBuilder.WriteToOutputDebugString;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   lCfg.Done;
 end;
 
@@ -663,8 +682,8 @@ var
   lInt: Integer;
 begin
   lCfg := aBuilder.WriteToMemory;
-  if TryGetLogLevel(aConfig, 'logLevel', lLogLevel) then
-    lCfg := lCfg.WithLogLevel(lLogLevel);
+  if TryGetLogLevel(aConfig, 'minimumLevel', lLogLevel) then
+    lCfg := lCfg.WithMinimumLevel(lLogLevel);
   if TryGetInt(aConfig, 'maxSize', lInt) then
     lCfg := lCfg.WithMaxSize(lInt);
   lCfg.Done;
@@ -702,43 +721,43 @@ end;
 procedure RegisterBuiltInFactories;
 begin
   TLoggerProConfig.RegisterAppenderType('Console', ConsoleFactory,
-    ['logLevel', 'colors', 'colorScheme', 'prefix', 'utf8Output']);
+    ['minimumLevel', 'colors', 'colorScheme', 'prefix', 'utf8Output', 'renderer']);
 
   TLoggerProConfig.RegisterAppenderType('SimpleConsole', SimpleConsoleFactory,
-    ['logLevel', 'utf8Output']);
+    ['minimumLevel', 'utf8Output']);
 
   TLoggerProConfig.RegisterAppenderType('File', FileFactory,
-    ['logLevel', 'logsFolder', 'fileBaseName', 'fileFormat',
+    ['minimumLevel', 'logsFolder', 'fileBaseName', 'fileFormat',
      'maxBackupFiles', 'maxFileSizeInKB', 'maxRetainedFiles', 'interval']);
 
   TLoggerProConfig.RegisterAppenderType('JSONLFile', JSONLFileFactory,
-    ['logLevel', 'logsFolder', 'fileBaseName',
+    ['minimumLevel', 'logsFolder', 'fileBaseName',
      'maxBackupFiles', 'maxFileSizeInKB']);
 
   TLoggerProConfig.RegisterAppenderType('TimeRotatingFile', TimeRotatingFileFactory,
-    ['logLevel', 'logsFolder', 'fileBaseName', 'interval', 'maxBackupFiles']);
+    ['minimumLevel', 'logsFolder', 'fileBaseName', 'interval', 'maxBackupFiles']);
 
   TLoggerProConfig.RegisterAppenderType('FileBySource', FileBySourceFactory,
-    ['logLevel', 'logsFolder', 'defaultSource',
+    ['minimumLevel', 'logsFolder', 'defaultSource',
      'maxFileSizeInKB', 'retainDays']);
 
   TLoggerProConfig.RegisterAppenderType('HTMLFile', HTMLFileFactory,
-    ['logLevel', 'logsFolder', 'fileBaseName', 'title',
+    ['minimumLevel', 'logsFolder', 'fileBaseName', 'title',
      'maxBackupFiles', 'maxFileSizeInKB', 'maxRetainedFiles', 'interval']);
 
   TLoggerProConfig.RegisterAppenderType('Webhook', WebhookFactory,
-    ['logLevel', 'url', 'contentType', 'timeout', 'retryCount', 'headers',
+    ['minimumLevel', 'url', 'contentType', 'timeout', 'retryCount', 'headers',
      'apiKey', 'apiKeyLocation', 'apiKeyName']);
 
   TLoggerProConfig.RegisterAppenderType('UDPSyslog', UDPSyslogFactory,
-    ['logLevel', 'host', 'port', 'hostName', 'userName', 'application',
+    ['minimumLevel', 'host', 'port', 'hostName', 'userName', 'application',
      'version', 'procID', 'useLocalTime']);
 
   TLoggerProConfig.RegisterAppenderType('OutputDebugString', OutputDebugStringFactory,
-    ['logLevel']);
+    ['minimumLevel']);
 
   TLoggerProConfig.RegisterAppenderType('Memory', MemoryFactory,
-    ['logLevel', 'maxSize']);
+    ['minimumLevel', 'maxSize']);
 end;
 
 { ===== TLoggerProConfig ===== }
@@ -876,10 +895,10 @@ begin
       lLevel := ParseLogType(lLevelStr);
       lBuilder.WithMinimumLevel(lLevel);
     end;
-    if TryGetString(lObj, 'defaultLogLevel', lLevelStr) then
+    if TryGetString(lObj, 'defaultMinimumLevel', lLevelStr) then
     begin
       lLevel := ParseLogType(lLevelStr);
-      lBuilder.WithDefaultLogLevel(lLevel);
+      lBuilder.WithDefaultMinimumLevel(lLevel);
     end;
     if TryGetString(lObj, 'defaultTag', lTag) then
       lBuilder.WithDefaultTag(lTag);

@@ -48,6 +48,7 @@ uses
   LoggerPro.Proxy,
   LoggerPro.ConsoleAppender,
   LoggerPro.Renderers,
+  LoggerPro.RendererRegistry,
   LoggerPro.JSONLFileAppender,
   LoggerPro.ElasticSearchAppender,
   LoggerPro.MemoryAppender,
@@ -93,8 +94,9 @@ type
     FColorScheme: TLogColorScheme;
     FPrefix: string;
   public
-    function WithLogLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IConsoleAppenderConfigurator; overload;
     function WithUTF8Output: IConsoleAppenderConfigurator;
     function WithColors: IConsoleAppenderConfigurator;
     function WithColorScheme(const aScheme: TLogColorScheme): IConsoleAppenderConfigurator;
@@ -107,7 +109,7 @@ type
   private
     FUTF8Output: Boolean;
   public
-    function WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
     function WithUTF8Output: ISimpleConsoleAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
@@ -133,9 +135,10 @@ type
     function WithInterval(aInterval: TTimeRotationInterval): IFileAppenderConfigurator;
     function WithFileFormat(const aFileFormat: string): IFileAppenderConfigurator;
     function WithMaxRetainedFiles(aMaxFiles: Integer): IFileAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IFileAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IFileAppenderConfigurator;
     function WithEncoding(aEncoding: TEncoding): IFileAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IFileAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IFileAppenderConfigurator; overload;
     function WithOnAfterRotate(aCallback: TFileRotateCallback): IFileAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
@@ -153,7 +156,7 @@ type
     function WithFileBaseName(const aFileBaseName: string): IJSONLFileAppenderConfigurator;
     function WithMaxBackupFiles(aMaxBackupFiles: Integer): IJSONLFileAppenderConfigurator;
     function WithMaxFileSizeInKB(aMaxFileSizeInKB: Integer): IJSONLFileAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IJSONLFileAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IJSONLFileAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -170,8 +173,9 @@ type
     function WithMaxBackupFiles(aMaxBackupFiles: Integer): ITimeRotatingFileAppenderConfigurator;
     function WithLogsFolder(const aLogsFolder: string): ITimeRotatingFileAppenderConfigurator;
     function WithFileBaseName(const aFileBaseName: string): ITimeRotatingFileAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): ITimeRotatingFileAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): ITimeRotatingFileAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): ITimeRotatingFileAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): ITimeRotatingFileAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): ITimeRotatingFileAppenderConfigurator; overload;
     function Done: ILoggerProBuilder;
   end;
 
@@ -198,7 +202,7 @@ type
     function WithAPIKey(const aValue: string;
       aLocation: TWebhookAPIKeyLocation = TWebhookAPIKeyLocation.Header;
       const aName: string = ''): IWebhookAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IWebhookAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IWebhookAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -228,7 +232,7 @@ type
     function WithBasicAuth(const aUsername, aPassword: string): IElasticSearchAppenderConfigurator;
     function WithAPIKey(const aAPIKey: string): IElasticSearchAppenderConfigurator;
     function WithBearerToken(const aToken: string): IElasticSearchAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IElasticSearchAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IElasticSearchAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -239,8 +243,9 @@ type
   public
     constructor Create(aBuilder: TLoggerProBuilder);
     function WithMaxSize(aMaxSize: Integer): IMemoryAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IMemoryAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IMemoryAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IMemoryAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IMemoryAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IMemoryAppenderConfigurator; overload;
     function Done: ILoggerProBuilder;
   end;
 
@@ -253,15 +258,16 @@ type
     constructor Create(aBuilder: TLoggerProBuilder);
     function WithCallback(aCallback: TLogItemCallback): ICallbackAppenderConfigurator;
     function WithSynchronizeToMainThread(aValue: Boolean): ICallbackAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): ICallbackAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): ICallbackAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
   { OutputDebugString appender configurator }
   TOutputDebugStringAppenderConfigurator = class(TBaseAppenderConfigurator, IOutputDebugStringAppenderConfigurator)
   public
-    function WithLogLevel(aLogLevel: TLogType): IOutputDebugStringAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IOutputDebugStringAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IOutputDebugStringAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IOutputDebugStringAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IOutputDebugStringAppenderConfigurator; overload;
     function Done: ILoggerProBuilder;
   end;
 
@@ -286,7 +292,7 @@ type
     function WithVersion(const aVersion: string): IUDPSyslogAppenderConfigurator;
     function WithProcID(const aProcID: string): IUDPSyslogAppenderConfigurator;
     function WithUseLocalTime(aUseLocalTime: Boolean): IUDPSyslogAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -300,8 +306,9 @@ type
     constructor Create(aBuilder: TLoggerProBuilder; aStrings: TStrings);
     function WithMaxLogLines(aMaxLogLines: Word): IStringsAppenderConfigurator;
     function WithClearOnStartup(aValue: Boolean): IStringsAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IStringsAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IStringsAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IStringsAppenderConfigurator; overload;
     function Done: ILoggerProBuilder;
   end;
 
@@ -316,8 +323,9 @@ type
     constructor Create(aBuilder: TLoggerProBuilder; aMemo: TMemo);
     function WithMaxLogLines(aMaxLogLines: Word): IVCLMemoAppenderConfigurator;
     function WithClearOnStartup(aValue: Boolean): IVCLMemoAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IVCLMemoAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IVCLMemoAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IVCLMemoAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLMemoAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IVCLMemoAppenderConfigurator; overload;
     function Done: ILoggerProBuilder;
   end;
 
@@ -329,8 +337,9 @@ type
   public
     constructor Create(aBuilder: TLoggerProBuilder; aListBox: TListBox);
     function WithMaxLogLines(aMaxLogLines: Word): IVCLListBoxAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IVCLListBoxAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IVCLListBoxAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IVCLListBoxAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLListBoxAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IVCLListBoxAppenderConfigurator; overload;
     function Done: ILoggerProBuilder;
   end;
 
@@ -342,8 +351,9 @@ type
   public
     constructor Create(aBuilder: TLoggerProBuilder; aListView: TListView);
     function WithMaxLogLines(aMaxLogLines: Word): IVCLListViewAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IVCLListViewAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IVCLListViewAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IVCLListViewAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IVCLListViewAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IVCLListViewAppenderConfigurator; overload;
     function Done: ILoggerProBuilder;
   end;
 
@@ -356,7 +366,7 @@ type
   public
     constructor Create(aBuilder: TLoggerProBuilder); overload;
     constructor Create(aBuilder: TLoggerProBuilder; aService: TService); overload;
-    function WithLogLevel(aLogLevel: TLogType): IWindowsEventLogAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IWindowsEventLogAppenderConfigurator;
     function WithSourceName(const aSourceName: string): IWindowsEventLogAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
@@ -371,7 +381,7 @@ type
   public
     function WithConnectionDefName(const aConnectionDefName: string): IFireDACAppenderConfigurator;
     function WithStoredProcName(const aStoredProcName: string): IFireDACAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IFireDACAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IFireDACAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -388,8 +398,9 @@ type
     function WithMaxFileSizeInKB(aMaxFileSizeInKB: Integer): IFileBySourceAppenderConfigurator;
     function WithRetainDays(aRetainDays: Integer): IFileBySourceAppenderConfigurator;
     function WithDefaultSource(const aDefaultSource: string): IFileBySourceAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IFileBySourceAppenderConfigurator;
-    function WithRenderer(aRenderer: ILogItemRenderer): IFileBySourceAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IFileBySourceAppenderConfigurator;
+    function WithRenderer(aRenderer: ILogItemRenderer): IFileBySourceAppenderConfigurator; overload;
+    function WithRenderer(const aRendererName: string): IFileBySourceAppenderConfigurator; overload;
     function Done: ILoggerProBuilder;
   end;
 
@@ -411,7 +422,7 @@ type
     function WithMaxFileSizeInKB(aMaxFileSizeInKB: Integer): IHTMLFileAppenderConfigurator;
     function WithInterval(aInterval: TTimeRotationInterval): IHTMLFileAppenderConfigurator;
     function WithMaxRetainedFiles(aMaxFiles: Integer): IHTMLFileAppenderConfigurator;
-    function WithLogLevel(aLogLevel: TLogType): IHTMLFileAppenderConfigurator;
+    function WithMinimumLevel(aLogLevel: TLogType): IHTMLFileAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -474,7 +485,7 @@ type
     // Generic method for adding pre-configured appenders
     function WriteToAppender(aAppender: ILogAppender): ILoggerProBuilder;
     // Global configuration
-    function WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
+    function WithDefaultMinimumLevel(aLogLevel: TLogType): ILoggerProBuilder;
     function WithMinimumLevel(aLevel: TLogType): ILoggerProBuilder;
     function WithDefaultRenderer(aRenderer: ILogItemRenderer): ILoggerProBuilder;
     function WithDefaultTag(const aTag: string): ILoggerProBuilder;
@@ -487,9 +498,9 @@ type
     procedure SetPendingConfigurator(const aName: string);
     procedure ClearPendingConfigurator;
     // Exposed so TBaseAppenderConfigurator.ApplyLogLevel can read the
-    // builder-wide fallback (set via WithDefaultLogLevel / the JSON
-    // "defaultLogLevel" root field).
-    property DefaultLogLevel: TLogType read FDefaultLogLevel;
+    // builder-wide fallback (set via WithDefaultMinimumLevel / the JSON
+    // "defaultMinimumLevel" root field).
+    property DefaultMinimumLevel: TLogType read FDefaultLogLevel;
   end;
 
 { TBaseAppenderConfigurator }
@@ -505,12 +516,12 @@ end;
 procedure TBaseAppenderConfigurator.ApplyLogLevel(aAppender: ILogAppender);
 begin
   if FLogLevelSet then
-    // explicit .WithLogLevel(...) wins
-    aAppender.SetLogLevel(FLogLevel)
+    // explicit .WithMinimumLevel(...) wins
+    aAppender.SetMinimumLevel(FLogLevel)
   else if Assigned(FBuilder) then
-    // fall back to the builder-wide default (set via WithDefaultLogLevel
-    // or the JSON "defaultLogLevel" root field)
-    aAppender.SetLogLevel(FBuilder.DefaultLogLevel);
+    // fall back to the builder-wide default (set via WithDefaultMinimumLevel
+    // or the JSON "defaultMinimumLevel" root field)
+    aAppender.SetMinimumLevel(FBuilder.DefaultMinimumLevel);
 end;
 
 function TBaseAppenderConfigurator.GetRenderer: ILogItemRenderer;
@@ -701,7 +712,7 @@ begin
   Result := TFilteredAppenderConfigurator.Create(Self, aAppender);
 end;
 
-function TLoggerProBuilder.WithDefaultLogLevel(aLogLevel: TLogType): ILoggerProBuilder;
+function TLoggerProBuilder.WithDefaultMinimumLevel(aLogLevel: TLogType): ILoggerProBuilder;
 begin
   FDefaultLogLevel := aLogLevel;
   Result := Self;
@@ -754,13 +765,13 @@ begin
   // Collect the log levels the configurators already set on each appender.
   // BuildLogWriter(aAppenders) defaults every per-appender level to Debug,
   // which would clobber the levels we honored in ApplyLogLevel (and every
-  // "logLevel" field in a JSON config). Pass the levels through explicitly.
+  // "minimumLevel" field in a JSON config). Pass the levels through explicitly.
   SetLength(lAppendersArray, FAppenders.Count);
   SetLength(lLogLevelsArray, FAppenders.Count);
   for I := 0 to FAppenders.Count - 1 do
   begin
     lAppendersArray[I] := FAppenders[I];
-    lLogLevelsArray[I] := FAppenders[I].GetLogLevel;
+    lLogLevelsArray[I] := FAppenders[I].GetMinimumLevel;
   end;
 
   {$WARN SYMBOL_DEPRECATED OFF}
@@ -783,7 +794,7 @@ end;
 
 { TConsoleAppenderConfigurator }
 
-function TConsoleAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
+function TConsoleAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -796,6 +807,19 @@ begin
   Result := Self;
 end;
 
+function TConsoleAppenderConfigurator.WithRenderer(const aRendererName: string): IConsoleAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TConsoleAppenderConfigurator.WithUTF8Output: IConsoleAppenderConfigurator;
 begin
   FUTF8Output := True;
@@ -854,7 +878,7 @@ end;
 
 { TSimpleConsoleAppenderConfigurator }
 
-function TSimpleConsoleAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
+function TSimpleConsoleAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): ISimpleConsoleAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -917,7 +941,7 @@ begin
   Result := Self;
 end;
 
-function TFileAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IFileAppenderConfigurator;
+function TFileAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IFileAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -954,6 +978,19 @@ begin
   Result := Self;
 end;
 
+function TFileAppenderConfigurator.WithRenderer(const aRendererName: string): IFileAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TFileAppenderConfigurator.WithOnAfterRotate(aCallback: TFileRotateCallback): IFileAppenderConfigurator;
 begin
   FOnAfterRotate := aCallback;
@@ -1045,7 +1082,7 @@ begin
   Result := Self;
 end;
 
-function TJSONLFileAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IJSONLFileAppenderConfigurator;
+function TJSONLFileAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IJSONLFileAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1106,7 +1143,7 @@ begin
   Result := Self;
 end;
 
-function TTimeRotatingFileAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): ITimeRotatingFileAppenderConfigurator;
+function TTimeRotatingFileAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): ITimeRotatingFileAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1119,6 +1156,19 @@ begin
   Result := Self;
 end;
 
+function TTimeRotatingFileAppenderConfigurator.WithRenderer(const aRendererName: string): ITimeRotatingFileAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TTimeRotatingFileAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1192,7 +1242,7 @@ begin
   Result := Self;
 end;
 
-function TWebhookAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IWebhookAppenderConfigurator;
+function TWebhookAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IWebhookAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1304,7 +1354,7 @@ begin
   Result := Self;
 end;
 
-function TElasticSearchAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IElasticSearchAppenderConfigurator;
+function TElasticSearchAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IElasticSearchAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1351,7 +1401,7 @@ begin
   Result := Self;
 end;
 
-function TMemoryAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IMemoryAppenderConfigurator;
+function TMemoryAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IMemoryAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1364,6 +1414,19 @@ begin
   Result := Self;
 end;
 
+function TMemoryAppenderConfigurator.WithRenderer(const aRendererName: string): IMemoryAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TMemoryAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1388,7 +1451,7 @@ begin
   Result := Self;
 end;
 
-function TCallbackAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): ICallbackAppenderConfigurator;
+function TCallbackAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): ICallbackAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1416,7 +1479,7 @@ end;
 
 { TOutputDebugStringAppenderConfigurator }
 
-function TOutputDebugStringAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IOutputDebugStringAppenderConfigurator;
+function TOutputDebugStringAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IOutputDebugStringAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1429,6 +1492,19 @@ begin
   Result := Self;
 end;
 
+function TOutputDebugStringAppenderConfigurator.WithRenderer(const aRendererName: string): IOutputDebugStringAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TOutputDebugStringAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1502,7 +1578,7 @@ begin
   Result := Self;
 end;
 
-function TUDPSyslogAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
+function TUDPSyslogAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IUDPSyslogAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1543,7 +1619,7 @@ begin
   Result := Self;
 end;
 
-function TStringsAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
+function TStringsAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IStringsAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1556,6 +1632,19 @@ begin
   Result := Self;
 end;
 
+function TStringsAppenderConfigurator.WithRenderer(const aRendererName: string): IStringsAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TStringsAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1590,7 +1679,7 @@ begin
   Result := Self;
 end;
 
-function TVCLMemoAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IVCLMemoAppenderConfigurator;
+function TVCLMemoAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IVCLMemoAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1603,6 +1692,19 @@ begin
   Result := Self;
 end;
 
+function TVCLMemoAppenderConfigurator.WithRenderer(const aRendererName: string): IVCLMemoAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TVCLMemoAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1628,7 +1730,7 @@ begin
   Result := Self;
 end;
 
-function TVCLListBoxAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IVCLListBoxAppenderConfigurator;
+function TVCLListBoxAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IVCLListBoxAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1641,6 +1743,19 @@ begin
   Result := Self;
 end;
 
+function TVCLListBoxAppenderConfigurator.WithRenderer(const aRendererName: string): IVCLListBoxAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TVCLListBoxAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1666,7 +1781,7 @@ begin
   Result := Self;
 end;
 
-function TVCLListViewAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IVCLListViewAppenderConfigurator;
+function TVCLListViewAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IVCLListViewAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1679,6 +1794,19 @@ begin
   Result := Self;
 end;
 
+function TVCLListViewAppenderConfigurator.WithRenderer(const aRendererName: string): IVCLListViewAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
+end;
 function TVCLListViewAppenderConfigurator.Done: ILoggerProBuilder;
 var
   lAppender: ILogAppender;
@@ -1707,7 +1835,7 @@ begin
   FUseService := True;
 end;
 
-function TWindowsEventLogAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IWindowsEventLogAppenderConfigurator;
+function TWindowsEventLogAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IWindowsEventLogAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1749,7 +1877,7 @@ begin
   Result := Self;
 end;
 
-function TFireDACAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IFireDACAppenderConfigurator;
+function TFireDACAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IFireDACAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;
@@ -1810,7 +1938,7 @@ begin
   Result := Self;
 end;
 
-function TFileBySourceAppenderConfigurator.WithLogLevel(
+function TFileBySourceAppenderConfigurator.WithMinimumLevel(
   aLogLevel: TLogType): IFileBySourceAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
@@ -1823,6 +1951,20 @@ function TFileBySourceAppenderConfigurator.WithRenderer(
 begin
   FRenderer := aRenderer;
   Result := Self;
+end;
+
+function TFileBySourceAppenderConfigurator.WithRenderer(const aRendererName: string): IFileBySourceAppenderConfigurator;
+var
+  lRenderer: ILogItemRenderer;
+begin
+  if not TryCreateRenderer(aRendererName, lRenderer) then
+    raise ELoggerPro.CreateFmt(
+      'Unknown renderer "%s". Currently registered: %s. ' +
+      'To fix: call LoggerPro.RendererRegistry.RegisterRenderer(''%s'', TYourRenderer) ' +
+      'from a unit on the program''s uses clause, or add the renderer''s unit to uses ' +
+      '(renderers from optional units self-register in their initialization section).',
+      [aRendererName, string.Join(', ', RegisteredRendererNames), aRendererName]);
+  Result := WithRenderer(lRenderer);
 end;
 
 function TFileBySourceAppenderConfigurator.Done: ILoggerProBuilder;
@@ -1893,7 +2035,7 @@ begin
   Result := Self;
 end;
 
-function THTMLFileAppenderConfigurator.WithLogLevel(aLogLevel: TLogType): IHTMLFileAppenderConfigurator;
+function THTMLFileAppenderConfigurator.WithMinimumLevel(aLogLevel: TLogType): IHTMLFileAppenderConfigurator;
 begin
   FLogLevel := aLogLevel;
   FLogLevelSet := True;

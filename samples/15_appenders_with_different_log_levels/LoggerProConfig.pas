@@ -27,11 +27,11 @@ begin
   _Log := LoggerProBuilder
     .WriteToFile
       .WithLogsFolder('logs')
-      .WithLogLevel(TLogType.Info)
+      .WithMinimumLevel(TLogType.Info)
       .Done
     .WriteToFile
       .WithLogsFolder('logs_errors')
-      .WithLogLevel(TLogType.Error)
+      .WithMinimumLevel(TLogType.Error)
       .Done
     .WriteToOutputDebugString.Done
     .Build;

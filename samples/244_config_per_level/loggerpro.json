@@ -6,23 +6,23 @@
     {
       "type": "Console",
       "colorScheme": "Midnight",
-      "logLevel": "Debug"
+      "minimumLevel": "Debug"
     },
     {
       "type": "File",
       "logsFolder": "logs",
       "fileBaseName": "app",
-      "logLevel": "Info"
+      "minimumLevel": "Info"
     },
     {
       "type": "File",
       "logsFolder": "logs_errors",
       "fileBaseName": "errors",
-      "logLevel": "Error"
+      "minimumLevel": "Error"
     },
     {
       "type": "OutputDebugString",
-      "logLevel": "Debug"
+      "minimumLevel": "Debug"
     }
   ]
 }

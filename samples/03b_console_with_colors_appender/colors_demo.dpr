@@ -52,7 +52,7 @@ begin
 
   Log := LoggerProBuilder
     .WriteToConsole
-      .WithLogLevel(TLogType.Debug)
+      .WithMinimumLevel(TLogType.Debug)
       .WithColorScheme(aScheme)
       .Done
     .WriteToFile                         // diagnostic mirror
@@ -75,7 +75,7 @@ begin
 
   Log := LoggerProBuilder
     .WriteToConsole
-      .WithLogLevel(TLogType.Debug)
+      .WithMinimumLevel(TLogType.Debug)
       .WithColors
       .Done
     .WriteToFile
@@ -98,7 +98,7 @@ begin
 
   Log := LoggerProBuilder
     .WriteToConsole
-      .WithLogLevel(TLogType.Debug)
+      .WithMinimumLevel(TLogType.Debug)
       .WithColors
       .WithPrefix('MYAPP')
       .Done
@@ -122,7 +122,7 @@ begin
 
   Log := LoggerProBuilder
     .WriteToConsole
-      .WithLogLevel(TLogType.Debug)
+      .WithMinimumLevel(TLogType.Debug)
       .Done
     .Build;
 

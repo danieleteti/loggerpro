@@ -27,7 +27,7 @@ initialization
 // to customize.
 _Log := LoggerProBuilder
   .WriteToConsole
-    .WithLogLevel(TLogType.Debug)
+    .WithMinimumLevel(TLogType.Debug)
     .WithColors
     .Done
   .Build;

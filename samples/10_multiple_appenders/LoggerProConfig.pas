@@ -34,10 +34,10 @@ begin
   // This sample demonstrates:
   //   - Multiple appenders (File, Console, OutputDebugString)
   //   - Conditional log level based on DEBUG/RELEASE build
-  //   - WithDefaultLogLevel to set minimum level for all appenders
+  //   - WithDefaultMinimumLevel to set minimum level for all appenders
   //
   _Log := LoggerProBuilder
-    .WithDefaultLogLevel(LOG_LEVEL)
+    .WithDefaultMinimumLevel(LOG_LEVEL)
     .WriteToFile.Done
     .WriteToConsole.Done
     .WriteToOutputDebugString.Done

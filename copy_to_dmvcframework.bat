@@ -52,6 +52,7 @@ set FILES=^
     LoggerPro.OutputDebugStringAppender.pas ^
     LoggerPro.Proxy.pas ^
     LoggerPro.Renderers.pas ^
+    LoggerPro.RendererRegistry.pas ^
     LoggerPro.TimeRotatingFileAppender.pas ^
     LoggerPro.StringsAppender.pas ^
     LoggerPro.UDPSyslogAppender.pas ^

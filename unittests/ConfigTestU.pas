@@ -147,7 +147,7 @@ begin
   Log := TLoggerProConfig.FromJSONString(
     '{"appenders":[{' +
     '"type":"Console",' +
-    '"logLevel":"Info",' +
+    '"minimumLevel":"Info",' +
     '"colors":true,' +
     '"colorScheme":"Midnight",' +
     '"prefix":"TEST",' +
@@ -164,7 +164,7 @@ begin
   Log := TLoggerProConfig.FromJSONString(
     '{"appenders":[{' +
     '"type":"File",' +
-    '"logLevel":"Warning",' +
+    '"minimumLevel":"Warning",' +
     '"logsFolder":"logs_test",' +
     '"fileBaseName":"myapp",' +
     '"maxBackupFiles":3,' +
@@ -342,7 +342,7 @@ begin
     '{' +
     '"minimumLevel":"Info",' +
     '"defaultTag":"main",' +
-    '"appenders":[{"type":"Memory","maxSize":100,"logLevel":"Info"}]' +
+    '"appenders":[{"type":"Memory","maxSize":100,"minimumLevel":"Info"}]' +
     '}');
   Log.Debug('should be filtered', 'main');
   Log.Info('should pass', 'main');

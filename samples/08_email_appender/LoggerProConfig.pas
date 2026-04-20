@@ -69,9 +69,9 @@ var
   lEmailAppender: ILogAppender;
 begin
   lEmailAppender := TLoggerProEMailAppender.Create(GetSMTP, 'MyApp Logs<noreply@example.com>', 'admin@example.com');
-  lEmailAppender.SetLogLevel(TLogType.Error);
+  lEmailAppender.SetMinimumLevel(TLogType.Error);
   _Log := LoggerProBuilder
-    .WithDefaultLogLevel(LOG_LEVEL)
+    .WithDefaultMinimumLevel(LOG_LEVEL)
     .WriteToFile.Done
     .WriteToAppender(lEmailAppender)
     .WriteToOutputDebugString.Done

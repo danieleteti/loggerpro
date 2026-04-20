@@ -42,7 +42,7 @@ type
     [Test]
     procedure TestBuilderFunction;
     [Test]
-    procedure TestWithDefaultLogLevel;
+    procedure TestWithDefaultMinimumLevel;
     [Test]
     procedure TestWithMinimumLevel;
     [Test]
@@ -103,7 +103,7 @@ type
     [Test]
     procedure TestWriteToWindowsEventLogWithSourceName;
     [Test]
-    procedure TestWriteToWindowsEventLogWithLogLevel;
+    procedure TestWriteToWindowsEventLogWithMinimumLevel;
 {$ENDIF}
   end;
 
@@ -209,7 +209,7 @@ begin
       .WithFileBaseName('testapp')
       .WithMaxBackupFiles(10)
       .WithMaxFileSizeInKB(5000)
-      .WithLogLevel(TLogType.Warning)
+      .WithMinimumLevel(TLogType.Warning)
       .Done
     .Build;
 
@@ -228,7 +228,7 @@ begin
       .WithRetryCount(5)
       .WithHeader('Authorization', 'Bearer token123')
       .WithHeader('X-Custom', 'value')
-      .WithLogLevel(TLogType.Info)
+      .WithMinimumLevel(TLogType.Info)
       .Done
     .Build;
 
@@ -242,7 +242,7 @@ begin
   lLog := LoggerProBuilder
     .WriteToMemory
       .WithMaxSize(500)
-      .WithLogLevel(TLogType.Debug)
+      .WithMinimumLevel(TLogType.Debug)
       .Done
     .Build;
 
@@ -266,7 +266,7 @@ begin
             lCallbackInvoked := True;
             lEvent.SetEvent;
           end)
-        .WithLogLevel(TLogType.Debug)
+        .WithMinimumLevel(TLogType.Debug)
         .Done
       .Build;
 
@@ -291,7 +291,7 @@ begin
       .WithMaxBackupFiles(30)
       .WithLogsFolder('logs')
       .WithFileBaseName('rotating')
-      .WithLogLevel(TLogType.Info)
+      .WithMinimumLevel(TLogType.Info)
       .Done
     .Build;
 
@@ -303,7 +303,7 @@ var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .WriteToConsole.WithLogLevel(TLogType.Warning).Done
+    .WriteToConsole.WithMinimumLevel(TLogType.Warning).Done
     .WriteToFile
       .WithLogsFolder('logs')
       .WithMaxBackupFiles(5)
@@ -332,12 +332,12 @@ begin
   Assert.IsNotNull(lLog, 'Logger should be created using LoggerProBuilder function');
 end;
 
-procedure TLoggerProBuilderTest.TestWithDefaultLogLevel;
+procedure TLoggerProBuilderTest.TestWithDefaultMinimumLevel;
 var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
-    .WithDefaultLogLevel(TLogType.Warning)
+    .WithDefaultMinimumLevel(TLogType.Warning)
     .WriteToConsole.Done
     .WriteToFile.Done
     .Build;
@@ -1252,14 +1252,14 @@ begin
   Assert.IsNotNull(lLog, 'Logger should be created with custom source name');
 end;
 
-procedure TLoggerProBuilderTest.TestWriteToWindowsEventLogWithLogLevel;
+procedure TLoggerProBuilderTest.TestWriteToWindowsEventLogWithMinimumLevel;
 var
   lLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
     .WriteToWindowsEventLog
       .WithSourceName('LoggerProTest')
-      .WithLogLevel(TLogType.Warning)
+      .WithMinimumLevel(TLogType.Warning)
       .Done
     .Build;
 

@@ -25,7 +25,7 @@ initialization
 _Log := LoggerProBuilder
   .WithDefaultRenderer(TLogItemRendererNoTag.Create)
   .WriteToConsole
-    .WithLogLevel(TLogType.Debug)
+    .WithMinimumLevel(TLogType.Debug)
     .Done
   .Build;
 

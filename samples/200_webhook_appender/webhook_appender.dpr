@@ -25,7 +25,7 @@ begin
 
     lLog := LoggerProBuilder
       .WriteToWebhook
-        .WithLogLevel(TLogType.Info) //INFO+ (DEBUG level is not sent)
+        .WithMinimumLevel(TLogType.Info) //INFO+ (DEBUG level is not sent)
         .WithURL('https://httpbin.org/post')
         .WithContentType(TWebhookContentType.JSON)
         .WithTimeout(5)
