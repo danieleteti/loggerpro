@@ -15,6 +15,7 @@ const
 var
   lTasks: array of ITask;
   lLog: ILogWriter;
+  lErrLog: ILogWriter;
 begin
   lLog := LoggerProBuilder
     .WriteToSimpleConsole.Done
@@ -50,4 +51,26 @@ begin
   end;
 
   TTask.WaitForAll(lTasks);
+  lLog.Shutdown;
+  lLog := nil;
+
+  // --- UseStdErr demo ---------------------------------------------------
+  // Same appender, but log lines go to stderr instead of stdout. Redirect
+  // stderr to see only these lines in a file:
+  //   SimpleConsole_appender.exe 2> errors.txt
+  // Typical use: MCP servers (stdout reserved for JSON-RPC) and Unix
+  // daemons where diagnostic output belongs on stderr.
+  Writeln('--- next five lines are sent to STDERR ---');
+  lErrLog := LoggerProBuilder
+    .WriteToSimpleConsole
+      .WithStdErr
+      .Done
+    .Build;
+  lErrLog.Debug('to stderr: debug', 'STDERR');
+  lErrLog.Info ('to stderr: info',  'STDERR');
+  lErrLog.Warn ('to stderr: warn',  'STDERR');
+  lErrLog.Error('to stderr: error', 'STDERR');
+  lErrLog.Fatal('to stderr: fatal', 'STDERR');
+  lErrLog.Shutdown;
+  lErrLog := nil;
 end.
