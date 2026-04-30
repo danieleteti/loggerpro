@@ -97,10 +97,10 @@ const
     // the meta-refresh timer at parse time and removing the element from
     // the DOM does NOT cancel that pending navigation (verified on
     // Chrome). That means once the file becomes FINALIZED there is no
-    // way to stop the loop from JS. Instead the defer'd script below
-    // schedules its own setTimeout, which is trivially cancellable -
-    // and which we simply skip altogether when the FINALIZED sentinel
-    // is already present in the DOM.
+    // way to stop the loop from JS. Instead the script below schedules
+    // its own setTimeout (gated on DOMContentLoaded), which is trivially
+    // cancellable - and which we simply skip altogether when the
+    // FINALIZED sentinel is already present in the DOM.
     '<title>$TITLE$</title>'#10 +
     '<style>'#10 +
     '  :root { color-scheme: dark; }'#10 +
@@ -154,26 +154,28 @@ const
     '  .live-badge.finalized { background: #30363d; color: #8b949e; border: 1px solid #484f58; }'#10 +
     '  @keyframes lp-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }'#10 +
     '</style>'#10 +
-    '<script defer>'#10 +
+    '<script>'#10 +
     '(() => {'#10 +
     // Disable browser scroll restoration IMMEDIATELY (synchronously, before
     // any layout or paint). Browsers restore the previous scroll position
     // *after* DOMContentLoaded, which would undo our scroll-to-bottom.
     // Setting this flag here wins the race.
     '  if ("scrollRestoration" in history) history.scrollRestoration = "manual";'#10 +
-    // <script defer> guarantees the document is fully parsed before this
-    // runs, so the FINALIZED sentinel (if present) is already in the DOM.
-    // Read it ONCE here and use the same value for every downstream
-    // decision (reload scheduling, badge, scroll-to-bottom).
-    '  const isClosed = !!document.getElementById("filecompleted");'#10 +
+    '  const onReady = () => {'#10 +
+    // The body has been parsed by the time onReady runs (DOMContentLoaded
+    // is its trigger), so getElementById can actually find the sentinel.
+    // NOTE: <script defer> is ignored on inline scripts per HTML spec, so
+    // this check MUST live inside onReady - moving it to the IIFE body
+    // would make it run before <body> is parsed and isClosed would be
+    // false on every load (including correctly finalized files).
+    '    const isClosed = !!document.getElementById("filecompleted");'#10 +
     // LIVE: schedule a JS-driven reload. We use location.replace(href)
     // rather than location.reload() because Chrome blocks reload() on
     // file:// origins ("Unsafe attempt to load URL ... unique security
     // origin"); a same-URL navigation via replace() is not subject to
     // that policy. FINALIZED: simply never schedule the timer - so the
     // loop stops the moment the writer closes the file cleanly.
-    '  if (!isClosed) setTimeout(() => location.replace(location.href), $RELOAD_MS$);'#10 +
-    '  const onReady = () => {'#10 +
+    '    if (!isClosed) setTimeout(() => location.replace(location.href), $RELOAD_MS$);'#10 +
     '    const q = document.getElementById("q");'#10 +
     '    const rows = document.getElementById("rows");'#10 +
     '    const count = document.getElementById("count");'#10 +
@@ -280,8 +282,9 @@ const
   HTML_FOOT =
     '</tbody>'#10 +
     '</table>'#10 +
-    // Sentinel marking "file is finalized" - defer'd script in <head>
-    // checks for this element to decide LIVE vs FINALIZED mode.
+    // Sentinel marking "file is finalized" - the script in <head>
+    // checks for this element (inside DOMContentLoaded) to decide
+    // LIVE vs FINALIZED mode.
     '<span id="filecompleted"></span>'#10 +
     '</body>'#10 +
     '</html>'#10;
@@ -437,6 +440,12 @@ begin
 
   if lPreexisting then
   begin
+    // Write the sentinel before freeing the writer, otherwise the rotated
+    // file ends at </tbody></table> with no <span id="filecompleted"> and
+    // the browser keeps it in LIVE mode forever (mirrors what TearDown does
+    // on clean shutdown).
+    if fFileWriter <> nil then
+      EmitEndRotateLogItem(fFileWriter);
     FreeAndNil(fFileWriter);
     RotateFile('', lNewFileName);
     fFileWriter := CreateWriter(GetLogFileName('', 0));
