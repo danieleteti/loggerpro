@@ -72,10 +72,18 @@ const
   BACK_WHITE       = ESC + '[107m';
 
   { Style escape sequences }
-  STYLE_BRIGHT  = ESC + '[1m';
-  STYLE_DIM     = ESC + '[2m';
-  STYLE_NORMAL  = ESC + '[22m';
-  STYLE_RESETALL= ESC + '[0m';
+  STYLE_BRIGHT        = ESC + '[1m';
+  STYLE_DIM           = ESC + '[2m';
+  STYLE_ITALIC        = ESC + '[3m';
+  STYLE_UNDERLINE     = ESC + '[4m';
+  STYLE_INVERSE       = ESC + '[7m';
+  STYLE_STRIKETHROUGH = ESC + '[9m';
+  STYLE_NORMAL        = ESC + '[22m';  // cancels Bold/Bright and Dim
+  STYLE_ITALICOFF     = ESC + '[23m';
+  STYLE_UNDERLINEOFF  = ESC + '[24m';
+  STYLE_INVERSEOFF    = ESC + '[27m';
+  STYLE_STRIKETHROUGHOFF = ESC + '[29m';
+  STYLE_RESETALL      = ESC + '[0m';
 
 type
   /// <summary>
@@ -134,14 +142,23 @@ type
 
   /// <summary>
   /// ANSI style escape sequences.
-  /// Style.ResetAll resets foreground, background and style.
+  /// Bold and Bright are aliases for the same ESC[1m code.
+  /// Style.ResetAll resets all attributes (color + style) to terminal defaults.
   /// </summary>
   Style = record
   const
-    Bright   = STYLE_BRIGHT;
-    Dim      = STYLE_DIM;
-    Normal   = STYLE_NORMAL;
-    ResetAll = STYLE_RESETALL;
+    Bright          = STYLE_BRIGHT;       // ESC[1m  (colorama: Style.BRIGHT)
+    Dim             = STYLE_DIM;          // ESC[2m
+    Italic          = STYLE_ITALIC;       // ESC[3m  (not all terminals)
+    Underline       = STYLE_UNDERLINE;    // ESC[4m
+    Inverse         = STYLE_INVERSE;      // ESC[7m  — swap fg/bg
+    StrikeThrough   = STYLE_STRIKETHROUGH;// ESC[9m  (not all terminals)
+    Normal          = STYLE_NORMAL;       // ESC[22m — cancel Bold/Dim
+    ItalicOff       = STYLE_ITALICOFF;    // ESC[23m
+    UnderlineOff    = STYLE_UNDERLINEOFF; // ESC[24m
+    InverseOff      = STYLE_INVERSEOFF;   // ESC[27m
+    StrikeThroughOff= STYLE_STRIKETHROUGHOFF; // ESC[29m
+    ResetAll        = STYLE_RESETALL;     // ESC[0m  — reset everything
   end;
 
 { Wrap aText in aColor + STYLE_RESETALL (colorama-style autoreset).
