@@ -387,9 +387,10 @@ begin
     lCfg := lCfg.WithMinimumLevel(lLogLevel);
 
   // Optional "renderer" field: resolved against the process-wide renderer
-  // registry. When set, the named renderer replaces the Console appender's
-  // built-in rendering pipeline - color/scheme/prefix fields below are still
-  // applied on top but the chosen renderer is what formats each TLogItem.
+  // registry. A named renderer owns its entire formatting pipeline including
+  // colours; when "renderer" is present the built-in color-scheme logic below
+  // is skipped so that Done() does not replace the custom renderer with the
+  // default GinStyle appender.
   // Unknown names raise: silent fallback would mask typos in config files.
   if TryGetString(aConfig, 'renderer', lRendererName) and (lRendererName <> '') then
   begin
@@ -402,55 +403,62 @@ begin
     lCfg := lCfg.WithRenderer(lRenderer);
   end;
 
-  // Resolve the color story. Rules:
-  //   - colors ON by default (the "Midnight" scheme); the renderer
-  //     auto-degrades to plain text when stdout is piped/redirected
-  //     so log files never contain ANSI escapes.
-  //   - "colors": false                       -> plain text, no ANSI.
-  //   - "colorScheme": null | ""              -> plain text, no ANSI.
-  //   - "colorScheme": "Nord" / "GinBadge"..  -> that scheme.
-  //   - "colors": true, no scheme             -> default scheme.
-  lColorsExplicit := TryGetBool(aConfig, 'colors', lColorsField);
-
-  lHasSchemeField := False;
-  lSchemeName := '';
-  lSchemeValue := aConfig.GetValue('colorScheme');
-  if lSchemeValue <> nil then
+  // Color-scheme logic only applies when no custom renderer was set.
+  // A custom renderer (see "renderer" field above) owns its entire formatting
+  // pipeline; calling WithColorScheme on top would cause Done() to create a
+  // GinStyle renderer and silently discard the custom renderer.
+  if lRendererName = '' then
   begin
-    lHasSchemeField := True;
-    if lSchemeValue is TJSONString then
-      lSchemeName := TJSONString(lSchemeValue).Value
-    else if not (lSchemeValue is TJSONNull) then
-      raise ELoggerProConfigError.Create(
-        'Field "colorScheme" must be a string or null.');
-  end;
+    // Resolve the color story. Rules:
+    //   - colors ON by default (the "Midnight" scheme); the renderer
+    //     auto-degrades to plain text when stdout is piped/redirected
+    //     so log files never contain ANSI escapes.
+    //   - "colors": false                       -> plain text, no ANSI.
+    //   - "colorScheme": null | ""              -> plain text, no ANSI.
+    //   - "colorScheme": "Nord" / "GinBadge"..  -> that scheme.
+    //   - "colors": true, no scheme             -> default scheme.
+    lColorsExplicit := TryGetBool(aConfig, 'colors', lColorsField);
 
-  // Reject conflicting "colors: false" together with a non-empty
-  // "colorScheme": one says no, the other says yes. Silently picking
-  // one would mask a typo / stale field in the JSON.
-  if lColorsExplicit and (not lColorsField) and
-     lHasSchemeField and (lSchemeName <> '') then
-    raise ELoggerProConfigError.CreateFmt(
-      'Conflicting JSON: "colors": false together with "colorScheme": "%s". ' +
-      'Use "colors": false (no colors) OR a colorScheme (with colors), not both.',
-      [lSchemeName]);
+    lHasSchemeField := False;
+    lSchemeName := '';
+    lSchemeValue := aConfig.GetValue('colorScheme');
+    if lSchemeValue <> nil then
+    begin
+      lHasSchemeField := True;
+      if lSchemeValue is TJSONString then
+        lSchemeName := TJSONString(lSchemeValue).Value
+      else if not (lSchemeValue is TJSONNull) then
+        raise ELoggerProConfigError.Create(
+          'Field "colorScheme" must be a string or null.');
+    end;
 
-  // Decide whether colors are on and which scheme wins.
-  if lColorsExplicit and (not lColorsField) then
-    lColorsEnabled := False
-  else if lHasSchemeField and (lSchemeName = '') then
-    // explicit "" or null -> opt out
-    lColorsEnabled := False
-  else
-    lColorsEnabled := True;
+    // Reject conflicting "colors: false" together with a non-empty
+    // "colorScheme": one says no, the other says yes. Silently picking
+    // one would mask a typo / stale field in the JSON.
+    if lColorsExplicit and (not lColorsField) and
+       lHasSchemeField and (lSchemeName <> '') then
+      raise ELoggerProConfigError.CreateFmt(
+        'Conflicting JSON: "colors": false together with "colorScheme": "%s". ' +
+        'Use "colors": false (no colors) OR a colorScheme (with colors), not both.',
+        [lSchemeName]);
 
-  if lColorsEnabled then
-  begin
-    if lSchemeName <> '' then
-      lCfg := lCfg.WithColorScheme(ParseColorScheme(lSchemeName))
+    // Decide whether colors are on and which scheme wins.
+    if lColorsExplicit and (not lColorsField) then
+      lColorsEnabled := False
+    else if lHasSchemeField and (lSchemeName = '') then
+      // explicit "" or null -> opt out
+      lColorsEnabled := False
     else
-      // default professional scheme
-      lCfg := lCfg.WithColorScheme(LogColorSchemes.Midnight);
+      lColorsEnabled := True;
+
+    if lColorsEnabled then
+    begin
+      if lSchemeName <> '' then
+        lCfg := lCfg.WithColorScheme(ParseColorScheme(lSchemeName))
+      else
+        // default professional scheme
+        lCfg := lCfg.WithColorScheme(LogColorSchemes.Midnight);
+    end;
   end;
 
   if TryGetString(aConfig, 'prefix', lStr) then
