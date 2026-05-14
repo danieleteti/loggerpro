@@ -929,6 +929,13 @@ type
     /// Useful when multiple processes or modules aggregate into the same
     /// console/pipe stream and you need to distinguish them visually.</summary>
     function WithPrefix(const aPrefix: string): IConsoleAppenderConfigurator;
+    /// <summary>Windows only, GUI apps only. Force AllocConsole instead of
+    /// attaching to the parent console. Use this when launching a GUI app
+    /// from the Delphi IDE so a console window actually pops up - otherwise
+    /// AttachConsole binds to bds.exe's invisible console and you see
+    /// nothing. No effect for console-subsystem apps (IsConsole = True) or
+    /// on POSIX.</summary>
+    function WithForceNewConsole: IConsoleAppenderConfigurator;
   end;
 
   { Simple console appender configurator }

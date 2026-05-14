@@ -457,6 +457,8 @@ begin
     lCfg := lCfg.WithPrefix(lStr);
   if TryGetBool(aConfig, 'utf8Output', lBool) and lBool then
     lCfg := lCfg.WithUTF8Output;
+  if TryGetBool(aConfig, 'forceNewConsole', lBool) and lBool then
+    lCfg := lCfg.WithForceNewConsole;
   lCfg.Done;
 end;
 

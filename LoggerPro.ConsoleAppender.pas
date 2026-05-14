@@ -53,6 +53,7 @@ type
   protected
     FUTF8Output: Boolean;
     FRendererHandlesColors: Boolean;
+    FForceNewConsole: Boolean;
 {$IFDEF MSWINDOWS}
     FSavedOutputCP: Cardinal;
     fColors: array [TLogType.Debug .. TLogType.Fatal] of Integer;
@@ -87,6 +88,14 @@ type
     /// renderer's multi-color output. Set by WithColors / WithColorScheme.
     /// </summary>
     property RendererHandlesColors: Boolean read FRendererHandlesColors write FRendererHandlesColors;
+    /// <summary>
+    /// Windows only. When True, Setup skips AttachConsole(ATTACH_PARENT_PROCESS)
+    /// and goes straight to AllocConsole. Use this for GUI applications that
+    /// must always pop up a fresh, visible console window, regardless of
+    /// whether the parent process (e.g. the Delphi IDE) already has one.
+    /// No effect on POSIX or for console-subsystem apps (IsConsole = True).
+    /// </summary>
+    property ForceNewConsole: Boolean read FForceNewConsole write FForceNewConsole;
   end;
 
   TLoggerProConsoleLogFmtAppender = class(TLoggerProConsoleAppender)
@@ -252,11 +261,20 @@ begin
     try
       if TInterlocked.Increment(FConsoleAllocated) = 1 then
       begin
-        // Attempt to attach to the parent console (if there is already a console allocated)
+        // For GUI apps (IsConsole = False) we need a console handle.
+        //   - ForceNewConsole = True  -> always AllocConsole (pops up a fresh
+        //     window even when launched from the Delphi IDE, whose parent
+        //     process bds.exe owns a console that AttachConsole would silently
+        //     attach to, leaving the user with no visible window).
+        //   - ForceNewConsole = False -> default behavior: try to attach to
+        //     the parent's console (cmd.exe, PowerShell, ...) and only
+        //     allocate a new one if there isn't one.
         if not IsConsole then
         begin
-          if not AttachConsole(ATTACH_PARENT_PROCESS) then
-            AllocConsole; // No console allocated, create a new one
+          if FForceNewConsole then
+            AllocConsole
+          else if not AttachConsole(ATTACH_PARENT_PROCESS) then
+            AllocConsole;
         end;
         fSavedColors := GetCurrentColors;
         TInterlocked.Increment(FConsoleAllocated);

@@ -93,6 +93,7 @@ type
     FUseColors: Boolean;
     FColorScheme: TLogColorScheme;
     FPrefix: string;
+    FForceNewConsole: Boolean;
   public
     function WithMinimumLevel(aLogLevel: TLogType): IConsoleAppenderConfigurator;
     function WithRenderer(aRenderer: ILogItemRenderer): IConsoleAppenderConfigurator; overload;
@@ -101,6 +102,7 @@ type
     function WithColors: IConsoleAppenderConfigurator;
     function WithColorScheme(const aScheme: TLogColorScheme): IConsoleAppenderConfigurator;
     function WithPrefix(const aPrefix: string): IConsoleAppenderConfigurator;
+    function WithForceNewConsole: IConsoleAppenderConfigurator;
     function Done: ILoggerProBuilder;
   end;
 
@@ -843,6 +845,12 @@ begin
   Result := Self;
 end;
 
+function TConsoleAppenderConfigurator.WithForceNewConsole: IConsoleAppenderConfigurator;
+begin
+  FForceNewConsole := True;
+  Result := Self;
+end;
+
 function TConsoleAppenderConfigurator.WithPrefix(
   const aPrefix: string): IConsoleAppenderConfigurator;
 begin
@@ -873,6 +881,7 @@ begin
     lAppender := TLoggerProConsoleAppender.Create(GetRenderer);
   end;
   (lAppender as TLoggerProConsoleAppender).UTF8Output := FUTF8Output;
+  (lAppender as TLoggerProConsoleAppender).ForceNewConsole := FForceNewConsole;
   ApplyLogLevel(lAppender);
   FBuilder.InternalAddAppender(lAppender);
   Result := FBuilder;
