@@ -434,7 +434,7 @@ begin
   // overlap. If the current file already exists with content from a
   // prior run, rotate it to a numbered backup so this run starts fresh.
   lCurrentName := GetLogFileName('', 0);
-  lPreexisting := TFile.Exists(lCurrentName) and (TFile.GetSize(lCurrentName) > 0);
+  lPreexisting := TFile.Exists(lCurrentName) and (GetFileSizeCompat(lCurrentName) > 0);
 
   inherited; // parent opens fFileWriter on the current file
 

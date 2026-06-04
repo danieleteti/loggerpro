@@ -105,9 +105,12 @@ begin
 end;
 
 procedure TLoggerProTest.TestLogLayoutToLogIndices(const LogLayout, ResultOutput: string);
+var
+  lWithIndices: string;
+  s: string;
 begin
-  var lWithIndices := LogLayoutByPlaceHoldersToLogLayoutByIndexes(LogLayout, True);
-  var s := Format(
+  lWithIndices := LogLayoutByPlaceHoldersToLogLayoutByIndexes(LogLayout, True);
+  s := Format(
     lWithIndices,
     [
       FormatDateTime('yyyy-mm-dd hh:nn:ss:zzz', encodedate(2020,3,15) + EncodeTime(12,30,20,123)),

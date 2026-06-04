@@ -40,15 +40,18 @@ var
 implementation
 
 uses
+  LoggerPro,
   LoggerProConfig;
 
 {$R *.dfm}
 
 procedure TMainForm.Button1Click(Sender: TObject);
+var
+  lLogWithCtx: ILogWriter;
 begin
   Log.Debug('This is a debug message with TAG1', 'TAG1');
   Log.Debug('This is a debug message with TAG2', 'TAG2');
-  var lLogWithCtx := Log
+  lLogWithCtx := Log
                         .WithProperty('value1',1)
                         .WithProperty('value2','2')
                         .WithProperty('value3',12.34)

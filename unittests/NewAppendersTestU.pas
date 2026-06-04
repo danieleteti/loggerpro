@@ -168,6 +168,7 @@ var
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
   lEvent: TEvent;
+  I: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(100);
   lLog := BuildLogWriter([lAppender]);
@@ -189,7 +190,7 @@ begin
       Assert.AreEqual('TAG2', lItems[1].LogTag);
       Assert.AreEqual(TLogType.Info, lItems[1].LogType);
     finally
-      for var I := 0 to lItems.Count - 1 do
+      for I := 0 to lItems.Count - 1 do
         lItems[I].Free;
       lItems.Free;
     end;
@@ -205,6 +206,7 @@ var
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
   I: Integer;
+  J: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(5); // Small buffer
   lLog := BuildLogWriter([lAppender]);
@@ -223,7 +225,7 @@ begin
       Assert.AreEqual('Message 6', lItems[0].LogMessage);
       Assert.AreEqual('Message 10', lItems[4].LogMessage);
     finally
-      for var J := 0 to lItems.Count - 1 do
+      for J := 0 to lItems.Count - 1 do
         lItems[J].Free;
       lItems.Free;
     end;
@@ -237,6 +239,7 @@ var
   lAppender: TLoggerProMemoryRingBufferAppender;
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
+  I: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(100);
   lLog := BuildLogWriter([lAppender]);
@@ -254,7 +257,7 @@ begin
       Assert.AreEqual('Message 1', lItems[0].LogMessage);
       Assert.AreEqual('Message 3', lItems[1].LogMessage);
     finally
-      for var I := 0 to lItems.Count - 1 do
+      for I := 0 to lItems.Count - 1 do
         lItems[I].Free;
       lItems.Free;
     end;
@@ -268,6 +271,7 @@ var
   lAppender: TLoggerProMemoryRingBufferAppender;
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
+  I: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(100);
   lLog := BuildLogWriter([lAppender]);
@@ -284,7 +288,7 @@ begin
       Assert.AreEqual(1, lItems.Count, 'Should have 1 error item');
       Assert.AreEqual('Error message', lItems[0].LogMessage);
     finally
-      for var I := 0 to lItems.Count - 1 do
+      for I := 0 to lItems.Count - 1 do
         lItems[I].Free;
       lItems.Free;
     end;
@@ -407,6 +411,7 @@ var
   lAppender: TLoggerProMemoryRingBufferAppender;
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
+  I: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(1); // Minimum buffer size
   lLog := BuildLogWriter([lAppender]);
@@ -423,7 +428,7 @@ begin
     try
       Assert.AreEqual('Message 3', lItems[0].LogMessage, 'Should have only the last message');
     finally
-      for var I := 0 to lItems.Count - 1 do
+      for I := 0 to lItems.Count - 1 do
         lItems[I].Free;
       lItems.Free;
     end;
@@ -437,6 +442,7 @@ var
   lAppender: TLoggerProMemoryRingBufferAppender;
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
+  I: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(100);
   lLog := BuildLogWriter([lAppender]);
@@ -449,7 +455,7 @@ begin
       Assert.AreEqual(1, lItems.Count);
       Assert.AreEqual('', lItems[0].LogMessage, 'Empty message should be preserved');
     finally
-      for var I := 0 to lItems.Count - 1 do
+      for I := 0 to lItems.Count - 1 do
         lItems[I].Free;
       lItems.Free;
     end;
@@ -464,6 +470,7 @@ var
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
   lLongMessage: string;
+  I: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(100);
   lLog := BuildLogWriter([lAppender]);
@@ -478,7 +485,7 @@ begin
       Assert.AreEqual(1, lItems.Count);
       Assert.AreEqual(100 * 1024, Length(lItems[0].LogMessage), 'Long message should be preserved');
     finally
-      for var I := 0 to lItems.Count - 1 do
+      for I := 0 to lItems.Count - 1 do
         lItems[I].Free;
       lItems.Free;
     end;
@@ -493,6 +500,7 @@ var
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
   lUnicodeMsg: string;
+  I: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(100);
   lLog := BuildLogWriter([lAppender]);
@@ -506,7 +514,7 @@ begin
       Assert.AreEqual(1, lItems.Count);
       Assert.AreEqual(lUnicodeMsg, lItems[0].LogMessage, 'Unicode message should be preserved');
     finally
-      for var I := 0 to lItems.Count - 1 do
+      for I := 0 to lItems.Count - 1 do
         lItems[I].Free;
       lItems.Free;
     end;
@@ -647,6 +655,7 @@ var
   lLog: ILogWriter;
   lItems: TList<TLogItem>;
   lSpecialTag: string;
+  I: Integer;
 begin
   lAppender := TLoggerProMemoryRingBufferAppender.Create(100);
   lLog := BuildLogWriter([lAppender]);
@@ -660,7 +669,7 @@ begin
       Assert.AreEqual(1, lItems.Count, 'Should find item with special characters in tag');
       Assert.AreEqual(lSpecialTag, lItems[0].LogTag);
     finally
-      for var I := 0 to lItems.Count - 1 do
+      for I := 0 to lItems.Count - 1 do
         lItems[I].Free;
       lItems.Free;
     end;

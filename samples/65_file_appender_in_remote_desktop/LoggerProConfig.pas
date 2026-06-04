@@ -24,12 +24,14 @@ end;
 function GetFileNameFormat: string;
 var
   lLogFileNameFormat: string;
+  lClientName: string;
+  lComputerName: string;
 begin
   lLogFileNameFormat := TLoggerProFileAppender.DEFAULT_FILENAME_FORMAT;
   // '%s.%2.2d.%s.log';
 
-  var lClientName: string := GetEnvironmentVariable('CLIENTNAME');
-  var lComputerName: string := GetEnvironmentVariable('COMPUTERNAME');
+  lClientName := GetEnvironmentVariable('CLIENTNAME');
+  lComputerName := GetEnvironmentVariable('COMPUTERNAME');
   if not lClientName.IsEmpty then
   begin
     Exit('LOG_' + lClientName + '_' + lLogFileNameFormat);

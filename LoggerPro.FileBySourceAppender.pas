@@ -110,6 +110,7 @@ uses
   System.IOUtils,
   System.DateUtils,
   System.StrUtils,
+  LoggerPro.FileAppender,
   LoggerPro.Renderers;
 
 { TLoggerProFileBySourceAppender }
@@ -283,7 +284,7 @@ begin
 
   // If that file already exceeds the size limit, start a new one
   if TFile.Exists(lFileName) and (FMaxFileSizeInKB > 0) and
-     (TFile.GetSize(lFileName) > Int64(FMaxFileSizeInKB) * 1024) then
+     (GetFileSizeCompat(lFileName) > Int64(FMaxFileSizeInKB) * 1024) then
   begin
     Inc(lSeq);
     lFileName := GetLogFileName(aSource, aTag, aDateStr, lSeq);
@@ -367,6 +368,7 @@ var
   lKeysToRemove: TArray<string>;
   lKey: string;
   lCount: Integer;
+  I: Integer;
 begin
   SetLength(lKeysToRemove, FWriters.Count);
   lCount := 0;
@@ -379,7 +381,7 @@ begin
     end;
   end;
 
-  for var I := 0 to lCount - 1 do
+  for I := 0 to lCount - 1 do
   begin
     FWriters.Remove(lKeysToRemove[I]);
     FSequences.Remove(lKeysToRemove[I]);

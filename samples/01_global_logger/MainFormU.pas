@@ -36,6 +36,7 @@ var
 implementation
 
 uses
+  LoggerPro,
   LoggerPro.GlobalLogger;
 
 {$R *.dfm}
@@ -84,6 +85,8 @@ begin
 end;
 
 procedure TMainForm.Button2Click(Sender: TObject);
+var
+  UserLog: ILogWriter;
 begin
   // Basic info logging with tags
   Log.Info('This is a info message with TAG1', 'TAG1');
@@ -93,7 +96,7 @@ begin
   // LoggerPro 2.0: WithProperty for structured context
   // ---------------------------------------------------------------------------
   // Create a sub-logger with bound context properties
-  var UserLog := Log
+  UserLog := Log
     .WithProperty('user_id', 42)
     .WithProperty('action', 'button_click');
   UserLog.Info('User performed action', 'USER');

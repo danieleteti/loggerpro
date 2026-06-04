@@ -230,6 +230,11 @@ type
       reintroduce;
   end;
 
+// Returns the size of an existing file in bytes. TFile.GetSize requires
+// Delphi 11 Alexandria (CompilerVersion 35); on older compilers (e.g.
+// 10.2.3 Tokyo) it falls back to a TFileStream-based size read.
+function GetFileSizeCompat(const aFileName: string): Int64;
+
 implementation
 
 uses
@@ -246,6 +251,24 @@ uses
 {$ENDIF}
     ;
 
+
+function GetFileSizeCompat(const aFileName: string): Int64;
+{$IF CompilerVersion >= 35}
+begin
+  Result := TFile.GetSize(aFileName);
+end;
+{$ELSE}
+var
+  lStream: TFileStream;
+begin
+  lStream := TFileStream.Create(aFileName, fmOpenRead or fmShareDenyNone);
+  try
+    Result := lStream.Size;
+  finally
+    lStream.Free;
+  end;
+end;
+{$ENDIF}
 
 function OccurrencesOfChar(const S: string; const C: char): integer;
 var

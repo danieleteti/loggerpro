@@ -78,6 +78,8 @@ begin
 end;
 
 procedure TFUDPServerClientForm.UDPClientTimerTimer(Sender: TObject);
+var
+  lCtxLog: ILogWriter;
 begin
   case RandomRange(0, 5) of
     0: Log.Debug('debug message', 'DEBUG');
@@ -86,7 +88,7 @@ begin
     3: Log.Error('error message', 'ERROR');
     4: begin
          // Example using WithProperty for structured context
-         var lCtxLog := Log
+         lCtxLog := Log
            .WithProperty('source', 'timer')
            .WithProperty('interval_ms', Integer(UDPClientTimer.Interval));
          lCtxLog.Info('Message with context from timer', 'INFO');
