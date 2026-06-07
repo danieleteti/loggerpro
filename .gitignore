@@ -78,3 +78,6 @@ nul
 /unittests/Win32/**/*.html
 *.dcu
 *daniele*
+
+# GetIt distribution zip (build artifact)
+GetIt/*.zip

@@ -452,3 +452,120 @@ def tag_release(ctx):
 def bump_version(ctx):
     """Increments the patch version number"""
     inc_version()
+
+
+# ============================================================================
+# GetIt distribution
+# ============================================================================
+
+GETIT_REPO = "danieleteti/loggerpro"
+
+GETIT_INSTALL_TEXT = """LoggerPro is a source-only library: all units are runtime units, no \
+design-time package or component installation is required.
+
+To install:
+1. Extract the zip. Sources are under the "loggerpro" folder: the root *.pas units, \
+the "packages" folder (one runtime package per RAD Studio version) and the "samples" folder.
+2. Add the "loggerpro" root folder to the IDE Library Path (Tools > Options > Language > \
+Delphi > Library) for every target platform you use (Win32, Win64, ...). This is the only \
+mandatory step: after it you can use any unit with "uses LoggerPro;".
+3. (Optional) If you prefer a precompiled runtime BPL instead of compiling the sources into \
+each project, open packages\\d<XXX>\\loggerproRT.dproj matching your RAD Studio version and \
+build it. It is a runtime-only package ({$RUNONLY}), so nothing has to be installed into the IDE.
+
+No external installer is executed and RAD Studio does NOT need to be closed during installation."""
+
+GETIT_UNINSTALL_TEXT = """1. Remove the "loggerpro" root folder entry from the IDE Library Path \
+(Tools > Options > Language > Delphi > Library) for every platform where it was added.
+2. If the optional runtime package was built, delete the generated loggerproRT*.bpl and \
+loggerproRT*.dcp from your output / bpl folders.
+3. Delete the extracted "loggerpro" folder.
+
+No Windows uninstaller and no registered IDE package are involved."""
+
+
+@task()
+def getit(ctx):
+    """Builds the GetIt distribution under the GetIt/ folder: a clean zip
+    (sources + samples only, no docs/logos/unittests) plus the install /
+    uninstall process texts ready to paste into the GetIt submission form."""
+    version = get_version_from_file()          # e.g. "loggerpro-2.1.1"
+    plain_version = version.replace("loggerpro-", "")
+
+    getit_dir = "GetIt"
+    os.makedirs(getit_dir, exist_ok=True)
+
+    # --- staging --------------------------------------------------------------
+    stage_root = os.path.join(getit_dir, "_stage")
+    stage = os.path.join(stage_root, "loggerpro")
+    rmtree(stage_root, True)
+    os.makedirs(stage, exist_ok=True)
+
+    # 1. root source units (no docs, no logos)
+    print("Staging root sources...")
+    for file in glob.glob("*.pas") + glob.glob("*.inc"):
+        copy2(file, stage)
+    if os.path.isfile("License.txt"):
+        copy2("License.txt", stage)
+
+    # 2. packages: only .dpk / .dproj (no compiled artifacts)
+    print("Staging packages...")
+    for folder in get_package_folders():
+        src_folder = os.path.join("packages", folder)
+        dest_folder = os.path.join(stage, "packages", folder)
+        os.makedirs(dest_folder, exist_ok=True)
+        for ext in ["*.dpk", "*.dproj"]:
+            for file in glob.glob(os.path.join(src_folder, ext)):
+                copy2(file, dest_folder)
+
+    # 3. samples, stripped of every build / IDE artifact
+    print("Staging samples...")
+    ignore_patterns = shutil.ignore_patterns(
+        "*.identcache", "*.dcu", "*.exe", "*.dll", "*.bpl", "*.dcp",
+        "*.o", "*.a", "*.res", "*.stat", "*.local", "*.log", "*.jsonl",
+        "*.map", "*.rsm", "*.drc", "*.~*",
+        "__history", "__recovery", "Win32", "Win64", "OSX64", "Android",
+        "logs", "logs_test", "nul",
+    )
+    copytree("samples", os.path.join(stage, "samples"), ignore=ignore_patterns)
+
+    # 4. zip -> GetIt/loggerpro-<version>.zip
+    zip_base = os.path.join(getit_dir, version)   # GetIt/loggerpro-2.1.1
+    zip_path = zip_base + ".zip"
+    if os.path.isfile(zip_path):
+        os.remove(zip_path)
+    shutil.make_archive(zip_base, "zip", stage_root)
+    rmtree(stage_root, True)
+
+    file_count = sum(len(files) for _, _, files in os.walk(getit_dir))
+    size_mb = round(os.path.getsize(zip_path) / (1024 * 1024), 2)
+
+    # 5. process texts + form helper
+    with open(os.path.join(getit_dir, "INSTALL.txt"), "w", encoding="utf-8") as f:
+        f.write(GETIT_INSTALL_TEXT)
+    with open(os.path.join(getit_dir, "UNINSTALL.txt"), "w", encoding="utf-8") as f:
+        f.write(GETIT_UNINSTALL_TEXT)
+
+    zip_url = (
+        f"https://github.com/{GETIT_REPO}/releases/download/"
+        f"v{plain_version}/{version}.zip"
+    )
+    with open(os.path.join(getit_dir, "GetIt-form.md"), "w", encoding="utf-8") as f:
+        f.write(f"# GetIt submission form - LoggerPro {plain_version}\n\n")
+        f.write("## Library Zip file URL\n\n")
+        f.write(f"{zip_url}\n\n")
+        f.write(
+            f"> Upload `{os.path.basename(zip_path)}` as an asset of the "
+            f"GitHub release `v{plain_version}` so this URL resolves.\n\n"
+        )
+        f.write("## Installation process\n\n")
+        f.write(GETIT_INSTALL_TEXT + "\n\n")
+        f.write("## Uninstallation process\n\n")
+        f.write(GETIT_UNINSTALL_TEXT + "\n")
+
+    print(Fore.GREEN + "=" * 70)
+    print(f"  GetIt distribution ready in: {getit_dir}\\")
+    print(f"  Zip:   {zip_path}  ({size_mb} MB)")
+    print(f"  Texts: INSTALL.txt, UNINSTALL.txt, GetIt-form.md")
+    print(f"  Zip URL (after upload): {zip_url}")
+    print("=" * 70 + Fore.RESET)

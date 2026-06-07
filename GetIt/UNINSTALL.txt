@@ -1,0 +1,5 @@
+1. Remove the "loggerpro" root folder entry from the IDE Library Path (Tools > Options > Language > Delphi > Library) for every platform where it was added.
+2. If the optional runtime package was built, delete the generated loggerproRT*.bpl and loggerproRT*.dcp from your output / bpl folders.
+3. Delete the extracted "loggerpro" folder.
+
+No Windows uninstaller and no registered IDE package are involved.

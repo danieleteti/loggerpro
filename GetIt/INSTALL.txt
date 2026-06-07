@@ -1,0 +1,8 @@
+LoggerPro is a source-only library: all units are runtime units, no design-time package or component installation is required.
+
+To install:
+1. Extract the zip. Sources are under the "loggerpro" folder: the root *.pas units, the "packages" folder (one runtime package per RAD Studio version) and the "samples" folder.
+2. Add the "loggerpro" root folder to the IDE Library Path (Tools > Options > Language > Delphi > Library) for every target platform you use (Win32, Win64, ...). This is the only mandatory step: after it you can use any unit with "uses LoggerPro;".
+3. (Optional) If you prefer a precompiled runtime BPL instead of compiling the sources into each project, open packages\d<XXX>\loggerproRT.dproj matching your RAD Studio version and build it. It is a runtime-only package ({$RUNONLY}), so nothing has to be installed into the IDE.
+
+No external installer is executed and RAD Studio does NOT need to be closed during installation.
