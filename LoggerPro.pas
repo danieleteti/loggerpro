@@ -1107,7 +1107,7 @@ type
   end;
 
 
-{$IF Defined(MSWINDOWS)}
+{$IF Defined(MSWINDOWS) and not Defined(LOGGERPRO_NO_VCL)}
   { VCL Memo appender configurator (requires VCL, Windows only) }
   IVCLMemoAppenderConfigurator = interface(IAppenderConfigurator)
     ['{B4C5D6E7-F8A9-7B8C-1D2E-3F4A5B6C7D8E}']
@@ -1252,7 +1252,7 @@ type
     function WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
     { Strings appender - logs to any TStrings instance (cross-platform) }
     function WriteToStrings(aStrings: TStrings): IStringsAppenderConfigurator;
-{$IF Defined(MSWINDOWS)}
+{$IF Defined(MSWINDOWS) and not Defined(LOGGERPRO_NO_VCL)}
     { VCL appenders - require VCL units (Windows only) }
     function WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
     function WriteToVCLListBox(aListBox: TObject): IVCLListBoxAppenderConfigurator;
