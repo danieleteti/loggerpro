@@ -2491,7 +2491,15 @@ var
   lLogItem: TLogItem;
 begin
   lLogItem := aLogItem.Clone;
-  Result := FAppenderQueue.Enqueue(lLogItem); // = TWaitResult.wrSignaled;
+  { A failing appender does not drain its queue (it sits in WaitAfterFail),
+    so the back-off in Enqueue (up to ~6 minutes per item) cannot help: it
+    would only block the logger thread and, once the main queue is full,
+    every caller of Log.*. Try once and let the QueueFull path handle it.
+    Healthy but slow appenders keep the blocking back-pressure. }
+  if (FAppenderThread <> nil) and FAppenderThread.Failing then
+    Result := FAppenderQueue.TryEnqueue(lLogItem)
+  else
+    Result := FAppenderQueue.Enqueue(lLogItem); // = TWaitResult.wrSignaled;
   if not Result then
   begin
     lLogItem.Free;
@@ -2645,6 +2653,8 @@ begin
               except
                 if lSetupFailCount = 10 then
                 begin
+                  Failing := True;
+                  FLogAppender.LastErrorTimeStamp := now;
                   lStatus := TAppenderStatus.WaitAfterFail;
                 end
                 else
@@ -2689,9 +2699,15 @@ begin
                   lStatus := TAppenderStatus.WaitAfterFail;
                 end;
               except
+                // a raising TryToRestart is a failed restart: back off
+                // instead of retrying immediately (busy loop)
                 lRestarted := False;
+                FLogAppender.LastErrorTimeStamp := now;
+                lStatus := TAppenderStatus.WaitAfterFail;
               end;
-              Failing := not lRestarted;
+              // Failing is cleared only by the first successful WriteLog
+              if not lRestarted then
+                Failing := True;
             end;
 
           TAppenderStatus.WaitAfterFail:
@@ -2738,6 +2754,8 @@ begin
                     try
                       if FLogAppender.IsEnabled then
                         FLogAppender.WriteLog(lLogItem);
+                      if Failing then
+                        Failing := False;
                     except
                       Failing := true;
                       FLogAppender.LastErrorTimeStamp := now;
