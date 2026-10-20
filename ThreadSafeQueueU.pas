@@ -42,6 +42,8 @@ type
     fShutDown: Boolean;
   public
     function Enqueue(const Item: T): Boolean;
+    { Single attempt, never sleeps. Returns False if the queue is full or shut down. }
+    function TryEnqueue(const Item: T): Boolean;
     function Dequeue(out Item: T): TWaitResult; overload;
     function Dequeue(out QueueSize: UInt64; out Item: T): TWaitResult; overload;
     function Dequeue: T; overload;
@@ -181,6 +183,23 @@ begin
     finally
       fCriticalSection.Leave;
     end;
+  end;
+end;
+
+function TThreadSafeQueue<T>.TryEnqueue(const Item: T): Boolean;
+begin
+  if fShutDown then
+    Exit(False);
+  fCriticalSection.Enter;
+  try
+    Result := fQueue.Count < fMaxSize;
+    if Result then
+    begin
+      fQueue.Enqueue(Item);
+      fEvent.SetEvent;
+    end;
+  finally
+    fCriticalSection.Leave;
   end;
 end;
 
