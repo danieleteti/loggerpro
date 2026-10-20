@@ -159,7 +159,7 @@ function TThreadSafeQueue<T>.Enqueue(const Item: T): Boolean;
 const
   cRetryCount: Byte = 20;
 var
-  lCount: Integer;
+  lCount, lWaitMs: Integer;
 begin
   if fShutDown then
     Exit(False);
@@ -168,7 +168,16 @@ begin
   lCount := 0;
   while lCount < cRetryCount do
   begin
-    Sleep(lCount * lCount * lCount * 10);  //let's slow down the enqueue call using a cubic function
+    lWaitMs := lCount * lCount * lCount * 10;  //let's slow down the enqueue call using a cubic function
+    // sliced, so that a queue that drains meanwhile releases the caller at once
+    while (lWaitMs > 0) and (fQueue.Count >= fMaxSize) do
+    begin
+      if lWaitMs < 100 then
+        Sleep(lWaitMs)
+      else
+        Sleep(100);
+      Dec(lWaitMs, 100);
+    end;
     fCriticalSection.Enter;
     try
       if fQueue.Count >= fMaxSize then

@@ -43,11 +43,16 @@ type
 
     [Test]
     procedure TestDestroyWithPendingMessages;
+
+    // A WriteLog that hangs (no exception) must not block Log.* callers
+    [Test]
+    procedure TestHungAppenderDoesNotBlockCallers;
   end;
 
 implementation
 
 uses
+  TestSupportAppendersU,
   LoggerPro.Builder,
   System.IOUtils,
   System.Diagnostics;
@@ -308,6 +313,49 @@ begin
   Assert.IsTrue(lMessageCount >= Trunc(EXPECTED_MESSAGES * 0.95),
     Format('Too many messages lost: %d/%d written (%.1f%%)',
       [lMessageCount, EXPECTED_MESSAGES, (lMessageCount / EXPECTED_MESSAGES) * 100]));
+end;
+
+procedure TCriticalIssuesTest.TestHungAppenderDoesNotBlockCallers;
+const
+  CALLS = 130000; // more than main queue + appender queue (2 x 50000)
+var
+  lLog: ILogWriter;
+  lRelease: TEvent;
+  lWatch, lCall: TStopwatch;
+  lMaxMs, lMaxWhen: Int64;
+  lMaxAt, I: Integer;
+begin
+  lRelease := TEvent.Create(nil, True, False, '');
+  try
+    lLog := BuildLogWriter([TMyAppender.Create(procedure begin end, procedure begin end,
+      procedure(aLogItem: TLogItem)
+      begin
+        lRelease.WaitFor(INFINITE); // stands for a WriteFile stuck in a filter driver
+      end)]);
+    lMaxMs := 0;
+    lWatch := TStopwatch.StartNew;
+    try
+      for I := 1 to CALLS do
+      begin
+        lCall := TStopwatch.StartNew;
+        lLog.Info('message %d', [I], 'HUNG');
+        if lCall.ElapsedMilliseconds > lMaxMs then
+        begin
+          lMaxMs := lCall.ElapsedMilliseconds;
+          lMaxAt := I;
+          lMaxWhen := lWatch.ElapsedMilliseconds;
+        end;
+      end;
+    finally
+      lRelease.SetEvent;
+    end;
+    Assert.IsTrue(lWatch.ElapsedMilliseconds < 60000,
+      Format('%d calls took %d ms', [CALLS, lWatch.ElapsedMilliseconds]));
+    Assert.IsTrue(lMaxMs < 10000, Format('a single call blocked %d ms (call %d, at %d ms)', [lMaxMs, lMaxAt, lMaxWhen]));
+    lLog := nil;
+  finally
+    lRelease.Free;
+  end;
 end;
 
 initialization
