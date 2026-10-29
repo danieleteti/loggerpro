@@ -28,6 +28,8 @@ type
     [Test]
     procedure TestSizeRotation;
     [Test]
+    procedure TestSizeRotationReleasesRotatedFiles;
+    [Test]
     procedure TestRetainDaysCleanup;
     [Test]
     procedure TestBuilderIntegration;
@@ -194,6 +196,41 @@ begin
   lFiles := TDirectory.GetFiles(lSourceFolder, '*.log');
   Assert.IsTrue(Length(lFiles) >= 2,
     Format('Should have at least 2 files after size rotation, got %d', [Length(lFiles)]));
+end;
+
+procedure TFileBySourceTest.TestSizeRotationReleasesRotatedFiles;
+var
+  lLog: ILogWriter;
+  lFiles: TArray<string>;
+  lFile: string;
+  I: Integer;
+begin
+  lLog := LoggerProBuilder
+    .WriteToFileBySource
+      .WithLogsFolder(FTestFolder)
+      .WithMaxFileSizeInKB(1)
+      .Done
+    .Build;
+
+  for I := 1 to 50 do
+    lLog.Info(Format('Rotation handle test message number %d with padding to fill up space quickly', [I]),
+      'TEST', [LogParam.S('source', 'HandleTest')]);
+
+  Sleep(300);
+  lLog.Shutdown;
+  lLog := nil;
+
+  lFiles := TDirectory.GetFiles(TPath.Combine(FTestFolder, 'HandleTest'), '*.log');
+  Assert.IsTrue(Length(lFiles) >= 2, 'Precondition: size rotation must have happened');
+
+  // A rotated-out writer that is not freed keeps its file handle open,
+  // so the file cannot be deleted even after Shutdown.
+  for lFile in lFiles do
+    try
+      TFile.Delete(lFile);
+    except
+      Assert.Fail('Rotated file is still locked after Shutdown: ' + lFile);
+    end;
 end;
 
 procedure TFileBySourceTest.TestRetainDaysCleanup;
