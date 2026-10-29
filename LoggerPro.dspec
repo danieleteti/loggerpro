@@ -2,7 +2,7 @@ min dpm client version: 1.0
 
 metadata:
   id: DanieleTeti.LoggerPro
-  version: 2.1.1
+  version: 2.1.2
   description: >
     Professional, thread-safe and DLL-safe logging library for Delphi with a
     fluent builder API and many appenders: file, JSONL, HTML, console, HTTP,

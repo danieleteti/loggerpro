@@ -1,10 +1,10 @@
-# GetIt submission form - LoggerPro 2.1.1
+# GetIt submission form - LoggerPro 2.1.2
 
 ## Library Zip file URL
 
-https://github.com/danieleteti/loggerpro/releases/download/v2.1.1/loggerpro-2.1.1.zip
+https://github.com/danieleteti/loggerpro/releases/download/v2.1.2/loggerpro-2.1.2.zip
 
-> Upload `loggerpro-2.1.1.zip` as an asset of the GitHub release `v2.1.1` so this URL resolves.
+> Upload `loggerpro-2.1.2.zip` as an asset of the GitHub release `v2.1.2` so this URL resolves.
 
 ## Installation process
 
