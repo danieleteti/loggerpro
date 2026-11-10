@@ -39,7 +39,8 @@ uses
   FileBySourceTestU in 'FileBySourceTestU.pas',
   LoggerPro.Renderers in '..\LoggerPro.Renderers.pas',
   LogFmtRendererTestU in 'LogFmtRendererTestU.pas',
-  LifecycleRaceTestU in 'LifecycleRaceTestU.pas';
+  LifecycleRaceTestU in 'LifecycleRaceTestU.pas',
+  CaptureTestU in 'CaptureTestU.pas';
 
 var
   runner : ITestRunner;

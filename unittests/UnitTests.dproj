@@ -137,6 +137,7 @@
         <DCCReference Include="..\LoggerPro.TimeRotatingFileAppender.pas"/>
         <DCCReference Include="..\LoggerPro.HTTPAppender.pas"/>
         <DCCReference Include="LifecycleRaceTestU.pas"/>
+        <DCCReference Include="CaptureTestU.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
