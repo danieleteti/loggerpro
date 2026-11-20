@@ -58,7 +58,7 @@ uses
   LoggerPro.FileBySourceAppender,
   LoggerPro.HTMLFileAppender,
   LoggerPro.DBAppender.FireDAC
-{$IF Defined(MSWINDOWS)}
+{$IF Defined(MSWINDOWS) and not Defined(LOGGERPRO_NO_VCL)}
   , LoggerPro.VCLMemoAppender
   , LoggerPro.VCLListBoxAppender
   , LoggerPro.VCLListViewAppender
@@ -316,7 +316,7 @@ type
     function Done: ILoggerProBuilder;
   end;
 
-{$IF Defined(MSWINDOWS)}
+{$IF Defined(MSWINDOWS) and not Defined(LOGGERPRO_NO_VCL)}
   { VCL Memo appender configurator }
   TVCLMemoAppenderConfigurator = class(TBaseAppenderConfigurator, IVCLMemoAppenderConfigurator)
   private
@@ -470,7 +470,7 @@ type
     function WriteToOutputDebugString: IOutputDebugStringAppenderConfigurator;
     function WriteToUDPSyslog: IUDPSyslogAppenderConfigurator;
     function WriteToStrings(aStrings: TStrings): IStringsAppenderConfigurator;
-{$IF Defined(MSWINDOWS)}
+{$IF Defined(MSWINDOWS) and not Defined(LOGGERPRO_NO_VCL)}
     // VCL appenders (Windows only)
     function WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
     function WriteToVCLListBox(aListBox: TObject): IVCLListBoxAppenderConfigurator;
@@ -653,7 +653,7 @@ begin
   Result := TStringsAppenderConfigurator.Create(Self, aStrings);
 end;
 
-{$IF Defined(MSWINDOWS)}
+{$IF Defined(MSWINDOWS) and not Defined(LOGGERPRO_NO_VCL)}
 function TLoggerProBuilder.WriteToVCLMemo(aMemo: TObject): IVCLMemoAppenderConfigurator;
 begin
   if not (aMemo is TMemo) then
@@ -1687,7 +1687,7 @@ begin
   Result := FBuilder;
 end;
 
-{$IF Defined(MSWINDOWS)}
+{$IF Defined(MSWINDOWS) and not Defined(LOGGERPRO_NO_VCL)}
 
 { TVCLMemoAppenderConfigurator }
 
