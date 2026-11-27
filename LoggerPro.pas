@@ -2222,6 +2222,7 @@ end;
 function TLogItem.Clone: TLogItem;
 begin
   Result := TLogItem.Create(FType, FMessage, FTag, FTimeStamp, FThreadID, FContext);
+  Result.PreRenderedContext := FPreRenderedContext;
   Result.Captured := FCaptured;
 end;
 
