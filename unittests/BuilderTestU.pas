@@ -60,6 +60,8 @@ type
     [Test]
     procedure TestLogExceptionWithMessageAndTag;
     [Test]
+    procedure TestLogExceptionWithDefaultContextUsesStackTraceFormatter;
+    [Test]
     procedure TestSyslogWithUseLocalTime;
     [Test]
     procedure TestElasticSearchWithBasicAuth;
@@ -575,6 +577,59 @@ begin
     Assert.Contains(lReceivedMessage, 'Test error', 'Should contain exception message');
     Assert.Contains(lReceivedMessage, 'FAKE_STACK_TRACE_LINE_1', 'Should contain stack trace');
     Assert.Contains(lReceivedMessage, 'FAKE_STACK_TRACE_LINE_2', 'Should contain full stack trace');
+  finally
+    lLog := nil;
+    lEvent.Free;
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestLogExceptionWithDefaultContextUsesStackTraceFormatter;
+var
+  lLog: ILogWriter;
+  lReceivedMessage, lReceivedTag: string;
+  lEvent: TEvent;
+begin
+  lEvent := TEvent.Create(nil, True, False, '');
+  try
+    lLog := LoggerProBuilder
+      .WithStackTraceFormatter(
+        function(E: Exception): string
+        begin
+          Result := 'FAKE_STACK_TRACE';
+        end)
+      .WriteToCallback
+        .WithCallback(
+          procedure(const aLogItem: TLogItem; const aFormattedMessage: string)
+          begin
+            lReceivedMessage := aLogItem.LogMessage;
+            lReceivedTag := aLogItem.LogTag;
+            lEvent.SetEvent;
+          end)
+        .Done
+      .Build
+      .WithDefaultContext([LogParam.S('request_id', '42')]);
+
+    try
+      raise Exception.Create('Test error');
+    except
+      on E: Exception do
+        lLog.LogException(E);
+    end;
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.Contains(lReceivedMessage, 'Test error', 'Should contain exception message');
+    Assert.Contains(lReceivedMessage, 'FAKE_STACK_TRACE', 'Should contain stack trace');
+
+    lEvent.ResetEvent;
+    try
+      raise Exception.Create('Test error');
+    except
+      on E: Exception do
+        lLog.LogException(E, 'context message', 'custom_tag');
+    end;
+    Assert.AreEqual(TWaitResult.wrSignaled, lEvent.WaitFor(5000), 'Callback should be invoked');
+    Assert.Contains(lReceivedMessage, 'context message', 'Should contain the message');
+    Assert.Contains(lReceivedMessage, 'FAKE_STACK_TRACE', 'Should contain stack trace');
+    Assert.AreEqual('custom_tag', lReceivedTag);
   finally
     lLog := nil;
     lEvent.Free;
