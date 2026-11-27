@@ -86,6 +86,8 @@ type
     [Test]
     procedure TestFileAppenderOnAfterRotateSizeRotation;
     [Test]
+    procedure TestFileAppenderMaxSizeOver2GBDoesNotRotate;
+    [Test]
     procedure TestFileAppenderOnAfterRotateBuilder;
     [Test]
     procedure TestWriteToStrings;
@@ -1052,6 +1054,45 @@ begin
     Assert.Contains(lRotatedFileName, '.01.', 'Rotated file should be file number 1');
     Assert.Contains(lRotatedFileName, 'TEST', 'Rotated file should contain the tag');
     Assert.IsTrue(TFile.Exists(lRotatedFileName), 'Rotated file should exist on disk');
+  finally
+    lLog := nil;
+    if TDirectory.Exists(lLogsFolder) then
+      TDirectory.Delete(lLogsFolder, True);
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestFileAppenderMaxSizeOver2GBDoesNotRotate;
+var
+  lLog: ILogWriter;
+  lAppender: TLoggerProFileAppender;
+  lLogsFolder: string;
+  lFiles: TArray<string>;
+  lRotated: Boolean;
+  I: Integer;
+begin
+  lLogsFolder := TPath.Combine(TPath.GetTempPath, 'loggerprotest_size4gb_' + FormatDateTime('hhnnsszzz', Now));
+  lRotated := False;
+  try
+    lAppender := TLoggerProFileAppender.Create(
+      5,
+      4 * 1024 * 1024, // 4 GB: the limit in bytes does not fit in an Integer
+      lLogsFolder,
+      '{module}.{number}.{tag}.log');
+    lAppender.OnAfterRotate :=
+      procedure(const aRotatedFileName: string)
+      begin
+        lRotated := True;
+      end;
+
+    lLog := BuildLogWriter([lAppender]);
+    for I := 1 to 3 do
+      lLog.Info('Size limit test message ' + I.ToString, 'TEST');
+    lLog := nil; // shutdown drains the queue
+
+    Assert.IsFalse(lRotated, 'A few short messages must not trigger size rotation');
+    lFiles := TDirectory.GetFiles(lLogsFolder, '*.log');
+    Assert.AreEqual(1, Integer(Length(lFiles)), 'Only one log file expected');
+    Assert.Contains(TFile.ReadAllText(lFiles[0]), 'Size limit test message 3', 'All messages expected in the file');
   finally
     lLog := nil;
     if TDirectory.Exists(lLogsFolder) then

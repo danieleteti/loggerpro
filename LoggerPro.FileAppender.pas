@@ -694,7 +694,7 @@ begin
 
   // Size-based rotation (only when MaxFileSizeInKB > 0)
   if (fMaxFileSizeInKiloByte > 0) and
-     (lWriter.BaseStream.Size > fMaxFileSizeInKiloByte * 1024) then
+     (lWriter.BaseStream.Size > Int64(fMaxFileSizeInKiloByte) * 1024) then
   begin
     RotateLog(aLogItem.LogTag, lWriter);
   end;
@@ -825,7 +825,7 @@ end;
 procedure TLoggerProSimpleFileAppender.WriteLog(const aLogItem: TLogItem);
 begin
   InternalWriteLog(fFileWriter, aLogItem);
-  if fFileWriter.BaseStream.Size > fMaxFileSizeInKiloByte * 1024 then
+  if fFileWriter.BaseStream.Size > Int64(fMaxFileSizeInKiloByte) * 1024 then
   begin
     RotateLog;
   end;
@@ -955,7 +955,7 @@ begin
 
   WriteToStream(fFileWriter, FormatLog(ALogItem));
 
-  if fFileWriter.BaseStream.Size > fMaxFileSizeInKiloByte * 1024 then
+  if fFileWriter.BaseStream.Size > Int64(fMaxFileSizeInKiloByte) * 1024 then
   begin
     RotateLog;
   end;
