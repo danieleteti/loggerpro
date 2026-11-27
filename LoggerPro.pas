@@ -3594,17 +3594,17 @@ end;
 
 procedure TLogWriterWithDefaultContext.LogException(const E: Exception);
 begin
-  FInner.Error(E.ClassName + ': ' + E.Message, DEFAULT_LOG_TAG, FDefaultContext);
+  FInner.LogException(E);
 end;
 
 procedure TLogWriterWithDefaultContext.LogException(const E: Exception; const aMessage: string);
 begin
-  FInner.Error(E.ClassName + ': ' + E.Message + ' - ' + aMessage, DEFAULT_LOG_TAG, FDefaultContext);
+  FInner.LogException(E, aMessage);
 end;
 
 procedure TLogWriterWithDefaultContext.LogException(const E: Exception; const aMessage: string; const aTag: string);
 begin
-  FInner.Error(E.ClassName + ': ' + E.Message + ' - ' + aMessage, aTag, FDefaultContext);
+  FInner.LogException(E, aMessage, aTag);
 end;
 
 procedure TLogWriterWithDefaultContext.Log(const aType: TLogType; const aMessage: string; const aParams: array of const; const aTag: string);
