@@ -62,6 +62,8 @@ type
     [Test]
     procedure TestSyslogWithUseLocalTime;
     [Test]
+    procedure TestSyslogUnixLineBreaks;
+    [Test]
     procedure TestElasticSearchWithBasicAuth;
     [Test]
     procedure TestElasticSearchWithAPIKey;
@@ -619,6 +621,24 @@ begin
   finally
     lLog := nil;
     lEvent.Free;
+  end;
+end;
+
+procedure TLoggerProBuilderTest.TestSyslogUnixLineBreaks;
+var
+  lLogItem: TLogItem;
+  lPacket: TLoggerProUDPSyslogPacket;
+begin
+  lLogItem := TLogItem.Create(TLogType.Info, 'line1' + sLineBreak + 'line2', 'TEST');
+  try
+    lPacket := TLoggerProUDPSyslogPacket.Create(lLogItem, 'testhost', 'testuser', 'testapp', '1.0', '123', True);
+    try
+      Assert.IsTrue(lPacket.SyslogData.EndsWith('line1' + #10 + 'line2'), 'Line breaks should be sent as LF');
+    finally
+      lPacket.Free;
+    end;
+  finally
+    lLogItem.Free;
   end;
 end;
 
