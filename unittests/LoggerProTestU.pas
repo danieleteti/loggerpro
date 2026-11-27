@@ -52,6 +52,8 @@ type
     [Test]
     procedure TestTLogItemCloneWithContext;
     [Test]
+    procedure TestTLogItemCloneKeepsPreRenderedContext;
+    [Test]
     procedure TestLogWriterWithContext;
     [Test]
     procedure TestLogWithContextOneShot;
@@ -470,6 +472,24 @@ begin
       Assert.AreEqual(lOriginal.Context[0].Value.AsString, lClone.Context[0].Value.AsString);
       Assert.AreEqual(lOriginal.Context[1].Key, lClone.Context[1].Key);
       Assert.AreEqual(lOriginal.Context[1].Value.AsInteger, lClone.Context[1].Value.AsInteger);
+    finally
+      lClone.Free;
+    end;
+  finally
+    lOriginal.Free;
+  end;
+end;
+
+procedure TLoggerProTest.TestTLogItemCloneKeepsPreRenderedContext;
+var
+  lOriginal, lClone: TLogItem;
+begin
+  lOriginal := TLogItem.Create(TLogType.Info, 'test message', 'test_tag', [LogParam.S('user', 'john')]);
+  try
+    lOriginal.PreRenderedContext := 'user=john';
+    lClone := lOriginal.Clone;
+    try
+      Assert.AreEqual('user=john', lClone.PreRenderedContext);
     finally
       lClone.Free;
     end;
