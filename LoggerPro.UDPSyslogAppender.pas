@@ -186,7 +186,7 @@ begin
   FMessageID := pLogItem.LogTag;
   FUnixLineBreaks := pUnixLineBreaks;
   if FUnixLineBreaks then
-    FMessageData := pLogItem.LogMessage.Replace(sLineBreak, '#10', [rfReplaceAll])
+    FMessageData := pLogItem.LogMessage.Replace(sLineBreak, #10, [rfReplaceAll])
   else
     FMessageData := pLogItem.LogMessage;
   FUTF8BOM := pUTF8BOM;
