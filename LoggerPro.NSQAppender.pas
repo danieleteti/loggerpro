@@ -131,8 +131,10 @@ constructor TLoggerProNSQAppenderBase.Create(aTopic: string; aEphemeral: Boolean
 begin
   inherited Create(aLogItemRenderer);
   FEphemeral := aEphemeral;
-  FNSQUrl := 'http://127.0.0.1:4151';
-  FUserName := aNSQUrl;
+  if aNSQUrl.IsEmpty then
+    FNSQUrl := DEFAULT_NSQ_URL
+  else
+    FNSQUrl := aNSQUrl;
   FTopic := aTopic;
 end;
 
