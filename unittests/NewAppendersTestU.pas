@@ -150,6 +150,15 @@ type
     procedure TestReEnableAppender;
   end;
 
+  [TestFixture]
+  TNSQAppenderTest = class
+  public
+    [Test]
+    procedure TestConstructorKeepsNSQUrl;
+    [Test]
+    procedure TestConstructorDefaultsNSQUrl;
+  end;
+
 implementation
 
 uses
@@ -157,6 +166,7 @@ uses
   LoggerPro.CallbackAppender,
   LoggerPro.TimeRotatingFileAppender,
   LoggerPro.WebhookAppender,
+  LoggerPro.NSQAppender,
   System.DateUtils,
   System.JSON;
 
@@ -1684,11 +1694,38 @@ begin
   end;
 end;
 
+{ TNSQAppenderTest }
+
+procedure TNSQAppenderTest.TestConstructorKeepsNSQUrl;
+var
+  lAppender: TLoggerProNSQAppenderBase;
+begin
+  lAppender := TLoggerProNSQAppenderBase.Create('topic', False, 'http://nsq.example.com:4151');
+  try
+    Assert.AreEqual('http://nsq.example.com:4151', lAppender.NSQUrl);
+  finally
+    lAppender.Free;
+  end;
+end;
+
+procedure TNSQAppenderTest.TestConstructorDefaultsNSQUrl;
+var
+  lAppender: TLoggerProNSQAppenderBase;
+begin
+  lAppender := TLoggerProNSQAppenderBase.Create('topic');
+  try
+    Assert.AreEqual(TLoggerProNSQAppenderBase.DEFAULT_NSQ_URL, lAppender.NSQUrl);
+  finally
+    lAppender.Free;
+  end;
+end;
+
 initialization
   TDUnitX.RegisterTestFixture(TMemoryAppenderTest);
   TDUnitX.RegisterTestFixture(TCallbackAppenderTest);
   TDUnitX.RegisterTestFixture(TTimeRotatingFileAppenderTest);
   TDUnitX.RegisterTestFixture(TWebhookAppenderTest);
   TDUnitX.RegisterTestFixture(TAppenderEnableDisableTest);
+  TDUnitX.RegisterTestFixture(TNSQAppenderTest);
 
 end.
